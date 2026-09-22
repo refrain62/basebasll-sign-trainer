@@ -1,15 +1,19 @@
-const APP_BUILD = "21";
+const APP_BUILD = "23";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
+const PUBLIC_SITE_URL = "https://basebasll-sign-trainer.refrain62.workers.dev";
 const TEAM_ID = "6BnWv2K3zo";
 const TEAM_PATH = `/t/${TEAM_ID}`;
+const TEAM_PUBLIC_URL = `${PUBLIC_SITE_URL}${TEAM_PATH}`;
 const LINE_TEAM_PATH = `${TEAM_PATH}?openExternalBrowser=1`;
+const LINE_TEAM_URL = `${TEAM_PUBLIC_URL}?openExternalBrowser=1`;
 const HISTORY_KEY = `sign-trainer:history:${TEAM_ID}`;
 const HISTORY_LIMIT = 50;
 
 const app = document.querySelector("#app");
 const confirmDialog = document.querySelector("#confirm-dialog");
 const logoutDialog = document.querySelector("#logout-dialog");
+const shareDialog = document.querySelector("#share-dialog");
 
 const state = {
   signs: [],
@@ -45,6 +49,9 @@ const icons = {
   target: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M22 12h-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   smile: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 10h.01M15.5 10h.01M8.5 14c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   clock: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  share: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="m8.2 10.9 7.5-4.4M8.2 13.1l7.5 4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  qr: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 14h2v2h-2zM18 14h2v4h-2zM14 18h4v2h-4zM20 20h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>'
 };
 
@@ -70,6 +77,113 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+
+function absoluteUrl(path = "/") {
+  return new URL(path, location.origin).toString();
+}
+
+function publicShareUrl() {
+  return `${PUBLIC_SITE_URL}/`;
+}
+
+function teamShareUrl() {
+  return LINE_TEAM_URL;
+}
+
+async function copyText(value) {
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const ok = document.execCommand("copy");
+    textarea.remove();
+    return ok;
+  }
+}
+
+function sharePayload(target) {
+  if (target === "team") {
+    return {
+      title: `${state.teamName || "SIGN TRAINER"} | サイン練習`,
+      text: `${state.teamName || "チーム"}のサイン練習ページです。初回はチームの合言葉を入力してください。`,
+      url: teamShareUrl(),
+      label: "チーム専用ページ",
+      note: "合言葉はURLやQRコードには含まれません。URLとは別にメンバーへ伝えてください。"
+    };
+  }
+  return {
+    title: "SIGN TRAINER | 野球のサイン練習",
+    text: "動画を見て、野球のサインをくり返し練習できるSIGN TRAINERです。",
+    url: publicShareUrl(),
+    label: "SIGN TRAINERトップページ",
+    note: "このQRコードはSIGN TRAINERの紹介ページを開きます。"
+  };
+}
+
+function openShareDialog(target = "site") {
+  if (!shareDialog) return;
+  const data = sharePayload(target);
+  shareDialog.dataset.target = target;
+  const title = shareDialog.querySelector("#share-title");
+  const lead = shareDialog.querySelector("#share-lead");
+  const urlInput = shareDialog.querySelector("#share-url");
+  const qr = shareDialog.querySelector("#share-qr");
+  const qrStatus = shareDialog.querySelector("#share-qr-status");
+  const note = shareDialog.querySelector("#share-note");
+  const copyStatus = shareDialog.querySelector("#share-copy-status");
+  if (title) title.textContent = `${data.label}を共有`;
+  if (lead) lead.textContent = target === "team" ? "このURLまたはQRコードを、LINEなどでチームメンバーへ共有してください。" : "URL・QRコード・スマホの共有メニューから第三者へ送れます。";
+  if (urlInput) urlInput.value = data.url;
+  if (note) note.textContent = data.note;
+  if (copyStatus) copyStatus.textContent = "";
+  if (qrStatus) qrStatus.textContent = "QRコードを準備しています…";
+  if (qr) {
+    qr.hidden = false;
+    qr.alt = `${data.label}のQRコード`;
+    qr.onload = () => { if (qrStatus) qrStatus.textContent = "スマホではQRコードを長押しして保存できます。"; };
+    qr.onerror = () => { qr.hidden = true; if (qrStatus) qrStatus.textContent = "QRコードを表示できませんでした。URLコピーをご利用ください。"; };
+    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=14&data=${encodeURIComponent(data.url)}`;
+  }
+  if (shareDialog.showModal) shareDialog.showModal();
+  else shareDialog.setAttribute("open", "");
+}
+
+function initShareDialog() {
+  if (!shareDialog || shareDialog.dataset.wired === "1") return;
+  shareDialog.dataset.wired = "1";
+  shareDialog.querySelector("#share-copy")?.addEventListener("click", async () => {
+    const data = sharePayload(shareDialog.dataset.target || "site");
+    const ok = await copyText(data.url);
+    const status = shareDialog.querySelector("#share-copy-status");
+    if (status) status.textContent = ok ? "リンクをコピーしました" : "コピーできませんでした";
+  });
+  shareDialog.querySelector("#share-native")?.addEventListener("click", async () => {
+    const data = sharePayload(shareDialog.dataset.target || "site");
+    if (navigator.share) {
+      try { await navigator.share({ title: data.title, text: data.text, url: data.url }); } catch (error) {
+        if (error?.name !== "AbortError") console.warn("share failed", error);
+      }
+    } else {
+      const ok = await copyText(data.url);
+      const status = shareDialog.querySelector("#share-copy-status");
+      if (status) status.textContent = ok ? "共有メニュー非対応のため、リンクをコピーしました" : "このブラウザでは共有できません";
+    }
+  });
+  shareDialog.querySelector("#share-line")?.addEventListener("click", () => {
+    const data = sharePayload(shareDialog.dataset.target || "site");
+    const message = `${data.text}\n${data.url}`;
+    window.open(`https://line.me/R/share?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+  });
+  shareDialog.querySelector("#share-close")?.addEventListener("click", () => shareDialog.close?.());
 }
 
 function navigate(path, { replace = false } = {}) {
@@ -127,6 +241,7 @@ function renderLanding() {
             <a href="#features">特徴</a>
             <a href="#howto">使い方</a>
             <a href="#for-team">こんな方に</a>
+            <a href="#share">共有方法</a>
             <a href="#faq">よくある質問</a>
             <a class="button button-primary button-small header-cta" href="${LINE_TEAM_PATH}" data-nav>サンプルを試す</a>
           </nav>
@@ -134,6 +249,7 @@ function renderLanding() {
         </div>
         <nav class="mobile-nav" id="mobile-nav" aria-label="スマートフォンメニュー">
           <a href="#features">特徴</a>
+          <a href="#capabilities">できること</a>
           <a href="#howto">使い方</a>
           <a href="#for-team">こんな方に</a>
           <a href="#faq">よくある質問</a>
@@ -162,9 +278,9 @@ function renderLanding() {
         <section id="features" class="feature-strip" aria-label="SIGN TRAINERの特徴">
           <div class="container feature-grid">
             ${featureItem(icons.play, "動画でわかる", "実際のサインを動画で確認")}
-            ${featureItem(icons.replay, "くり返し練習", "ランダム出題でしっかり定着")}
-            ${featureItem(icons.chart, "チームの成長", "みんなで覚えて強くなる")}
-            ${featureItem(icons.phone, "すぐに使える", "インストール不要・スマホ対応")}
+            ${featureItem(icons.replay, "間違いだけ復習", "動画を見直してすぐ再練習")}
+            ${featureItem(icons.clock, "練習履歴が残る", "正答率や間違いを端末に保存")}
+            ${featureItem(icons.share, "チームに共有", "URL・QR・LINEですぐ配布")}
           </div>
         </section>
 
@@ -197,6 +313,23 @@ function renderLanding() {
           </div>
         </section>
 
+        <section id="capabilities" class="lp-section capabilities-section">
+          <div class="container">
+            <div class="section-heading compact-heading capabilities-heading">
+              <h2 class="underline-heading">SIGN TRAINERでできること</h2>
+              <p>見る・答えるだけで終わらず、復習・履歴・共有までチーム練習に必要な流れをひとつにまとめています。</p>
+            </div>
+            <div class="capabilities-grid">
+              ${capabilityCard(icons.target, "5問・10問・全サイン", "短時間の確認から、全サインのじっくり練習まで選べます。")}
+              ${capabilityCard(icons.replay, "シャッフル出題", "同じ順番を覚えるのではなく、サインそのものを見分ける練習ができます。")}
+              ${capabilityCard(icons.check, "○×で自己採点", "答えを見て自分で判定。選択肢から推測せず、実戦に近い形で覚えます。")}
+              ${capabilityCard(icons.play, "間違えた動画を再確認", "間違えたサインは、その動画をもう一度見てから復習できます。")}
+              ${capabilityCard(icons.clock, "練習履歴を確認", "正答率・練習時間・間違えたサインをこの端末に最大50件保存します。")}
+              ${capabilityCard(icons.share, "URL・QR・LINEで共有", "チームページをリンクコピー、QRコード、共有メニューから簡単に配れます。")}
+            </div>
+          </div>
+        </section>
+
         <section id="for-team" class="lp-section audience-section">
           <div class="container">
             <div class="section-heading compact-heading">
@@ -224,9 +357,27 @@ function renderLanding() {
                 <div class="testimonial-author"><span class="avatar">2</span><span>自主練習</span></div>
               </article>
               <article class="testimonial-card">
-                <p><strong>間違えたサインの復習に</strong><br>練習後は間違えた問題だけを動画で確認して、もう一度出題できます。</p>
-                <div class="testimonial-author"><span class="avatar">3</span><span>復習</span></div>
+                <p><strong>履歴を見ながら復習に</strong><br>正答率や間違えたサインを履歴で確認し、苦手な問題だけもう一度練習できます。</p>
+                <div class="testimonial-author"><span class="avatar">3</span><span>履歴・復習</span></div>
               </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="share" class="lp-section share-guide-section">
+          <div class="container">
+            <div class="section-heading compact-heading">
+              <h2 class="underline-heading">チームへの共有もかんたん</h2>
+              <p class="share-guide-lead">正式利用ではチーム専用ページを発行。URLやQRコードをLINEなどで配るだけで、メンバーがすぐ練習できます。</p>
+            </div>
+            <div class="share-steps" aria-label="チームページの共有手順">
+              <div class="share-step"><span class="share-step-no">1</span><div><strong>専用ページを発行</strong><p>チーム登録後に、推測されにくい専用URLを用意します。</p></div></div>
+              <div class="share-step"><span class="share-step-no">2</span><div><strong>URL・QRを共有</strong><p>リンクコピー、QRコード、LINEやスマホの共有メニューから送れます。</p></div></div>
+              <div class="share-step"><span class="share-step-no">3</span><div><strong>合言葉は別に伝える</strong><p>合言葉はURLやQRには入れず、チーム内で別途共有します。</p></div></div>
+            </div>
+            <div class="share-guide-actions">
+              <button class="button button-primary" id="share-site" type="button">${icons.share} このサイトを共有</button>
+              <button class="button button-secondary" id="share-sample-team" type="button">${icons.qr} サンプルチームのQRを見る</button>
             </div>
           </div>
         </section>
@@ -250,7 +401,9 @@ function renderLanding() {
             <div class="faq-list">
               <details><summary>動画はどのように登録されていますか？</summary><p>YouTubeの限定公開動画を利用します。練習ページの合言葉認証前には、サイン名やYouTube動画IDをブラウザへ返しません。</p></details>
               <details><summary>スマホ以外でも使えますか？</summary><p>はい。スマートフォンを中心に設計していますが、タブレットやPCのブラウザでも利用できます。</p></details>
-              <details><summary>チームではどのように利用しますか？</summary><p>チーム登録後に、そのチーム専用の練習ページとURLを発行します。監督・コーチがLINEなどでURLをメンバーへ共有し、メンバーはチームの合言葉を入力して練習します。</p></details>
+              <details><summary>チームではどのように利用しますか？</summary><p>チーム登録後に、そのチーム専用の練習ページとURLを発行します。監督・コーチがLINEなどでURLやQRコードをメンバーへ共有し、メンバーはチームの合言葉を入力して練習します。</p></details>
+              <details><summary>練習結果はあとから見られますか？</summary><p>はい。この端末に練習履歴を最大50件保存し、正答率・練習時間・各問題の○×・間違えたサインを見返せます。履歴から間違えた問題だけ再練習することもできます。</p></details>
+              <details><summary>間違えたサインだけ復習できますか？</summary><p>できます。結果画面や履歴詳細から、間違えたサインの動画をもう一度確認し、その問題だけで再練習できます。</p></details>
               <details><summary>料金はかかりますか？</summary><p>料金体系はサービス提供時に案内します。現在のトップページではサンプルチームを体験できます。</p></details>
             </div>
           </div>
@@ -261,7 +414,7 @@ function renderLanding() {
         <div class="container footer-inner">
           ${brand({ footer: true })}
           <nav class="footer-nav" aria-label="フッターナビゲーション">
-            <a href="/" data-nav>トップ</a><a href="#features">特徴</a><a href="#howto">使い方</a><a href="#for-team">こんな方に</a><a href="#faq">よくある質問</a>
+            <a href="/" data-nav>トップ</a><a href="#features">特徴</a><a href="#capabilities">できること</a><a href="#howto">使い方</a><a href="#for-team">こんな方に</a><a href="#share">共有方法</a><a href="#faq">よくある質問</a>
           </nav>
           <div class="footer-tagline">野球を、もっとシンプルに。<br>もっと楽しく。</div>
           <div class="footer-meta">© 2026 SIGN TRAINER. All rights reserved.</div>
@@ -273,6 +426,9 @@ function renderLanding() {
 }
 
 function wireLandingNavigation() {
+  initShareDialog();
+  document.querySelector("#share-site")?.addEventListener("click", () => openShareDialog("site"));
+  document.querySelector("#share-sample-team")?.addEventListener("click", () => openShareDialog("team"));
   const menuButton = document.querySelector("#mobile-menu-button");
   const mobileNav = document.querySelector("#mobile-nav");
   if (menuButton && mobileNav) {
@@ -300,6 +456,10 @@ function audienceCard(icon, text) {
   return `<article class="audience-card"><div class="audience-icon">${icon}</div><strong>${text.replace("\n", "<br>")}</strong></article>`;
 }
 
+function capabilityCard(icon, title, text) {
+  return `<article class="capability-card"><div class="capability-icon">${icon}</div><div><h3>${title}</h3><p>${text}</p></div></article>`;
+}
+
 function lineStep(no, title, text) {
   return `<article class="line-step"><span class="line-step-no">STEP ${no}</span><strong>${title}</strong><span>${text}</span></article>`;
 }
@@ -309,7 +469,7 @@ function stepCard(no, title, text, phone) {
 }
 
 function phoneSetupMock() {
-  return `<div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">練習設定</div><div class="phone-body"><div class="phone-title">問題数を選ぶ</div><div class="phone-choice">5問</div><div class="phone-choice is-green">10問</div><div class="phone-choice">20問</div><div class="phone-choice">全てのサイン</div><div class="phone-btn green">スタート</div></div></div></div>`;
+  return `<div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">練習設定</div><div class="phone-body"><div class="phone-title">問題数を選ぶ</div><div class="phone-choice">5問</div><div class="phone-choice is-green">10問</div><div class="phone-choice">全てのサイン</div><div class="phone-btn green">スタート</div></div></div></div>`;
 }
 
 function phoneQuestionMock() {
@@ -470,6 +630,11 @@ function renderPracticeSetup() {
           <span class="history-entry-copy"><strong>練習履歴を見る</strong><span>${escapeHtml(historySub)}</span></span>
           ${history.length ? `<span class="history-entry-count">${history.length}件</span>` : `<span class="history-entry-arrow">›</span>`}
         </button>
+        <button class="share-entry-button" id="open-team-share" type="button">
+          <span class="share-entry-icon">${icons.share}</span>
+          <span class="share-entry-copy"><strong>チームに共有</strong><span>URL・QRコード・LINEでこの練習ページを配布</span></span>
+          <span class="history-entry-arrow">›</span>
+        </button>
         <div class="practice-points" aria-label="練習のポイント">
           <div class="practice-point">${icons.check}<span>動画を見て何のサインか考える</span></div>
           <div class="practice-point">${icons.check}<span>答えを見て○×で自己採点</span></div>
@@ -487,6 +652,8 @@ function renderPracticeSetup() {
     });
   });
   document.querySelector("#open-history").addEventListener("click", renderPracticeHistory);
+  initShareDialog();
+  document.querySelector("#open-team-share")?.addEventListener("click", () => openShareDialog("team"));
   document.querySelector("#logout").addEventListener("click", confirmLogout);
 }
 

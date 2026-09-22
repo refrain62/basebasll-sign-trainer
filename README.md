@@ -154,20 +154,20 @@ Wranglerが発行する `*.workers.dev` URLで動作確認できます。独自�
 本番URLが:
 
 ```text
-https://sign.example.com
+https://basebasll-sign-trainer.refrain62.workers.dev
 ```
 
 の場合:
 
 ```text
-https://sign.example.com/t/6BnWv2K3zo?openExternalBrowser=1
+https://basebasll-sign-trainer.refrain62.workers.dev/t/6BnWv2K3zo?openExternalBrowser=1
 ```
 
 配布文例:
 
 ```text
 ⚾ サイン練習はこちら
-https://sign.example.com/t/6BnWv2K3zo?openExternalBrowser=1
+https://basebasll-sign-trainer.refrain62.workers.dev/t/6BnWv2K3zo?openExternalBrowser=1
 
 初回のみ合言葉が必要です。
 ```
@@ -327,3 +327,12 @@ Cloudflare 上の Worker に `TEAM_PASSPHRASE` または `SESSION_SECRET` が設
 ```
 
 本番値は `wrangler.jsonc` に書かず、`wrangler secret put` で登録してください。
+
+
+## 共有機能（build 22）
+
+- LPからSIGN TRAINERトップページをURL・QR・共有メニューで共有できます。
+- 認証後の練習設定画面からチーム専用ページをURL・QR・LINEで共有できます。
+- チーム用共有URLには `openExternalBrowser=1` を付け、LINEから開いた際に外部ブラウザへ誘導する前提です。
+- 合言葉はURL/QRには含めません。メンバーには別経路・別メッセージで伝えてください。
+- QR表示は `api.qrserver.com` を利用し、送信される情報は共有対象URLのみです。

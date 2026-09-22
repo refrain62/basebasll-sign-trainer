@@ -39,7 +39,7 @@
 例：
 
 ```text
-https://sign.example.com/t/6BnWv2K3zo
+https://basebasll-sign-trainer.refrain62.workers.dev/t/6BnWv2K3zo
 ```
 
 実運用ではLINEからこのURLを配布する。
@@ -97,7 +97,7 @@ LINEメッセージ例：
 
 下のリンクから練習できます。
 
-https://sign.example.com/t/6BnWv2K3zo
+https://basebasll-sign-trainer.refrain62.workers.dev/t/6BnWv2K3zo
 
 初回だけ合言葉を入力してください。
 ```

@@ -8,14 +8,16 @@
     <meta property="og:type" content="website" />
     <meta property="og:title" content="サイントレーナー | 野球のサイン練習" />
     <meta property="og:description" content="見て、覚えて、迷わず動く。チームのサインを動画でくり返し練習。" />
-    <meta property="og:image" content="/og.png" />
+    <meta property="og:url" content="https://basebasll-sign-trainer.refrain62.workers.dev/" />
+    <meta property="og:image" content="https://basebasll-sign-trainer.refrain62.workers.dev/og.png" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href="https://basebasll-sign-trainer.refrain62.workers.dev/" />
     <title>SIGN TRAINER | 野球のサイン練習</title>
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="icon" href="/favicon-48.png" sizes="48x48" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="stylesheet" href="/styles.css?v=21" />
+    <link rel="stylesheet" href="/styles.css?v=23" />
   </head>
   <body>
     <div id="app" aria-live="polite"></div>
@@ -44,6 +46,28 @@
       </form>
     </dialog>
 
-    <script src="/app.js?v=21" type="module"></script>
+    <dialog id="share-dialog" class="dialog share-dialog" aria-labelledby="share-title">
+      <div class="share-dialog-card">
+        <button class="share-dialog-close" id="share-close" type="button" aria-label="共有画面を閉じる">×</button>
+        <div class="share-dialog-icon" aria-hidden="true">⇧</div>
+        <h2 id="share-title">SIGN TRAINERを共有</h2>
+        <p id="share-lead" class="share-dialog-lead">URL・QRコードから共有できます。</p>
+        <label class="share-url-label" for="share-url">共有URL</label>
+        <input class="share-url-input" id="share-url" type="text" readonly />
+        <div class="share-dialog-actions">
+          <button class="button button-primary button-full" id="share-native" type="button">共有メニューを開く</button>
+          <button class="button button-secondary button-full" id="share-copy" type="button">リンクをコピー</button>
+          <button class="button line-share-button button-full" id="share-line" type="button">LINEで共有</button>
+        </div>
+        <p class="share-copy-status" id="share-copy-status" role="status" aria-live="polite"></p>
+        <div class="share-qr-wrap">
+          <img id="share-qr" class="share-qr" alt="" width="360" height="360" decoding="async" />
+          <p id="share-qr-status" class="share-qr-status">QRコードを準備しています…</p>
+        </div>
+        <div class="share-security-note"><strong>大切：</strong><span id="share-note">合言葉はURLやQRコードには含まれません。</span></div>
+      </div>
+    </dialog>
+
+    <script src="/app.js?v=23" type="module"></script>
   </body>
 </html>
