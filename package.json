@@ -1,0 +1,14 @@
+{
+  "name": "sign-trainer",
+  "version": "0.8.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "node --check src/index.js && node --check src/signs.js && node --check public/app.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.20.0"
+  }
+}

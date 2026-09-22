@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "sign-trainer",
+  "main": "./src/index.js",
+  "compatibility_date": "2026-09-22",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "none"
+  },
+  "vars": {
+    "TEAM_ID": "6BnWv2K3zo",
+    "TEAM_NAME": "サンプルチーム",
+    "SESSION_DAYS": "30"
+  }
+}
