@@ -1,3 +1,6 @@
+const APP_BUILD = "21";
+console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
+
 const TEAM_ID = "6BnWv2K3zo";
 const TEAM_PATH = `/t/${TEAM_ID}`;
 const LINE_TEAM_PATH = `${TEAM_PATH}?openExternalBrowser=1`;

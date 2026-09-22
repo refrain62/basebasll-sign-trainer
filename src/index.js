@@ -30,7 +30,8 @@ export default {
       }
 
       const response = await env.ASSETS.fetch(assetRequest);
-      return withHeaders(response, { noIndex: url.pathname.startsWith("/t/") });
+      const noCache = ["/", "/index.html", "/app.js", "/styles.css"].includes(url.pathname) || url.pathname.startsWith("/t/");
+      return withHeaders(response, { noIndex: url.pathname.startsWith("/t/"), noCache });
     } catch (error) {
       console.error(error);
       return withHeaders(
@@ -247,7 +248,7 @@ function json(data, status = 200, headers = {}) {
   });
 }
 
-function withHeaders(response, { noIndex = false } = {}) {
+function withHeaders(response, { noIndex = false, noCache = false } = {}) {
   const headers = new Headers(response.headers);
   headers.set("x-content-type-options", "nosniff");
   headers.set("referrer-policy", "strict-origin-when-cross-origin");
@@ -258,6 +259,7 @@ function withHeaders(response, { noIndex = false } = {}) {
     "default-src 'self'; script-src 'self' https://www.youtube.com; style-src 'self'; img-src 'self' data: https:; frame-src https://www.youtube.com https://www.youtube-nocookie.com; connect-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; media-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
   );
   if (noIndex) headers.set("x-robots-tag", "noindex, nofollow, noarchive");
+  if (noCache) headers.set("cache-control", "no-cache, no-store, must-revalidate");
 
   return new Response(response.body, {
     status: response.status,
