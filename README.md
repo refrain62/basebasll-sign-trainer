@@ -336,3 +336,23 @@ Cloudflare 上の Worker に `TEAM_PASSPHRASE` または `SESSION_SECRET` が設
 - チーム用共有URLには `openExternalBrowser=1` を付け、LINEから開いた際に外部ブラウザへ誘導する前提です。
 - 合言葉はURL/QRには含めません。メンバーには別経路・別メッセージで伝えてください。
 - QR表示は `api.qrserver.com` を利用し、送信される情報は共有対象URLのみです。
+
+
+## YouTubeプレイヤー表示（build 24）
+
+クイズ動画は、サイン動作が操作UIで隠れにくいように YouTube の埋め込みプレイヤーを最小UIで表示します。
+
+- `controls=0`: プレイヤーの操作バーを非表示
+- `fs=0`: 全画面ボタンを非表示
+- `disablekb=1`: キーボード操作を無効化
+- `iv_load_policy=3`: アノテーションを非表示
+- `playsinline=1`: モバイルでインライン再生
+
+YouTube側が必須として表示するロゴ・再生前後の表示などは完全には除去できません。
+
+
+## Build 25
+
+- iPhone/Safari向けにYouTubeを問題表示時に即ロードし、mute付きautoplayを試行します。
+- Safariのiframe loadイベント待ちで画面が止まらないよう、独自ローディング表示を短時間で外します。
+- インストール用アイコン（Apple Touch / PWA / maskable）は緑を端まで敷いたフルブリード版にし、OS側の白フチを防ぎます。

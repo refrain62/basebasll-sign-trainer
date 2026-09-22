@@ -1,4 +1,4 @@
-const APP_BUILD = "23";
+const APP_BUILD = "25";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const PUBLIC_SITE_URL = "https://basebasll-sign-trainer.refrain62.workers.dev";
@@ -790,13 +790,22 @@ function buildYouTubeEmbedUrl(videoId) {
 
   const params = new URLSearchParams({
     autoplay: "1",
+    mute: "1",
     playsinline: "1",
-    controls: "1",
-    rel: "0"
+    controls: "0",
+    disablekb: "1",
+    fs: "0",
+    iv_load_policy: "3",
+    rel: "0",
+    hl: "ja",
+    enablejsapi: "1",
+    origin: window.location.origin
   });
 
+  // iPhone/Safariでも問題表示と同時にプレイヤーをロードする。
+  // 音声付き自動再生はiOSでブロックされるため、最初はmute=1で再生を試す。
   // Shorts も通常動画も埋め込み時は同じ /embed/{videoId} を使う。
-  return `https://www.youtube.com/embed/${encodeURIComponent(id)}?${params.toString()}`;
+  return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?${params.toString()}`;
 }
 
 function startVideo(item) {
@@ -822,10 +831,9 @@ function startVideo(item) {
   iframe.title = `${item.name}のサイン動画`;
   iframe.src = src;
   iframe.loading = "eager";
-  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; fullscreen";
+  iframe.allow = "accelerometer; autoplay; encrypted-media; gyroscope";
   iframe.referrerPolicy = "strict-origin-when-cross-origin";
-  iframe.allowFullscreen = true;
-  iframe.setAttribute("playsinline", "");
+    iframe.setAttribute("playsinline", "");
 
   state.player = iframe;
   state.playerReady = false;
@@ -853,6 +861,22 @@ function startVideo(item) {
   }, { once: true });
 
   mount.replaceChildren(iframe);
+
+  // Safari/iOSではiframeのloadイベントがユーザー操作後まで遅れる場合がある。
+  // プレイヤー自体は既に挿入済みなので、短時間で独自ローディング表示を外し、
+  // YouTube側のプレイヤー/サムネイルを直接見せる。
+  window.setTimeout(() => {
+    if (state.player !== iframe) return;
+    cover.hidden = true;
+    cover.classList.add("is-hidden");
+    // iOSではiframeのloadイベントが遅延することがあるため、
+    // ここで「プレイヤーは画面に出せる状態」とみなし、誤タイムアウトを防ぐ。
+    if (!state.playerReady) {
+      state.playerReady = true;
+      clearTimeout(state.videoLoadTimer);
+      state.videoLoadTimer = null;
+    }
+  }, 450);
 }
 
 function replayVideo(item) {
@@ -1075,10 +1099,9 @@ function startReviewVideo(item, mistakes) {
   iframe.title = `${item.name}のサイン動画`;
   iframe.src = src;
   iframe.loading = "eager";
-  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; fullscreen";
+  iframe.allow = "accelerometer; autoplay; encrypted-media; gyroscope";
   iframe.referrerPolicy = "strict-origin-when-cross-origin";
-  iframe.allowFullscreen = true;
-  iframe.setAttribute("playsinline", "");
+    iframe.setAttribute("playsinline", "");
   state.player = iframe;
   state.playerReady = false;
 
@@ -1102,6 +1125,19 @@ function startReviewVideo(item, mistakes) {
   }, { once: true });
 
   mount.replaceChildren(iframe);
+
+  window.setTimeout(() => {
+    if (state.player !== iframe) return;
+    cover.hidden = true;
+    cover.classList.add("is-hidden");
+    // iOSではiframeのloadイベントが遅延することがあるため、
+    // ここで「プレイヤーは画面に出せる状態」とみなし、誤タイムアウトを防ぐ。
+    if (!state.playerReady) {
+      state.playerReady = true;
+      clearTimeout(state.videoLoadTimer);
+      state.videoLoadTimer = null;
+    }
+  }, 450);
 }
 
 function renderReviewVideoError(item, mistakes, message = "通信環境を確認して、再度お試しください。") {
