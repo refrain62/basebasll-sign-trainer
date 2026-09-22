@@ -314,3 +314,16 @@ npm run deploy
 ### `/api/auth` が 503 / 認証設定エラーになる場合
 
 Cloudflare 上の Worker に `TEAM_PASSPHRASE` または `SESSION_SECRET` が設定されていません。入力した合言葉の間違いではありません。上記の `wrangler secret put` を実行してください。
+
+
+## Wrangler 4.136+ の secrets 設定
+
+`wrangler.jsonc` の `secrets` は配列ではなく、次の形式です。
+
+```json
+"secrets": {
+  "required": ["TEAM_PASSPHRASE", "SESSION_SECRET"]
+}
+```
+
+本番値は `wrangler.jsonc` に書かず、`wrangler secret put` で登録してください。
