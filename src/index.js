@@ -56,8 +56,8 @@ async function handleApi(request, env, url) {
   if (url.pathname === "/api/auth" && method === "POST") {
     if (!env.TEAM_PASSPHRASE || !env.SESSION_SECRET) {
       return apiJson(
-        { error: "server_not_configured", message: "認証設定が完了していません。" },
-        500
+        { error: "server_not_configured", message: "現在、認証設定の準備中です。管理者にお知らせください。" },
+        503
       );
     }
 

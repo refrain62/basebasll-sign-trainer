@@ -278,3 +278,39 @@ IFrame Player API の `onReady` 待ちには依存しないため、APIイベン
 - LP、FAQ、結果、復習、操作ボタンの文字サイズを引き上げ、視認性を改善
 - 架空の利用者レビューをやめ、実際の利用シーンを説明するセクションへ変更
 - スキップがある場合でも結果の分母は出題数を維持
+
+
+## Cloudflare 本番認証の必須設定
+
+本番では `.dev.vars` は使われません。Cloudflare Worker に次の2つの Secret が必要です。
+
+```bash
+npx wrangler login
+npx wrangler secret put TEAM_PASSPHRASE
+npx wrangler secret put SESSION_SECRET
+```
+
+`TEAM_PASSPHRASE` にはチームの合言葉（例: `ホームラン`）を入力します。
+`SESSION_SECRET` は十分に長いランダム文字列にしてください。Node.js が使える環境では次で生成できます。
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+このプロジェクトの `wrangler.jsonc` は、現在利用中の Worker `basebasll-sign-trainer` を対象にしています。また `TEAM_PASSPHRASE` と `SESSION_SECRET` を必須 Secret として宣言しているため、今後は Secret が未設定のまま `npm run deploy` するとデプロイ時点で検出できます。
+
+設定確認:
+
+```bash
+npx wrangler secret list
+```
+
+両方が表示されたら:
+
+```bash
+npm run deploy
+```
+
+### `/api/auth` が 503 / 認証設定エラーになる場合
+
+Cloudflare 上の Worker に `TEAM_PASSPHRASE` または `SESSION_SECRET` が設定されていません。入力した合言葉の間違いではありません。上記の `wrangler secret put` を実行してください。

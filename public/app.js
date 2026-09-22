@@ -321,7 +321,7 @@ function appTopbar(action = "") {
   return `<header class="app-topbar"><div class="app-topbar-inner">${brand()}${action}</div></header>`;
 }
 
-function renderAuth({ error = "", value = "" } = {}) {
+function renderAuth({ error = "", value = "", configError = false } = {}) {
   document.title = "合言葉を入力 | SIGN TRAINER";
   app.innerHTML = `<div class="app-bg auth-bg">
     ${appTopbar('<a class="button button-ghost" href="/" data-nav>トップへ</a>')}
@@ -346,7 +346,7 @@ function renderAuth({ error = "", value = "" } = {}) {
               <input class="text-input" id="passphrase" name="passphrase" type="text" inputmode="text" lang="ja" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="go" placeholder="例：ホームラン" value="${escapeHtml(value)}" required autofocus />
             </div>
             <p class="input-note">ひらがな・カタカナ・漢字でも入力できます。</p>
-            ${error ? `<div class="form-error" role="alert"><span class="form-error-mark">!</span><span>${escapeHtml(error)}<br>もう一度確認して入力してください。</span></div>` : ""}
+            ${error ? `<div class="form-error" role="alert"><span class="form-error-mark">!</span><span>${escapeHtml(error)}${configError ? "" : "<br>もう一度確認して入力してください。"}</span></div>` : ""}
             <button class="button button-primary button-full" id="auth-submit" type="submit">練習をはじめる</button>
           </form>
           <p class="form-help">合言葉は監督・コーチに確認してください。</p>
@@ -385,7 +385,16 @@ function renderAuth({ error = "", value = "" } = {}) {
       });
       const data = await response.json();
       if (!response.ok) {
-        renderAuth({ error: data.message || "合言葉が違うようです。" });
+        if (data.error === "server_not_configured") {
+          console.error("SIGN TRAINER auth configuration is missing on the deployed Worker.", data);
+          renderAuth({
+            error: data.message || "現在、認証設定の準備中です。管理者にお知らせください。",
+            value: input.value,
+            configError: true
+          });
+          return;
+        }
+        renderAuth({ error: data.message || "合言葉が違うようです。", value: input.value });
         return;
       }
       state.teamName = data.teamName || state.teamName;
