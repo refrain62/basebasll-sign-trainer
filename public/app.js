@@ -1,6 +1,8 @@
 const TEAM_ID = "6BnWv2K3zo";
 const TEAM_PATH = `/t/${TEAM_ID}`;
 const LINE_TEAM_PATH = `${TEAM_PATH}?openExternalBrowser=1`;
+const HISTORY_KEY = `sign-trainer:history:${TEAM_ID}`;
+const HISTORY_LIMIT = 50;
 
 const app = document.querySelector("#app");
 const confirmDialog = document.querySelector("#confirm-dialog");
@@ -19,7 +21,10 @@ const state = {
   pendingGradeTimer: null,
   reviewMode: false,
   lastMistakes: [],
-  completedAt: 0
+  completedAt: 0,
+  practiceMode: "10",
+  sessionId: "",
+  historySavedSessionId: ""
 };
 
 const icons = {
@@ -430,6 +435,12 @@ async function loadSigns() {
 
 function renderPracticeSetup() {
   document.title = "サイン練習 | SIGN TRAINER";
+  const history = getPracticeHistory();
+  const latest = history[0];
+  const historySub = latest
+    ? `前回 ${latest.correct}/${latest.total}問正解 · ${formatHistoryDate(latest.completedAt, { short: true })}`
+    : "練習すると、この端末に結果が残ります";
+
   app.innerHTML = `<div class="app-bg">
     ${appTopbar('<a class="button button-ghost" href="/" data-nav>トップへ</a>')}
     <main class="app-main">
@@ -442,6 +453,11 @@ function renderPracticeSetup() {
           <button class="choice" data-count="5" type="button"><span class="choice-copy"><span class="choice-main">5問ではじめる</span><span class="choice-sub">サクッと練習</span></span><span class="choice-arrow">${icons.arrow}</span></button>
           <button class="choice" data-count="all" type="button"><span class="choice-copy"><span class="choice-main">全てのサイン</span><span class="choice-sub">じっくり練習 · ${state.signs.length}種類</span></span><span class="choice-arrow">${icons.arrow}</span></button>
         </div>
+        <button class="history-entry-button" id="open-history" type="button">
+          <span class="history-entry-icon">${icons.clock}</span>
+          <span class="history-entry-copy"><strong>練習履歴を見る</strong><span>${escapeHtml(historySub)}</span></span>
+          ${history.length ? `<span class="history-entry-count">${history.length}件</span>` : `<span class="history-entry-arrow">›</span>`}
+        </button>
         <div class="practice-points" aria-label="練習のポイント">
           <div class="practice-point">${icons.check}<span>動画を見て何のサインか考える</span></div>
           <div class="practice-point">${icons.check}<span>答えを見て○×で自己採点</span></div>
@@ -458,6 +474,7 @@ function renderPracticeSetup() {
       startQuiz(count);
     });
   });
+  document.querySelector("#open-history").addEventListener("click", renderPracticeHistory);
   document.querySelector("#logout").addEventListener("click", confirmLogout);
 }
 
@@ -493,6 +510,9 @@ function startQuiz(count, sourceSigns = state.signs, { review = false } = {}) {
   state.results = [];
   state.startedAt = Date.now();
   state.reviewMode = review;
+  state.practiceMode = review ? "review" : (count === "all" ? "all" : String(targetCount));
+  state.sessionId = `${state.startedAt}-${Math.random().toString(36).slice(2, 8)}`;
+  state.historySavedSessionId = "";
   state.completedAt = 0;
   renderQuestion();
 }
@@ -765,6 +785,7 @@ function renderResults() {
   state.lastMistakes = mistakes;
   const title = state.reviewMode ? "復習結果" : "練習結果";
   const message = rate === 100 && totalQuestions ? "全問正解！よくできました。" : "よくがんばりました！";
+  saveCurrentPracticeResult({ correct, wrong, skipped, totalQuestions, rate, seconds });
   document.title = `${title} | SIGN TRAINER`;
 
   app.innerHTML = `<div class="app-bg">
@@ -911,6 +932,175 @@ function renderReviewVideoError(item, mistakes, message = "通信環境を確認
   frame.innerHTML = `<div class="video-cover"><div class="video-error"><div class="video-error-mark">!</div><h2>動画を読み込めませんでした</h2><p>${escapeHtml(message)}</p><div class="quiz-actions"><button class="quiz-button quiz-button-primary" id="retry-review-video" type="button">再試行する</button><button class="quiz-button quiz-button-secondary" id="back-review-list" type="button">一覧に戻る</button></div></div></div>`;
   document.querySelector("#retry-review-video").addEventListener("click", () => renderReviewVideo(item, mistakes));
   document.querySelector("#back-review-list").addEventListener("click", () => renderMistakeReview(mistakes));
+}
+
+function getPracticeHistory() {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((entry) => entry && typeof entry.id === "string");
+  } catch (error) {
+    console.warn("[SIGN TRAINER] 練習履歴を読み込めませんでした", error);
+    return [];
+  }
+}
+
+function writePracticeHistory(history) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, HISTORY_LIMIT)));
+    return true;
+  } catch (error) {
+    console.warn("[SIGN TRAINER] 練習履歴を保存できませんでした", error);
+    return false;
+  }
+}
+
+function saveCurrentPracticeResult({ correct, wrong, skipped, totalQuestions, rate, seconds }) {
+  if (!state.sessionId || state.historySavedSessionId === state.sessionId) return;
+  const entry = {
+    id: state.sessionId,
+    teamId: TEAM_ID,
+    teamName: state.teamName,
+    startedAt: state.startedAt,
+    completedAt: state.completedAt,
+    mode: state.practiceMode,
+    total: totalQuestions,
+    correct,
+    wrong,
+    skipped,
+    rate,
+    durationSeconds: seconds,
+    results: state.results.map((result) => ({
+      id: result.sign.id,
+      name: result.sign.name,
+      grade: result.grade,
+      videoId: result.sign.videoId || "",
+      videos: Array.isArray(result.sign.videos) ? result.sign.videos.slice(0, 8) : []
+    }))
+  };
+  const history = getPracticeHistory().filter((item) => item.id !== entry.id);
+  history.unshift(entry);
+  if (writePracticeHistory(history)) state.historySavedSessionId = state.sessionId;
+}
+
+function historyModeLabel(entry) {
+  if (entry.mode === "review") return "間違い復習";
+  if (entry.mode === "all") return "全サイン";
+  const n = Number(entry.mode);
+  return Number.isFinite(n) ? `${n}問` : `${entry.total || 0}問`;
+}
+
+function formatHistoryDate(timestamp, { short = false } = {}) {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "日時不明";
+  return new Intl.DateTimeFormat("ja-JP", short
+    ? { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }
+    : { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }
+  ).format(date);
+}
+
+function getHistoryMistakeResults(entry) {
+  return (entry.results || []).filter((result) => result.grade === "wrong");
+}
+
+function getHistoryMistakeSigns(entry) {
+  const currentById = new Map(state.signs.map((sign) => [sign.id, sign]));
+  const seen = new Set();
+  const signs = [];
+  for (const result of getHistoryMistakeResults(entry)) {
+    if (seen.has(result.id)) continue;
+    seen.add(result.id);
+    const current = currentById.get(result.id);
+    const fallbackVideos = [result.videoId, ...(result.videos || [])].filter(Boolean);
+    signs.push({
+      ...(current || {}),
+      id: result.id,
+      name: result.name,
+      videos: current?.videos?.length ? current.videos : fallbackVideos,
+      videoId: result.videoId || current?.videos?.[0] || fallbackVideos[0] || ""
+    });
+  }
+  return signs.filter((sign) => sign.videos?.length || sign.videoId);
+}
+
+function renderPracticeHistory() {
+  cleanupPlayer();
+  const history = getPracticeHistory();
+  document.title = "練習履歴 | SIGN TRAINER";
+  app.innerHTML = `<div class="app-bg">
+    ${appTopbar('<button class="button button-ghost" id="history-back" type="button">戻る</button>')}
+    <main class="app-main">
+      <section class="app-panel history-panel">
+        <h1>練習履歴</h1>
+        <p class="panel-lead">この端末で行った練習結果を確認できます。</p>
+        ${history.length ? `<div class="history-list">
+          ${history.map((entry) => {
+            const mistakes = getHistoryMistakeResults(entry);
+            const names = [...new Set(mistakes.map((item) => item.name))];
+            return `<button class="history-card" data-history-id="${escapeHtml(entry.id)}" type="button">
+              <span class="history-card-top"><span class="history-date">${escapeHtml(formatHistoryDate(entry.completedAt))}</span><span class="history-mode">${escapeHtml(historyModeLabel(entry))}</span></span>
+              <span class="history-card-main"><strong>${entry.correct}<small> / ${entry.total}問</small></strong><span class="history-rate">正答率 ${entry.rate}%</span><span class="history-chevron">›</span></span>
+              <span class="history-card-meta">${formatDuration(entry.durationSeconds || 0)}${entry.skipped ? ` · ${entry.skipped}問スキップ` : ""}</span>
+              <span class="history-card-mistakes">${names.length ? `間違い：${escapeHtml(names.slice(0, 3).join("・"))}${names.length > 3 ? ` ほか${names.length - 3}件` : ""}` : "間違いなし"}</span>
+            </button>`;
+          }).join("")}
+        </div>` : `<div class="history-empty"><div class="history-empty-icon">${icons.clock}</div><h2>まだ練習履歴はありません</h2><p>練習を最後まで終えると、結果がここに自動で保存されます。</p></div>`}
+        <div class="result-actions"><button class="button button-primary button-full" id="history-start" type="button">練習をはじめる</button></div>
+      </section>
+    </main>
+  </div>`;
+
+  document.querySelector("#history-back").addEventListener("click", renderPracticeSetup);
+  document.querySelector("#history-start").addEventListener("click", renderPracticeSetup);
+  document.querySelectorAll("[data-history-id]").forEach((button) => {
+    button.addEventListener("click", () => renderPracticeHistoryDetail(button.dataset.historyId));
+  });
+}
+
+function renderPracticeHistoryDetail(historyId) {
+  cleanupPlayer();
+  const entry = getPracticeHistory().find((item) => item.id === historyId);
+  if (!entry) {
+    renderPracticeHistory();
+    return;
+  }
+  const mistakes = getHistoryMistakeSigns(entry);
+  document.title = `${formatHistoryDate(entry.completedAt, { short: true })}の練習 | SIGN TRAINER`;
+  app.innerHTML = `<div class="app-bg">
+    ${appTopbar('<button class="button button-ghost" id="history-detail-back" type="button">履歴へ</button>')}
+    <main class="app-main">
+      <section class="app-panel result-panel history-detail-panel">
+        <div class="result-title"><h1>${escapeHtml(historyModeLabel(entry))}の結果</h1><p>${escapeHtml(formatHistoryDate(entry.completedAt))}</p></div>
+        <div class="result-score" id="history-result-score"><div class="result-score-inner"><div class="result-score-big">${entry.correct}<small> / ${entry.total}問</small></div><span class="result-score-small">正答率 ${entry.rate}%</span></div></div>
+        <div class="result-stats">
+          <div class="result-stat"><strong>${entry.correct}</strong><span>正解</span></div>
+          <div class="result-stat"><strong>${entry.wrong}</strong><span>不正解</span></div>
+          <div class="result-stat"><strong>${formatDuration(entry.durationSeconds || 0)}</strong><span>練習時間${entry.skipped ? `<br>${entry.skipped}問スキップ` : ""}</span></div>
+        </div>
+        <div class="history-answer-list">
+          ${(entry.results || []).map((result, index) => {
+            const status = result.grade === "correct" ? "○" : result.grade === "wrong" ? "×" : "—";
+            const label = result.grade === "correct" ? "正解" : result.grade === "wrong" ? "不正解" : "スキップ";
+            return `<div class="history-answer-row is-${escapeHtml(result.grade)}"><span class="history-answer-no">${index + 1}</span><span class="history-answer-name">${escapeHtml(result.name)}</span><span class="history-answer-status"><b>${status}</b>${label}</span></div>`;
+          }).join("")}
+        </div>
+        <div class="result-actions">
+          ${mistakes.length ? `<button class="button button-primary button-full" id="history-review" type="button">間違えた${mistakes.length}問を練習する</button>` : ""}
+          <button class="button button-secondary button-full" id="history-retry" type="button">もう一度${entry.mode === "all" ? "全サイン" : entry.total + "問"}</button>
+          <button class="result-text-button" id="history-detail-back-bottom" type="button">練習履歴に戻る</button>
+        </div>
+      </section>
+    </main>
+  </div>`;
+  const score = document.querySelector("#history-result-score");
+  if (score) score.style.setProperty("--score", String(entry.rate || 0));
+  const back = () => renderPracticeHistory();
+  document.querySelector("#history-detail-back").addEventListener("click", back);
+  document.querySelector("#history-detail-back-bottom").addEventListener("click", back);
+  document.querySelector("#history-retry").addEventListener("click", () => startQuiz(entry.mode === "all" ? "all" : Math.max(1, entry.total || 10)));
+  if (mistakes.length) document.querySelector("#history-review").addEventListener("click", () => startQuiz(mistakes.length, mistakes, { review: true }));
 }
 
 function uniqueSigns(signs) {
