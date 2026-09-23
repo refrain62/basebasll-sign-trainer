@@ -25,7 +25,10 @@ export default {
 
       let assetRequest = request;
       if (url.pathname === `/t/${env.TEAM_ID}` || url.pathname === `/t/${env.TEAM_ID}/`) {
-        const assetUrl = new URL("/index.html", url.origin);
+        // Fetch the root document instead of /index.html.
+        // Cloudflare Static Assets canonicalizes /index.html to / with a 307,
+        // which would otherwise send team deep links back to the LP.
+        const assetUrl = new URL("/", url.origin);
         assetRequest = new Request(assetUrl, request);
       }
 

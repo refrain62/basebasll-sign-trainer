@@ -1,4 +1,4 @@
-const APP_BUILD = "25";
+const APP_BUILD = "30";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const PUBLIC_SITE_URL = "https://basebasll-sign-trainer.refrain62.workers.dev";
@@ -84,11 +84,50 @@ function absoluteUrl(path = "/") {
   return new URL(path, location.origin).toString();
 }
 
+
+function getResultCelebration(rate, totalQuestions) {
+  if (!totalQuestions) {
+    return { level: "none", badge: "RESULT", message: "結果を確認しましょう。", pieces: 0, waves: 0 };
+  }
+  if (rate >= 100) {
+    return { level: "max", badge: "PERFECT!", message: "全問正解！パーフェクト！", pieces: 72, waves: 2 };
+  }
+  if (rate >= 80) {
+    return { level: "high", badge: "GREAT!", message: "すごい！かなり身についています。", pieces: 46, waves: 2 };
+  }
+  if (rate >= 60) {
+    return { level: "mid", badge: "NICE!", message: "よくがんばりました！", pieces: 28, waves: 1 };
+  }
+  if (rate >= 40) {
+    return { level: "low", badge: "KEEP GOING", message: "あと少し！次の練習でもう一歩。", pieces: 12, waves: 1 };
+  }
+  return { level: "none", badge: "TRY AGAIN", message: "間違えたサインを見直して、もう一度！", pieces: 0, waves: 0 };
+}
+
+function renderConfettiPieces(count = 0) {
+  if (!count) return "";
+  const tones = ["yellow", "green", "blue", "white"];
+  return Array.from({ length: count }, (_, index) => {
+    const left = Math.round((index + 1) * (100 / (count + 1)) + (Math.random() * 8 - 4));
+    const drift = Math.round(Math.random() * 120 - 60);
+    const delay = Math.round(Math.random() * 280);
+    const duration = 1800 + Math.round(Math.random() * 1100);
+    const rotate = Math.round(Math.random() * 520 - 260);
+    const size = 8 + Math.round(Math.random() * 8);
+    const tone = tones[index % tones.length];
+    return `<span class="confetti-piece confetti-piece--${tone}" style="--x:${left}%;--drift:${drift}px;--delay:${delay}ms;--duration:${duration}ms;--rotate:${rotate}deg;--size:${size}px;"></span>`;
+  }).join("");
+}
+
 function publicShareUrl() {
   return `${PUBLIC_SITE_URL}/`;
 }
 
 function teamShareUrl() {
+  return TEAM_PUBLIC_URL;
+}
+
+function lineTeamShareUrl() {
   return LINE_TEAM_URL;
 }
 
@@ -147,11 +186,20 @@ function openShareDialog(target = "site") {
   if (copyStatus) copyStatus.textContent = "";
   if (qrStatus) qrStatus.textContent = "QRコードを準備しています…";
   if (qr) {
+    const qrCode = shareDialog.querySelector("#share-qr-code");
     qr.hidden = false;
+    if (qrCode) qrCode.hidden = false;
     qr.alt = `${data.label}のQRコード`;
-    qr.onload = () => { if (qrStatus) qrStatus.textContent = "スマホではQRコードを長押しして保存できます。"; };
-    qr.onerror = () => { qr.hidden = true; if (qrStatus) qrStatus.textContent = "QRコードを表示できませんでした。URLコピーをご利用ください。"; };
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=14&data=${encodeURIComponent(data.url)}`;
+    qr.onload = () => {
+      if (qrCode) qrCode.hidden = false;
+      if (qrStatus) qrStatus.textContent = "中央のSIGN TRAINERアイコン付きQRです。別の端末から読み取って共有できます。";
+    };
+    qr.onerror = () => {
+      qr.hidden = true;
+      if (qrCode) qrCode.hidden = true;
+      if (qrStatus) qrStatus.textContent = "QRコードを表示できませんでした。URLコピーをご利用ください。";
+    };
+    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=14&ecc=H&data=${encodeURIComponent(data.url)}`;
   }
   if (shareDialog.showModal) shareDialog.showModal();
   else shareDialog.setAttribute("open", "");
@@ -179,8 +227,10 @@ function initShareDialog() {
     }
   });
   shareDialog.querySelector("#share-line")?.addEventListener("click", () => {
-    const data = sharePayload(shareDialog.dataset.target || "site");
-    const message = `${data.text}\n${data.url}`;
+    const target = shareDialog.dataset.target || "site";
+    const data = sharePayload(target);
+    const lineUrl = target === "team" ? lineTeamShareUrl() : data.url;
+    const message = `${data.text}\n${lineUrl}`;
     window.open(`https://line.me/R/share?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   });
   shareDialog.querySelector("#share-close")?.addEventListener("click", () => shareDialog.close?.());
@@ -987,16 +1037,18 @@ function renderResults() {
   const mistakes = uniqueSigns(state.results.filter((result) => result.grade === "wrong").map((result) => result.sign));
   state.lastMistakes = mistakes;
   const title = state.reviewMode ? "復習結果" : "練習結果";
-  const message = rate === 100 && totalQuestions ? "全問正解！よくできました。" : "よくがんばりました！";
+  const celebration = getResultCelebration(rate, totalQuestions);
+  const message = celebration.message;
   saveCurrentPracticeResult({ correct, wrong, skipped, totalQuestions, rate, seconds });
   document.title = `${title} | SIGN TRAINER`;
 
   app.innerHTML = `<div class="app-bg">
     ${appTopbar('<a class="button button-ghost" href="/" data-nav>トップへ</a>')}
     <main class="app-main">
-      <section class="app-panel result-panel">
-        <div class="result-title"><h1>${title}</h1><p>${message}</p></div>
-        <div class="result-score" id="result-score"><div class="result-score-inner"><div class="result-score-big">${correct}<small> / ${totalQuestions || 0}問</small></div><span class="result-score-small">正答率 ${totalQuestions ? `${rate}%` : "—"}</span></div></div>
+      <section class="app-panel result-panel result-panel--${celebration.level}">
+        <div class="result-celebration result-celebration--${celebration.level}" aria-hidden="true">${renderConfettiPieces(celebration.pieces)}</div>
+        <div class="result-title"><span class="result-badge">${celebration.badge}</span><h1>${title}</h1><p>${message}</p></div>
+        <div class="result-score result-score--${celebration.level}" id="result-score"><div class="result-score-inner"><div class="result-score-big">${correct}<small> / ${totalQuestions || 0}問</small></div><span class="result-score-small">正答率 ${totalQuestions ? `${rate}%` : "—"}</span></div></div>
         <div class="result-stats">
           <div class="result-stat"><strong>${correct}</strong><span>正解</span></div>
           <div class="result-stat"><strong>${wrong}</strong><span>不正解</span></div>
