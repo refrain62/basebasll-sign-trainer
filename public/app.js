@@ -1,4 +1,4 @@
-const APP_BUILD = "46";
+const APP_BUILD = "47";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const PUBLIC_SITE_URL = "https://basebasll-sign-trainer.refrain62.workers.dev";
@@ -517,6 +517,25 @@ function renderLanding() {
           </div>
         </section>
 
+        <section class="lp-section privacy-section" aria-labelledby="privacy-title">
+          <div class="container">
+            <div class="privacy-card">
+              <div class="privacy-icon" aria-hidden="true">${icons.lock}</div>
+              <div class="privacy-copy">
+                <span class="privacy-kicker">安心して練習できるように</span>
+                <h2 id="privacy-title">回答や練習履歴は、今使っている端末に保存します</h2>
+                <p>○×の回答、正答率、練習時間、間違えたサインなどの練習結果は、SIGN TRAINERのサーバーには保存せず、操作している端末のブラウザ内に保存します。チームの他の人や運営側へ、あなたの練習結果が自動で共有されることはありません。</p>
+                <div class="privacy-points" aria-label="練習データの保存について">
+                  <span>${icons.phone}<strong>この端末に保存</strong></span>
+                  <span>${icons.lock}<strong>練習結果をサーバー保存しない</strong></span>
+                  <span>${icons.clock}<strong>別端末には自動同期しない</strong></span>
+                </div>
+                <p class="privacy-note">※ ブラウザのデータを削除した場合や端末を変更した場合は、保存した履歴が消えることがあります。合言葉認証やYouTube動画の読み込みには通信を使用します。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="for-team" class="lp-section audience-section">
           <div class="container">
             <div class="section-heading compact-heading">
@@ -602,28 +621,28 @@ function renderLanding() {
                     <span class="install-step-badge">1</span>
                     <div><h4>SafariでSIGN TRAINERを開く</h4><p>Safariでサイトを開きます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=46" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=47" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">2</span>
                     <div><h4>共有ボタンをタップ</h4><p>画面下の共有ボタン（四角から上向き矢印）をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=46" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=47" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">3</span>
                     <div><h4>「ホーム画面に追加」を選ぶ</h4><p>共有メニューを下へ見て、「ホーム画面に追加」をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=46" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=47" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">4</span>
                     <div><h4>右上の「追加」で完了</h4><p>確認画面の右上にある「追加」をタップするとホーム画面に追加されます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=46" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=47" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
                 </article>
               </div>
               <p class="install-note">一度追加すれば、次回からホーム画面のSIGN TRAINERアイコンですぐ開けます。</p>
@@ -643,28 +662,28 @@ function renderLanding() {
                     <span class="install-step-badge">1</span>
                     <div><h4>ChromeでSIGN TRAINERを開く</h4><p>AndroidのChromeでサイトを開きます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=46" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=47" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">2</span>
                     <div><h4>「インストール」が出たらタップ</h4><p>インストール案内が表示された場合は、そのまま「インストール」をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=46" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=47" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">3</span>
                     <div><h4>出ない場合は右上の︙を開く</h4><p>「インストール」が見つからない場合は、右上の︙から「ホーム画面に追加」を選びます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=46" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=47" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">4</span>
                     <div><h4>追加・インストールで完了</h4><p>確認画面で「追加」または「インストール」を押すと完了です。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=46" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=47" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
                 </article>
               </div>
               <p class="install-note">インストールボタンが見つからない場合でも、右上の︙メニューから追加できます。</p>
@@ -693,6 +712,7 @@ function renderLanding() {
               <details><summary>スマホ以外でも使えますか？</summary><p>はい。スマートフォンを中心に設計していますが、タブレットやPCのブラウザでも利用できます。</p></details>
               <details><summary>チームではどのように利用しますか？</summary><p>チーム登録後に、そのチーム専用の練習ページとURLを発行します。監督・コーチがLINEなどでURLやQRコードをメンバーへ共有し、メンバーはチームの合言葉を入力して練習します。</p></details>
               <details><summary>練習結果はあとから見られますか？</summary><p>はい。この端末に練習履歴を最大50件保存し、正答率・練習時間・各問題の○×・間違えたサインを見返せます。履歴から間違えた問題だけ再練習することもできます。</p></details>
+              <details><summary>回答や練習履歴はどこに保存されますか？</summary><p>○×の回答、正答率、練習時間、間違えたサインなどの練習結果は、今使っている端末のブラウザ内に保存します。SIGN TRAINERのサーバーには練習結果を保存せず、別端末にも自動では同期しません。ブラウザデータを削除すると履歴が消える場合があります。</p></details>
               <details><summary>間違えたサインだけ復習できますか？</summary><p>できます。結果画面や履歴詳細から、間違えたサインの動画をもう一度確認し、その問題だけで再練習できます。</p></details>
               <details><summary>料金はかかりますか？</summary><p>料金体系はサービス提供時に案内します。現在のトップページではサンプルチームを体験できます。</p></details>
             </div>
