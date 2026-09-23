@@ -1,4 +1,4 @@
-const APP_BUILD = "30";
+const APP_BUILD = "33";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const PUBLIC_SITE_URL = "https://basebasll-sign-trainer.refrain62.workers.dev";
@@ -104,19 +104,83 @@ function getResultCelebration(rate, totalQuestions) {
   return { level: "none", badge: "TRY AGAIN", message: "間違えたサインを見直して、もう一度！", pieces: 0, waves: 0 };
 }
 
-function renderConfettiPieces(count = 0) {
-  if (!count) return "";
-  const tones = ["yellow", "green", "blue", "white"];
-  return Array.from({ length: count }, (_, index) => {
-    const left = Math.round((index + 1) * (100 / (count + 1)) + (Math.random() * 8 - 4));
-    const drift = Math.round(Math.random() * 120 - 60);
-    const delay = Math.round(Math.random() * 280);
-    const duration = 1800 + Math.round(Math.random() * 1100);
-    const rotate = Math.round(Math.random() * 520 - 260);
-    const size = 8 + Math.round(Math.random() * 8);
-    const tone = tones[index % tones.length];
-    return `<span class="confetti-piece confetti-piece--${tone}" style="--x:${left}%;--drift:${drift}px;--delay:${delay}ms;--duration:${duration}ms;--rotate:${rotate}deg;--size:${size}px;"></span>`;
-  }).join("");
+function renderCelebrationBursts(level = "none") {
+  const burstCount = level === "max" ? 3 : level === "high" ? 2 : level === "mid" ? 2 : level === "low" ? 1 : 0;
+  if (!burstCount) return "";
+  const positions = ["left", "right", "center"];
+  return `<div class="celebration-bursts">${Array.from({ length: burstCount }, (_, index) => {
+    const pos = positions[index] || "right";
+    return `<span class="celebration-burst celebration-burst--${pos}" aria-hidden="true">🎉</span>`;
+  }).join("")}</div>`;
+}
+
+function runResultCelebration(celebration) {
+  if (!celebration?.pieces) return;
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+  const canvas = document.querySelector("#result-confetti-canvas");
+  if (!(canvas instanceof HTMLCanvasElement)) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.max(1, Math.round(rect.width * dpr));
+  canvas.height = Math.max(1, Math.round(rect.height * dpr));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const width = rect.width;
+  const height = rect.height;
+  const colors = ["#ffdc3d", "#16a865", "#173d73", "#ff7a59", "#ffffff"];
+  const gravity = celebration.level === "max" ? 0.07 : 0.08;
+  const duration = celebration.level === "max" ? 3300 : celebration.level === "high" ? 2900 : celebration.level === "mid" ? 2500 : 2100;
+  const start = performance.now();
+  const particles = Array.from({ length: celebration.pieces }, (_, index) => ({
+    x: Math.random() * width,
+    y: -30 - Math.random() * 110,
+    vx: (Math.random() - 0.5) * (celebration.level === "max" ? 3.4 : 2.6),
+    vy: 1.5 + Math.random() * 2.7,
+    w: 7 + Math.random() * 8,
+    h: 10 + Math.random() * 13,
+    angle: Math.random() * Math.PI,
+    spin: (Math.random() - 0.5) * 0.22,
+    delay: Math.random() * (celebration.level === "max" ? 420 : 260),
+    color: colors[index % colors.length]
+  }));
+
+  function draw(now) {
+    const elapsed = now - start;
+    ctx.clearRect(0, 0, width, height);
+
+    for (const p of particles) {
+      if (elapsed < p.delay) continue;
+      p.vy += gravity;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.angle += p.spin;
+
+      if (p.x < -30) p.x = width + 20;
+      if (p.x > width + 30) p.x = -20;
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.min(1, Math.max(0, (duration - elapsed) / 650));
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+
+    if (elapsed < duration) {
+      requestAnimationFrame(draw);
+    } else {
+      ctx.clearRect(0, 0, width, height);
+    }
+  }
+
+  requestAnimationFrame(draw);
 }
 
 function publicShareUrl() {
@@ -292,6 +356,7 @@ function renderLanding() {
             <a href="#howto">使い方</a>
             <a href="#for-team">こんな方に</a>
             <a href="#share">共有方法</a>
+            <a href="#install">インストール</a>
             <a href="#faq">よくある質問</a>
             <a class="button button-primary button-small header-cta" href="${LINE_TEAM_PATH}" data-nav>サンプルを試す</a>
           </nav>
@@ -302,6 +367,7 @@ function renderLanding() {
           <a href="#capabilities">できること</a>
           <a href="#howto">使い方</a>
           <a href="#for-team">こんな方に</a>
+          <a href="#install">インストール</a>
           <a href="#faq">よくある質問</a>
           <a class="button button-primary" href="${LINE_TEAM_PATH}" data-nav>サンプルチームで試す</a>
         </nav>
@@ -432,6 +498,44 @@ function renderLanding() {
           </div>
         </section>
 
+
+        <section id="install" class="lp-section install-section">
+          <div class="container">
+            <div class="section-heading compact-heading install-heading">
+              <h2 class="underline-heading">アプリとしてインストールする方法</h2>
+              <p>SIGN TRAINERはブラウザだけでなく、ホーム画面へ追加してアプリのように開けます。iPhoneとAndroidそれぞれの流れを、画面全体が分かる画像付きで案内します。</p>
+            </div>
+            <div class="install-platform-grid">
+              <article class="install-card">
+                <div class="install-card-head">
+                  <div>
+                    <span class="install-chip">iPhone</span>
+                    <h3>Safariからホーム画面に追加</h3>
+                  </div>
+                  <a class="install-jump" href="#faq">困ったときはFAQへ</a>
+                </div>
+                <p class="install-copy">Safariでサイトを開き、共有ボタン → 「ホーム画面に追加」 → 右上の「追加」の順に進めます。</p>
+                <figure class="install-figure">
+                  <img src="/assets/install-iphone.png?v=33" alt="iPhoneでSIGN TRAINERをホーム画面に追加する4ステップの画像ガイド" loading="lazy" decoding="async">
+                </figure>
+              </article>
+              <article class="install-card">
+                <div class="install-card-head">
+                  <div>
+                    <span class="install-chip install-chip-android">Android</span>
+                    <h3>Chromeからホーム画面に追加</h3>
+                  </div>
+                  <span class="install-jump is-static">インストールボタンが出ないときも案内</span>
+                </div>
+                <p class="install-copy">Chromeでサイトを開き、インストールボタンが出ればそのまま追加。出ないときは右上メニューから「ホーム画面に追加」を選びます。</p>
+                <figure class="install-figure">
+                  <img src="/assets/install-android.png?v=33" alt="AndroidでSIGN TRAINERをホーム画面に追加する4ステップの画像ガイド" loading="lazy" decoding="async">
+                </figure>
+              </article>
+            </div>
+          </div>
+        </section>
+
         <section class="reference-cta-band">
           <div class="container reference-cta-grid">
             <div class="cta-hand-note">⌁ 今日からはじめよう！</div>
@@ -464,7 +568,7 @@ function renderLanding() {
         <div class="container footer-inner">
           ${brand({ footer: true })}
           <nav class="footer-nav" aria-label="フッターナビゲーション">
-            <a href="/" data-nav>トップ</a><a href="#features">特徴</a><a href="#capabilities">できること</a><a href="#howto">使い方</a><a href="#for-team">こんな方に</a><a href="#share">共有方法</a><a href="#faq">よくある質問</a>
+            <a href="/" data-nav>トップ</a><a href="#features">特徴</a><a href="#capabilities">できること</a><a href="#howto">使い方</a><a href="#for-team">こんな方に</a><a href="#share">共有方法</a><a href="#install">インストール</a><a href="#faq">よくある質問</a>
           </nav>
           <div class="footer-tagline">野球を、もっとシンプルに。<br>もっと楽しく。</div>
           <div class="footer-meta">© 2026 SIGN TRAINER. All rights reserved.</div>
@@ -1046,7 +1150,7 @@ function renderResults() {
     ${appTopbar('<a class="button button-ghost" href="/" data-nav>トップへ</a>')}
     <main class="app-main">
       <section class="app-panel result-panel result-panel--${celebration.level}">
-        <div class="result-celebration result-celebration--${celebration.level}" aria-hidden="true">${renderConfettiPieces(celebration.pieces)}</div>
+        <div class="result-celebration result-celebration--${celebration.level}" aria-hidden="true"><canvas class="result-confetti-canvas" id="result-confetti-canvas"></canvas>${renderCelebrationBursts(celebration.level)}</div>
         <div class="result-title"><span class="result-badge">${celebration.badge}</span><h1>${title}</h1><p>${message}</p></div>
         <div class="result-score result-score--${celebration.level}" id="result-score"><div class="result-score-inner"><div class="result-score-big">${correct}<small> / ${totalQuestions || 0}問</small></div><span class="result-score-small">正答率 ${totalQuestions ? `${rate}%` : "—"}</span></div></div>
         <div class="result-stats">
@@ -1066,6 +1170,7 @@ function renderResults() {
 
   const score = document.querySelector("#result-score");
   if (score) score.style.setProperty("--score", String(rate));
+  runResultCelebration(celebration);
   if (mistakes.length) document.querySelector("#review-mistakes").addEventListener("click", () => renderMistakeReview(mistakes));
   document.querySelector("#retry-10").addEventListener("click", () => startQuiz(10));
   document.querySelector("#back-setup").addEventListener("click", renderPracticeSetup);
