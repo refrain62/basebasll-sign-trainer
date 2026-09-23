@@ -1,441 +1,357 @@
-## Build 47: 練習データの端末内保存をLPで明示
-
-- LPに「回答や練習履歴は、今使っている端末に保存します」という安心案内を追加。
-- ○×、正答率、練習時間、間違えたサインなどの練習結果はブラウザの localStorage に保存し、SIGN TRAINERのサーバーには保存しない現行仕様を説明。
-- 別端末への自動同期はなく、ブラウザデータ削除や端末変更で履歴が消える場合があることも明記。
-- FAQにも保存場所の質問を追加。
-
-## Build 46: スマホ操作のタップ領域を全面改善
-
-- テキストリンク風だった「戻る」「問題数を選び直す」「認証解除」などをボタンUIへ統一
-- スマホでは主要アクションを原則52px以上のタップ領域に拡大
-- クイズ中の「終了／戻る」「この問題を飛ばす」「判定を戻す」も押しやすいボタン化
-- LPのモバイルメニューとフッターリンクも44px以上のタップ領域を確保
-- タッチ端末で `touch-action: manipulation` とタップハイライトを適用
-
-## Build 45: 結果演出とサンプル合言葉案内
-
-- クラッカーを画面上部から下部へ移動。iPhone/Androidのsafe-areaを考慮。
-- 紙吹雪は従来どおり画面上部から散る演出を維持。
-- サンプルチームのログイン画面だけ、合言葉「ホームラン」を案内。
-- 共有URL/QRには合言葉を含めない。
-
-## Build 44: iPhone紙吹雪の表示修正
-
-- iPhone/Safari/PWAで `prefers-reduced-motion: reduce` の場合に紙吹雪Canvas自体を非表示にしていた問題を修正。
-- Reduce Motion時はアニメーションせず、静止した紙吹雪を約2.2秒表示。
-- 通常時はiOS向けに3フレーム待ってからCanvasサイズ確定・描画開始。
-- クラッカー、成績別演出、履歴から開いた結果では演出しない既存仕様を維持。
-
-## Build 44: インストール手順の説明文と画像を分離
-
-- iPhone / Android とも手順説明をHTMLテキストに分離
-- 画像は操作画面だけを表示
-- PC/タブレットは最大2列、スマホは1列
-- 手順1の崩れを防ぐためカードをflex/gridで固定
-
-
-- iPhone / Android のインストール画像を同じ4ステップ・同じレイアウトで再制作
-- SIGN TRAINERの実アイコン、ネイビー / グリーン、既存ヒーロー写真を使用
-- Android画像から不要なURL表記を削除
-- iPhone / Androidともに端末全体が分かる構図で、操作位置を強調
-
 # SIGN TRAINER
 
-野球チーム向けのサイン練習Webアプリのです。
+野球チーム固有のサインを動画で反復練習する Web / PWA です。**build 55** では、Cloudflare D1 を **local / dev / staging / production** で分離する構成へ変更しています。
 
-- サンプルチームID: `6BnWv2K3zo`
-- LINEでチーム専用URLを配布
-- 初回のみ合言葉認証
-- 認証後にのみサイン名・YouTube動画IDを取得
-- 5問 / 10問 / 全サイン
-- シャッフル出題
-- YouTube限定公開動画
-- ○ / × 自己採点
-- 間違えたサインだけ復習
-- Cloudflare Workers + Static Assets
+本番URL: `https://basebasll-sign-trainer.refrain62.workers.dev/`
 
+## 環境構成
 
-## Build 34: iPhone / Android の結果演出とAndroidインストール画像
+SIGN TRAINER 全体で複数チームを1つのD1に保存しますが、D1自体は環境ごとに完全分離します。
 
-- 結果演出をResultカード内ではなく、画面全体を覆う最前面の固定レイヤーへ変更
-- iPhone Safariでレイアウト確定前にCanvasが0pxになるケースを避けるため、2フレーム待ってから描画開始
-- Androidでも紙吹雪とクラッカーが結果UIより手前に表示されるようz-indexを最上位化
-- 100%時は紙吹雪＋クラッカー3個、成績に応じて量を段階調整
-- `prefers-reduced-motion` 時は移動する紙吹雪を止め、静止クラッカーのみ表示
-- 履歴から過去結果を開いた場合は従来どおり演出なし
-- LPのAndroidインストール画像はマスキング処理版ではなく、新規に作り直した画像へ差し替え
+| 環境 | Worker | D1 | 用途 |
+|---|---|---|---|
+| local | `wrangler dev --env dev` | WranglerローカルD1 | PCでの開発 |
+| dev | `basebasll-sign-trainer-dev` | `sign-trainer-dev` | 開発共有 |
+| staging | `basebasll-sign-trainer-staging` | `sign-trainer-staging` | 本番前確認 |
+| production | `basebasll-sign-trainer` | `sign-trainer-production` | 本番 |
 
-## Build 29: チーム専用URLの307リダイレクト修正
+アプリコードは全環境で `env.DB` だけを参照します。接続先D1は `wrangler.jsonc` が切り替えます。
 
-`/t/6BnWv2K3zo` を開いた際に Cloudflare Static Assets が `/index.html` を `/` へ正規化して 307 リダイレクトしていたため、Worker ではチーム専用URLに対してルートドキュメント `/` を内部取得し、そのレスポンスを `/t/:teamId` のまま返すように変更しました。これにより未認証時は合言葉入力画面、認証済み時は練習開始画面へ直接入ります。
+## 重要: 本番を誤操作しないための方針
 
+- 通常のローカル起動は `npm run dev` を使用します。これは `--env dev` かつローカルD1で起動します。
+- dev / staging / production へのmigrationはそれぞれ別コマンドです。
+- deployも `deploy:dev` / `deploy:staging` / `deploy:prod` に分けています。
+- genericな `npm run deploy` は用意していません。
+- 練習結果・回答内容はD1へ保存せず、利用端末の `localStorage` のみに保存します。
 
-## サービス上の利用導線
-
-トップページのCTAは **「サンプルチームで試す」** とし、固定チームID `6BnWv2K3zo` の体験ページへ移動します。
-
-正式利用時は次の流れを想定します。
-
-```text
-チーム登録
-  ↓
-チーム専用ページ / URLを発行
-  ↓
-監督・コーチがLINEなどでURLを共有
-  ↓
-メンバーがチームの合言葉を入力
-  ↓
-サイン練習
-```
-
-サンプルチームは、この正式導線の操作感を登録なしで確認するためのものです。
-
-## Build 27 の表示調整
-
-- タブレット幅では、CTAの「今日からはじめよう！」をボタン上、「覚えた分だけチームは強くなる。」をボタン下に配置
-- 共有QRの中央にSIGN TRAINERアイコンを表示
-- QRコードは誤り訂正レベルHで生成し、中央アイコンによる読み取り耐性を確保
-
-## Build 26 の表示調整
-
-- LPヘッダーのブランドアイコンをヘッダー内に確実に収めるようサイズと高さを固定
-- Result画面は正答率に応じて紙吹雪を5段階で変更
-  - 100%: 最大演出
-  - 80〜99%: 多め
-  - 60〜79%: 標準
-  - 40〜59%: 控えめ
-  - 0〜39%: 紙吹雪なし、復習を促す表示
-
-## 1. 必要なもの
-
-- Node.js
-- npm
-- Cloudflareアカウント（本番デプロイ時のみ）
-
-## 2. ローカル起動
+## 1. 依存関係
 
 ```bash
 npm install
+```
+
+## 2. ローカル開発
+
+`.dev.vars` をプロジェクト直下に作成します。
+
+```env
+SESSION_SECRET=local-development-secret-change-me
+SYSTEM_ADMIN_SECRET=local-system-admin
+```
+
+ローカルD1へmigrationを適用します。
+
+```bash
+npm run db:migrate:local
+```
+
+起動します。
+
+```bash
 npm run dev
 ```
 
-ブラウザで Wrangler が表示するローカルURL（通常は `http://localhost:8787`）を開きます。
-
-ローカル確認用のローカル合言葉は `.dev.vars` に入っています。
+通常は以下で確認できます。
 
 ```text
-ホームラン
+LP                    http://localhost:8787/
+サンプルチーム        http://localhost:8787/t/6BnWv2K3zo
+システム管理          http://localhost:8787/admin
+チーム管理            http://localhost:8787/t/6BnWv2K3zo/admin
 ```
 
-> `.dev.vars` は `.gitignore` 済みです。本番用の合言葉をここへコミットしないでください。
+ローカルではCloudflare上の `sign-trainer-dev` を直接変更しません。`wrangler dev` のローカルD1を使います。
 
-## 3. ローカルで開くURL
+## 3. Cloudflare D1を3つ作成
 
-公開LP:
-
-```text
-http://localhost:8787/
-```
-
-サンプルチームURL:
-
-```text
-http://localhost:8787/t/6BnWv2K3zo
-```
-
-正式利用では、チーム登録後にチームごとの専用URLを発行し、LINEなどで共有する想定です。サンプルURLをLINEで確認する場合は末尾に `?openExternalBrowser=1` を付ける運用を想定しています。
-
-## 4. 登録済みサイン動画
-
-`src/signs.js` の `DEFAULT_SIGNS` に、チーム用のYouTube Shorts動画を10種類登録済みです。
-
-| No. | サイン | YouTube動画ID |
-|---:|---|---|
-| 01 | 盗塁 | `TNUjEP60Gh0` |
-| 02 | バント | `_2ujH2nEtOc` |
-| 03 | 待て | `fT0yEpxO9PQ` |
-| 04 | ヒットエンドラン | `HNRRYqcpWEk` |
-| 05 | バスター | `A2FEzscDhJY` |
-| 06 | セーフティバント | `nqnyCmyfZ7k` |
-| 07 | スクイズ | `8cYBvzQKelc` |
-| 08 | ランエンドヒット | `JYT0yxyvHJU` |
-| 09 | サイン解除／自由に打て | `SLGZzjdatb0` |
-| 10 | 送りバント | `76OBENrzcXc` |
-
-YouTube Shortsも、アプリ側では通常のYouTube動画と同じく動画IDで再生します。
-
-同じサインに複数動画を登録したい場合は、`videos` 配列へ動画IDを追加できます。
-
-```js
-{
-  id: "steal",
-  name: "盗塁",
-  videos: ["VIDEO_ID_A", "VIDEO_ID_B", "VIDEO_ID_C"]
-}
-```
-
-### 環境変数でサインを上書きする方法
-
-`SIGNS_JSON` を設定すると `src/signs.js` より優先されます。
-
-`.dev.vars.example` に例があります。
-
-## 5. 合言葉
-
-ローカルでは `.dev.vars`:
-
-```dotenv
-TEAM_PASSPHRASE=ホームラン
-SESSION_SECRET=sign-trainer-local-dev-secret-change-me-2026
-```
-
-本番ではソースコードに入れず、Cloudflare Secretsとして設定します。
-
-```bash
-npx wrangler secret put TEAM_PASSPHRASE
-npx wrangler secret put SESSION_SECRET
-```
-
-`SESSION_SECRET` は十分に長いランダム文字列を設定してください。
-
-## 6. Cloudflareへデプロイ
-
-最初にCloudflareへログイン:
+Cloudflareへログインします。
 
 ```bash
 npx wrangler login
 ```
 
-Secretsを設定:
+D1を作ります。
 
 ```bash
-npx wrangler secret put TEAM_PASSPHRASE
+npx wrangler d1 create sign-trainer-dev
+npx wrangler d1 create sign-trainer-staging
+npx wrangler d1 create sign-trainer-production
+```
+
+それぞれ表示された `database_id` を `wrangler.jsonc` の次のプレースホルダーへ設定します。
+
+```text
+3b47491c-8e2a-412a-b2a7-1a06922b3604
+2ca39d6b-e06f-44b4-862b-b0c2932d9310
+bdd534e9-1c42-4db7-adbe-c62e35e123b5
+```
+
+### `wrangler.jsonc` の対応
+
+```text
+env.dev.d1_databases       -> sign-trainer-dev
+env.staging.d1_databases   -> sign-trainer-staging
+top-level d1_databases     -> sign-trainer-production
+```
+
+productionをトップレベルにしているのは、既存の本番Worker名 `basebasll-sign-trainer` と本番URLを変更しないためです。
+
+## 4. migration
+
+### local
+
+```bash
+npm run db:migrate:local
+```
+
+### dev
+
+```bash
+npm run db:migrate:dev
+```
+
+### staging
+
+```bash
+npm run db:migrate:staging
+```
+
+### production
+
+```bash
+npm run db:migrate:prod
+```
+
+migrationは全環境共通です。
+
+- `migrations/0001_initial.sql` — `teams`, `signs`, `sign_videos`
+- `migrations/0002_seed_sample.sql` — サンプルチームと10サイン
+
+サンプルチーム:
+
+```text
+Team ID: 6BnWv2K3zo
+選手用合言葉: ホームラン
+```
+
+## 5. Secretも環境ごとに設定
+
+Secretは環境間で共有しません。各Workerへ個別に設定します。
+
+### dev
+
+```bash
+npx wrangler secret put SESSION_SECRET --env dev
+npx wrangler secret put SYSTEM_ADMIN_SECRET --env dev
+```
+
+### staging
+
+```bash
+npx wrangler secret put SESSION_SECRET --env staging
+npx wrangler secret put SYSTEM_ADMIN_SECRET --env staging
+```
+
+### production
+
+```bash
 npx wrangler secret put SESSION_SECRET
+npx wrangler secret put SYSTEM_ADMIN_SECRET
 ```
 
-デプロイ:
+`SESSION_SECRET` は十分長いランダム値を使用してください。
 
-```bash
-npm run deploy
-```
-
-Wranglerが発行する `*.workers.dev` URLで動作確認できます。独自ドメインを使う場合はCloudflare DashboardでWorkerへCustom Domainを割り当ててください。
-
-## 7. LINEで配るURL
-
-本番URLが:
-
-```text
-https://basebasll-sign-trainer.refrain62.workers.dev
-```
-
-の場合:
-
-```text
-https://basebasll-sign-trainer.refrain62.workers.dev/t/6BnWv2K3zo?openExternalBrowser=1
-```
-
-配布文例:
-
-```text
-⚾ サイン練習はこちら
-https://basebasll-sign-trainer.refrain62.workers.dev/t/6BnWv2K3zo?openExternalBrowser=1
-
-初回のみ合言葉が必要です。
-```
-
-合言葉はURLには含めません。
-
-## 8. 認証の考え方
-
-1. チーム専用URLへアクセス
-2. `/api/session` で認証状態確認
-3. 未認証なら合言葉画面
-4. `/api/auth` でWorker側が合言葉を検証
-5. 成功すると署名済みHttpOnly Cookieを発行
-6. `/api/signs` はCookieが有効な場合だけサインデータを返す
-
-認証前のHTML/JavaScriptには、実運用のサイン名・YouTube動画IDは含まれません。
-
-認証Cookieは標準で約30日です。`wrangler.jsonc` の `SESSION_DAYS` で変更できます。
-
-## 9. YouTube限定公開について
-
-このバージョンの合言葉はSIGN TRAINERへのアクセスを制限するものであり、YouTube限定公開動画そのものを完全に非公開にする仕組みではありません。
-
-一度YouTube動画URLが別途共有された場合は、SIGN TRAINERを経由せず視聴される可能性があります。
-
-## 10. 主なファイル
-
-```text
-sign-trainer/
-├─ public/
-│  ├─ app.js            # LP・認証・クイズUI
-│  ├─ styles.css        # モバイル優先デザイン
-│  ├─ index.html
-│  ├─ favicon.svg
-│  └─ og.png
-├─ src/
-│  ├─ index.js          # Worker/API/認証
-│  └─ signs.js          # サーバー側サイン設定
-├─ .dev.vars            # ローカル専用秘密情報
-├─ .dev.vars.example
-├─ wrangler.jsonc
-└─ package.json
-```
-
-## 11. 現バージョンで意図的に入れていないもの
-
-- マルチチーム管理
-- 管理画面
-- 選手アカウント
-- 個人成績保存
-- ランキング
-- LINEログイン
-- PWAインストール誘導
-- プッシュ通知
-
-まず「LINE → 合言葉 → 動画を見る → 答える → 復習」が説明なしで使えるかを検証するためです。
-
-## 12. デザイン
-
-`docs/design.md` にLP・合言葉・練習設定・問題・動画エラー・正解・採点遷移・結果・間違い復習まで、実装のデザイン基準をまとめています。今回の実装は、会話内で作成した縦長LP案とスマートフォン画面案を基準に全面的に再構成しています。
-
-## 2026-09-22 UI / 合言葉入力修正
-
-- 合言葉入力を `type="password"` から日本語IME対応の `type="text"` に変更しました。
-- `inputmode="text"` / `lang="ja"` を指定し、ひらがな・カタカナ・漢字の合言葉を入力できます。
-- IME変換中のEnterで誤送信しないよう composition イベントを考慮しています。
-- サーバー側では合言葉をUnicode NFC正規化して比較します。
-- PC表示の合言葉画面はLPと同じコーチ写真を使った2カラム構成、スマホではデザイン案どおり1カラムのアプリ画面に切り替わります。
-- アプリ内CTAはLPのカプセル型ではなく、操作画面のデザイン案に合わせた角丸ボタンに調整しています。
-
-
-## v0.4 LP redesign
-
-トップページLPを参照デザインに合わせてHTML/CSSで全面再構築。Hero、4特徴、サイン練習の意義、3ステップ、対象ユーザー、声、CTA、FAQ、フッターまで再現。画像は `public/assets/hero-wide.webp` と `public/assets/why-baseball.png` を追加。
-
-
-## v0.7 修正
-- LP「なぜサインの練習が大切？」セクションの画像を背景画像ではなく `<img>` 描画に変更し、見切れないように修正しました。
-
-
-## YouTube Shorts の再生について
-
-YouTube Shorts も通常動画と同じ動画IDを使い、`https://www.youtube.com/embed/{VIDEO_ID}` 形式で再生します。
-IFrame Player API の `onReady` 待ちには依存しないため、APIイベントが返らずローディング表示が残り続ける問題を避けています。
-動画iframeが12秒以内に読み込まれない場合は、再試行または問題スキップを選べるエラー表示へ切り替わります。
-
-
-
-## v0.9 練習履歴
-
-練習を最後まで完了すると、結果をブラウザの `localStorage` に自動保存します。
-
-- 日時
-- 練習モード（5問 / 10問 / 全サイン / 間違い復習）
-- 正解数 / 不正解数 / スキップ数
-- 正答率
-- 練習時間
-- 各問題の○×
-- 間違えたサイン
-- 出題時の動画ID
-
-練習開始画面の「練習履歴を見る」から一覧を表示し、詳細画面から間違えた問題だけを再練習できます。履歴はチームIDごとに最大50件まで、この端末内だけに保存されます。サーバーや他端末には同期しません。
-
-## v0.8 UI/UX review
-
-- 最新の透過アイコンを全ブランド表示、favicon、Apple Touch Icon、Web App Icon、OG画像へ統一
-- 間違えた問題一覧の各カードから、その問題の動画を直接確認できるよう改善
-- LP、FAQ、結果、復習、操作ボタンの文字サイズを引き上げ、視認性を改善
-- 架空の利用者レビューをやめ、実際の利用シーンを説明するセクションへ変更
-- スキップがある場合でも結果の分母は出題数を維持
-
-
-## Cloudflare 本番認証の必須設定
-
-本番では `.dev.vars` は使われません。Cloudflare Worker に次の2つの Secret が必要です。
-
-```bash
-npx wrangler login
-npx wrangler secret put TEAM_PASSPHRASE
-npx wrangler secret put SESSION_SECRET
-```
-
-`TEAM_PASSPHRASE` にはチームの合言葉（例: `ホームラン`）を入力します。
-`SESSION_SECRET` は十分に長いランダム文字列にしてください。Node.js が使える環境では次で生成できます。
+例:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
 
-このプロジェクトの `wrangler.jsonc` は、現在利用中の Worker `basebasll-sign-trainer` を対象にしています。また `TEAM_PASSPHRASE` と `SESSION_SECRET` を必須 Secret として宣言しているため、今後は Secret が未設定のまま `npm run deploy` するとデプロイ時点で検出できます。
+## 6. デプロイ
 
-設定確認:
-
-```bash
-npx wrangler secret list
-```
-
-両方が表示されたら:
+事前チェック:
 
 ```bash
-npm run deploy
+npm run check
 ```
 
-### `/api/auth` が 503 / 認証設定エラーになる場合
+### dev
 
-Cloudflare 上の Worker に `TEAM_PASSPHRASE` または `SESSION_SECRET` が設定されていません。入力した合言葉の間違いではありません。上記の `wrangler secret put` を実行してください。
-
-
-## Wrangler 4.136+ の secrets 設定
-
-`wrangler.jsonc` の `secrets` は配列ではなく、次の形式です。
-
-```json
-"secrets": {
-  "required": ["TEAM_PASSPHRASE", "SESSION_SECRET"]
-}
+```bash
+npm run deploy:dev
 ```
 
-本番値は `wrangler.jsonc` に書かず、`wrangler secret put` で登録してください。
+想定Worker: `basebasll-sign-trainer-dev`
+
+### staging
+
+```bash
+npm run deploy:staging
+```
+
+想定Worker: `basebasll-sign-trainer-staging`
+
+### production
+
+```bash
+npm run deploy:prod
+```
+
+本番Worker: `basebasll-sign-trainer`
+
+## 7. migration状態確認
+
+```bash
+npm run db:list:local
+npm run db:list:dev
+npm run db:list:staging
+npm run db:list:prod
+```
+
+## データ構造
+
+### `teams`
+
+- `id`
+- `name`
+- `passphrase_hash`
+- `admin_password_hash`
+- `status`
+- timestamps
+
+### `signs`
+
+- `id`
+- `team_id`
+- `name`
+- `sort_order`
+- `enabled`
+- timestamps
+
+### `sign_videos`
+
+- `id`
+- `sign_id`
+- `youtube_url`
+- `youtube_video_id`
+- `sort_order`
+- `enabled`
+- timestamp
+
+## 認証
+
+認証は3種類に分離しています。
+
+1. 選手用合言葉 — `/t/{teamId}`
+2. チーム管理者パスワード — `/t/{teamId}/admin`
+3. `SYSTEM_ADMIN_SECRET` — `/admin`
+
+選手用合言葉とチーム管理者パスワードは平文でD1へ保存せず、PBKDF2-SHA256で保存します。
+
+## HTML / JavaScript
+
+- `public/index.html` — LP
+- `public/landing.js` — LP操作
+- `public/team.html` — 選手画面
+- `public/team.js` — 練習・動画・履歴・結果演出
+- `public/admin.html` — 管理画面
+- `public/admin-entry.js` — 管理画面ルート判定
+- `public/admin.js` — システム管理 / チーム管理
+- `public/styles.css` — 共通CSS
+- `src/index.js` — Worker / API / HTMLルーティング
+
+## 選手の練習履歴
+
+選手の以下のデータはD1へ保存しません。
+
+- ○×回答
+- 正答率
+- 練習時間
+- 間違えたサイン
+- 練習履歴
+
+利用している端末の `localStorage` に保存し、別端末へ自動同期しません。
+
+## API概要
+
+### 選手
+
+- `GET /api/session?teamId=...`
+- `POST /api/auth`
+- `POST /api/logout`
+- `GET /api/signs?teamId=...`
+
+### チーム管理者
+
+- `GET /api/team-admin/session?teamId=...`
+- `POST /api/team-admin/auth`
+- `POST /api/team-admin/logout`
+- `GET /api/team-admin/team?teamId=...`
+- `PUT /api/team-admin/team`
+- `POST /api/team-admin/signs`
+- `PUT/DELETE /api/team-admin/signs/{id}`
+- `POST /api/team-admin/signs/{id}/videos`
+- `PUT/DELETE /api/team-admin/videos/{id}`
+
+### システム管理者
+
+- `GET /api/system/session`
+- `POST /api/system/auth`
+- `POST /api/system/logout`
+- `GET/POST /api/system/teams`
+- `PUT/DELETE /api/system/teams/{teamId}`
+
+### ローカルで `/` が 307 になる場合
+
+build 55 では、LPのルート `/` を Static Assets の `/index.html` へ書き換えず、`/` のまま取得するよう修正しています。Cloudflare Static Assets の `/index.html` → `/` 正規化による 307 ループを回避します。
+
+## 307 リダイレクト対策
+
+`/admin`、`/t/:teamId`、`/t/:teamId/admin` は、Cloudflare Static Assets の HTML 正規化に依存せず、Worker が内部の `public/__pages/*.txt` を読み込んで `text/html` の 200 Response として返します。これにより `.html` への内部フェッチが 307 を返して同一URLへループする問題を避けています。
+
+## build 55: チームメンバーへの共有
+
+選手向けチームページとチーム管理画面の両方から、メンバー用URLを共有できます。
+
+- 参加リンクをコピー
+- QRコードを表示（SIGN TRAINERアイコン付き）
+- LINEで共有
+- Web Share API対応端末では「その他のアプリで共有」
+- 共有URLは現在の環境の `/t/:teamId` を使用（local/dev/staging/productionで自動的に切り替わる）
+- 合言葉はURL・QRコード・共有メッセージに含めず、チーム内で別途伝える
+
+チーム管理画面では合言葉の平文をD1から取り出すことはできません。必要な場合は「チーム設定」で新しい合言葉へ再設定してください。
 
 
-## 共有機能（build 22）
+## build 55: 登録サイン数に応じた出題数
 
-- LPからSIGN TRAINERトップページをURL・QR・共有メニューで共有できます。
-- 認証後の練習設定画面からチーム専用ページをURL・QR・LINEで共有できます。
-- チーム用共有URLには `openExternalBrowser=1` を付け、LINEから開いた際に外部ブラウザへ誘導する前提です。
-- 合言葉はURL/QRには含めません。メンバーには別経路・別メッセージで伝えてください。
-- QR表示は `api.qrserver.com` を利用し、送信される情報は共有対象URLのみです。
+- 0件: 練習開始不可。管理者へサイン・動画登録を案内
+- 1〜4件: 登録済みの全サイン数だけで練習
+- 5件: 5問（全サイン）
+- 6〜9件: 5問 / 全サイン
+- 10件以上: 5問 / 10問 / 全サイン
+- 出題は1セット内で重複なし。要求数が登録数を超えても自動で実数へ丸めます。
 
+## 現在のD1 ID
 
-## YouTubeプレイヤー表示（build 24）
+| 環境 | D1 | Database ID |
+|---|---|---|
+| dev | `sign-trainer-dev` | `3b47491c-8e2a-412a-b2a7-1a06922b3604` |
+| staging | `sign-trainer-staging` | `2ca39d6b-e06f-44b4-862b-b0c2932d9310` |
+| production | `sign-trainer-production` | `bdd534e9-1c42-4db7-adbe-c62e35e123b5` |
 
-クイズ動画は、サイン動作が操作UIで隠れにくいように YouTube の埋め込みプレイヤーを最小UIで表示します。
+全環境のbinding名は `DB` に統一しています。ローカル開発では `remote: true` を使わず、WranglerのローカルD1を利用します。
 
-- `controls=0`: プレイヤーの操作バーを非表示
-- `fs=0`: 全画面ボタンを非表示
-- `disablekb=1`: キーボード操作を無効化
-- `iv_load_policy=3`: アノテーションを非表示
-- `playsinline=1`: モバイルでインライン再生
+## QR / 共有URLの環境追従
 
-YouTube側が必須として表示するロゴ・再生前後の表示などは完全には除去できません。
+共有URLとQRコードは固定の本番URLを持たず、ブラウザ実行時の `window.location.origin` から動的に生成します。
 
+- local: `http://localhost:8787/t/{teamId}`
+- dev: dev Worker の origin
+- staging: staging Worker の origin
+- production: production Worker の origin
 
-## Build 25
+QR・リンクコピーには合言葉、セッション、管理画面URL、`openExternalBrowser` などのクエリを含めません。LINE共有時のみ必要に応じて外部ブラウザ用クエリを付与します。
 
-- iPhone/Safari向けにYouTubeを問題表示時に即ロードし、mute付きautoplayを試行します。
-- Safariのiframe loadイベント待ちで画面が止まらないよう、独自ローディング表示を短時間で外します。
-- インストール用アイコン（Apple Touch / PWA / maskable）は緑を端まで敷いたフルブリード版にし、OS側の白フチを防ぎます。
-
-
-## Build 30
-- LPとチームページの左上ブランドヘッダーを同一サイズ・位置・内容に統一しました。
-
-
-### build 41
-- LPのインストール手順をiPhone / Androidのタブ切替に変更。
-- 1画面に表示する手順画像を最大2枚にし、4ステップを1-2 / 3-4に分割して大きく表示。
-- スマホでは1枚ずつ縦表示。
+対象: LPサンプルチームQR、選手画面の共有QR、チーム管理画面QR、新規チーム登録完了QR。

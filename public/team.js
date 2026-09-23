@@ -1,7 +1,8 @@
-const APP_BUILD = "48";
+import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=57";
+
+const APP_BUILD = "57";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
-const PUBLIC_SITE_URL = "https://basebasll-sign-trainer.refrain62.workers.dev";
 const SAMPLE_TEAM_ID = "6BnWv2K3zo";
 const SAMPLE_TEAM_PATH = `/t/${SAMPLE_TEAM_ID}`;
 const SAMPLE_LINE_TEAM_PATH = `${SAMPLE_TEAM_PATH}?openExternalBrowser=1`;
@@ -13,7 +14,7 @@ function activeTeamPath() {
 }
 
 function activeTeamPublicUrl() {
-  return `${PUBLIC_SITE_URL}${activeTeamPath()}`;
+  return teamUrl(activeTeamId);
 }
 
 function historyKey() {
@@ -265,7 +266,7 @@ function runResultCelebration(celebration) {
 }
 
 function publicShareUrl() {
-  return `${PUBLIC_SITE_URL}/`;
+  return topUrl();
 }
 
 function teamShareUrl() {
@@ -273,7 +274,7 @@ function teamShareUrl() {
 }
 
 function lineTeamShareUrl() {
-  return `${activeTeamPublicUrl()}?openExternalBrowser=1`;
+  return lineShareUrl(activeTeamPublicUrl());
 }
 
 async function copyText(value) {
@@ -298,9 +299,9 @@ function sharePayload(target) {
   if (target === "team") {
     return {
       title: `${state.teamName || "SIGN TRAINER"} | サイン練習`,
-      text: `${state.teamName || "チーム"}のサイン練習ページです。初回はチームの合言葉を入力してください。`,
+      text: `【SIGN TRAINER】\n${state.teamName || "チーム"}のサイン練習ページです。\nリンクを開いて練習してください。合言葉はチーム内で確認してください。`,
       url: teamShareUrl(),
-      label: "チーム専用ページ",
+      label: "チームメンバー用ページ",
       note: "合言葉はURLやQRコードには含まれません。URLとは別にメンバーへ伝えてください。"
     };
   }
@@ -324,11 +325,23 @@ function openShareDialog(target = "site") {
   const qrStatus = shareDialog.querySelector("#share-qr-status");
   const note = shareDialog.querySelector("#share-note");
   const copyStatus = shareDialog.querySelector("#share-copy-status");
-  if (title) title.textContent = `${data.label}を共有`;
-  if (lead) lead.textContent = target === "team" ? "このURLまたはQRコードを、LINEなどでチームメンバーへ共有してください。" : "URL・QRコード・スマホの共有メニューから第三者へ送れます。";
+  if (title) title.textContent = target === "team" ? "チームメンバーに共有" : `${data.label}を共有`;
+  if (lead) lead.textContent = target === "team" ? "参加リンクをコピーするか、QRコード・LINE・スマホの共有メニューからメンバーへ送れます。" : "URL・QRコード・スマホの共有メニューから第三者へ送れます。";
   if (urlInput) urlInput.value = data.url;
   if (note) note.textContent = data.note;
   if (copyStatus) copyStatus.textContent = "";
+  const nativeButton = shareDialog.querySelector("#share-native");
+  const copyButton = shareDialog.querySelector("#share-copy");
+  const lineButton = shareDialog.querySelector("#share-line");
+  if (target === "team") {
+    if (nativeButton) nativeButton.textContent = "その他のアプリで共有";
+    if (copyButton) copyButton.textContent = "参加リンクをコピー";
+    if (lineButton) lineButton.textContent = "LINEでメンバーに共有";
+  } else {
+    if (nativeButton) nativeButton.textContent = "共有メニューを開く";
+    if (copyButton) copyButton.textContent = "リンクをコピー";
+    if (lineButton) lineButton.textContent = "LINEで共有";
+  }
   if (qrStatus) qrStatus.textContent = "QRコードを準備しています…";
   if (qr) {
     const qrCode = shareDialog.querySelector("#share-qr-code");
@@ -344,7 +357,7 @@ function openShareDialog(target = "site") {
       if (qrCode) qrCode.hidden = true;
       if (qrStatus) qrStatus.textContent = "QRコードを表示できませんでした。URLコピーをご利用ください。";
     };
-    qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=14&ecc=H&data=${encodeURIComponent(data.url)}`;
+    qr.src = qrImageUrl(data.url, 360);
   }
   if (shareDialog.showModal) shareDialog.showModal();
   else shareDialog.setAttribute("open", "");
@@ -405,20 +418,7 @@ async function route() {
 
   const path = location.pathname.replace(/\/$/, "") || "/";
   if (path === "/") {
-    renderLanding();
-    return;
-  }
-
-  if (path === "/admin" || path === "/register") {
-    const { renderSystemAdmin } = await import(`/admin.js?v=${APP_BUILD}`);
-    renderSystemAdmin({ initialView: path === "/register" ? "create" : "list" });
-    return;
-  }
-
-  const teamAdminMatch = path.match(/^\/t\/([A-Za-z0-9_-]+)\/admin$/);
-  if (teamAdminMatch) {
-    const { renderTeamAdmin } = await import(`/admin.js?v=${APP_BUILD}`);
-    renderTeamAdmin(teamAdminMatch[1]);
+    window.location.replace("/");
     return;
   }
 
@@ -453,398 +453,6 @@ async function route() {
   }
 
   renderClientNotFound();
-}
-
-function renderLanding() {
-  document.title = "SIGN TRAINER | 野球のサイン練習";
-  app.innerHTML = `
-    <div class="site-shell lp-v2">
-      <header class="site-header">
-        <div class="container header-inner">
-          ${brand()}
-          <nav class="header-nav" aria-label="メインナビゲーション">
-            <a href="#features">特徴</a>
-            <a href="#howto">使い方</a>
-            <a href="#for-team">こんな方に</a>
-            <a href="#share">共有方法</a>
-            <a href="#install">インストール</a>
-            <a href="#faq">よくある質問</a>
-            <a class="button button-primary button-small header-cta" href="${SAMPLE_LINE_TEAM_PATH}" data-nav>サンプルを試す</a>
-          </nav>
-          <button class="mobile-menu-button" id="mobile-menu-button" type="button" aria-label="メニューを開く" aria-expanded="false">${icons.menu}</button>
-        </div>
-        <nav class="mobile-nav" id="mobile-nav" aria-label="スマートフォンメニュー">
-          <a href="#features">特徴</a>
-          <a href="#capabilities">できること</a>
-          <a href="#howto">使い方</a>
-          <a href="#for-team">こんな方に</a>
-          <a href="#install">インストール</a>
-          <a href="#faq">よくある質問</a>
-          <a class="button button-primary" href="${SAMPLE_LINE_TEAM_PATH}" data-nav>サンプルチームで試す</a>
-        </nav>
-      </header>
-
-      <main>
-        <section class="hero hero-reference">
-          <div class="container hero-inner">
-            <div class="hero-copy">
-              <h1>見てわかる。<br><span class="hero-highlight">覚えて動ける。</span></h1>
-              <p class="hero-subtitle">チームのサインを<br>みんなのチカラに。</p>
-              <p class="hero-lead">実際のサイン動画を見て、何のサインかを答えるだけ。<br>くり返し練習して、試合で迷わない選手に。</p>
-              <div class="hero-actions">
-                <a class="button button-primary hero-cta" href="${SAMPLE_LINE_TEAM_PATH}" data-nav>サンプルチームで試す ${icons.arrow}</a>
-              </div>
-              <p class="hero-note">登録不要で操作を体験できます</p>
-              <p class="hero-team-note">正式利用では、チーム登録後に専用ページを発行し、そのURLをメンバーへ共有します。</p>
-            </div>
-            <div class="hero-script hero-script-top" aria-hidden="true">伝わる。<br>動ける。<br><small>もっと野球が楽しくなる。</small></div>
-            <div class="hero-script hero-script-bottom" aria-hidden="true">サインを知ることは<br>チームを信じることだ。</div>
-          </div>
-        </section>
-
-        <section id="features" class="feature-strip" aria-label="SIGN TRAINERの特徴">
-          <div class="container feature-grid">
-            ${featureItem(icons.play, "動画でわかる", "実際のサインを動画で確認")}
-            ${featureItem(icons.replay, "間違いだけ復習", "動画を見直してすぐ再練習")}
-            ${featureItem(icons.clock, "練習履歴が残る", "正答率や間違いを端末に保存")}
-            ${featureItem(icons.share, "チームに共有", "URL・QR・LINEですぐ配布")}
-          </div>
-        </section>
-
-        <section class="lp-section why-section">
-          <div class="container why-grid">
-            <div class="why-copy">
-              <h2 class="underline-heading">なぜサインの練習が大切？</h2>
-              <p>サインが正しく伝わり、全員が同じ動きができると、<br>チームの力は大きく上がります。<br>サインを覚えることは、仲間を信じ、試合で力を<br>発揮するための大切な準備です。</p>
-              <ul class="check-list">
-                <li><span class="check-dot">✓</span><span>試合で迷わず動ける</span></li>
-                <li><span class="check-dot">✓</span><span>チームの連携が高まる</span></li>
-                <li><span class="check-dot">✓</span><span>野球がもっと楽しくなる</span></li>
-              </ul>
-            </div>
-            <figure class="baseball-visual"><img src="/assets/why-baseball.png" alt="グラウンドに置かれた野球ボールと『ひとつのサインがチームを動かす。』のメッセージ"></figure>
-          </div>
-        </section>
-
-        <section id="howto" class="lp-section howto-section">
-          <div class="container">
-            <div class="section-heading compact-heading">
-              <h2 class="underline-heading">使い方はかんたん3ステップ</h2>
-            </div>
-            <div class="steps-grid reference-steps">
-              ${stepCard(1, "練習設定", "問題数を選んでスタート", phoneSetupMock())}
-              ${stepCard(2, "動画を見て答える", "サイン動画を見て\n何のサインか考えよう", phoneQuestionMock())}
-              ${stepCard(3, "正解を確認", "答えを見て\n○×で進もう", phoneAnswerMock())}
-              <div class="steps-side-note" aria-hidden="true">くり返すほど<br>自信になる。</div>
-            </div>
-          </div>
-        </section>
-
-        <section id="capabilities" class="lp-section capabilities-section">
-          <div class="container">
-            <div class="section-heading compact-heading capabilities-heading">
-              <h2 class="underline-heading">SIGN TRAINERでできること</h2>
-              <p>見る・答えるだけで終わらず、復習・履歴・共有までチーム練習に必要な流れをひとつにまとめています。</p>
-            </div>
-            <div class="capabilities-grid">
-              ${capabilityCard(icons.target, "5問・10問・全サイン", "短時間の確認から、全サインのじっくり練習まで選べます。")}
-              ${capabilityCard(icons.replay, "シャッフル出題", "同じ順番を覚えるのではなく、サインそのものを見分ける練習ができます。")}
-              ${capabilityCard(icons.check, "○×で自己採点", "答えを見て自分で判定。選択肢から推測せず、実戦に近い形で覚えます。")}
-              ${capabilityCard(icons.play, "間違えた動画を再確認", "間違えたサインは、その動画をもう一度見てから復習できます。")}
-              ${capabilityCard(icons.clock, "練習履歴を確認", "正答率・練習時間・間違えたサインをこの端末に最大50件保存します。")}
-              ${capabilityCard(icons.share, "URL・QR・LINEで共有", "チームページをリンクコピー、QRコード、共有メニューから簡単に配れます。")}
-            </div>
-          </div>
-        </section>
-
-        <section class="lp-section privacy-section" aria-labelledby="privacy-title">
-          <div class="container">
-            <div class="privacy-card">
-              <div class="privacy-icon" aria-hidden="true">${icons.lock}</div>
-              <div class="privacy-copy">
-                <span class="privacy-kicker">安心して練習できるように</span>
-                <h2 id="privacy-title">回答や練習履歴は、今使っている端末に保存します</h2>
-                <p>○×の回答、正答率、練習時間、間違えたサインなどの練習結果は、SIGN TRAINERのサーバーには保存せず、操作している端末のブラウザ内に保存します。チームの他の人や運営側へ、あなたの練習結果が自動で共有されることはありません。</p>
-                <div class="privacy-points" aria-label="練習データの保存について">
-                  <span>${icons.phone}<strong>この端末に保存</strong></span>
-                  <span>${icons.lock}<strong>練習結果をサーバー保存しない</strong></span>
-                  <span>${icons.clock}<strong>別端末には自動同期しない</strong></span>
-                </div>
-                <p class="privacy-note">※ ブラウザのデータを削除した場合や端末を変更した場合は、保存した履歴が消えることがあります。合言葉認証やYouTube動画の読み込みには通信を使用します。</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="for-team" class="lp-section audience-section">
-          <div class="container">
-            <div class="section-heading compact-heading">
-              <h2 class="underline-heading">こんなチーム・選手におすすめ</h2>
-            </div>
-            <div class="audience-grid">
-              ${audienceCard(icons.users, "チーム全員で\nサインを統一したい")}
-              ${audienceCard(icons.chart, "効率よく\nサインを覚えたい")}
-              ${audienceCard(icons.smile, "楽しく\nくり返し練習したい")}
-              ${audienceCard(icons.phone, "練習時間を\nもっと有効に使いたい")}
-            </div>
-          </div>
-        </section>
-
-        <section class="testimonials-section" aria-labelledby="testimonials-title">
-          <div class="container">
-            <h2 id="testimonials-title" class="testimonials-title">チームでの使い方</h2>
-            <div class="testimonials-grid">
-              <article class="testimonial-card">
-                <p><strong>練習前の確認に</strong><br>集合前の数分で、その日のサインをチーム全員で確認できます。</p>
-                <div class="testimonial-author"><span class="avatar">1</span><span>チーム練習</span></div>
-              </article>
-              <article class="testimonial-card">
-                <p><strong>自宅での反復練習に</strong><br>LINEの専用URLから入り、自分のペースで何度でも練習できます。</p>
-                <div class="testimonial-author"><span class="avatar">2</span><span>自主練習</span></div>
-              </article>
-              <article class="testimonial-card">
-                <p><strong>履歴を見ながら復習に</strong><br>正答率や間違えたサインを履歴で確認し、苦手な問題だけもう一度練習できます。</p>
-                <div class="testimonial-author"><span class="avatar">3</span><span>履歴・復習</span></div>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section id="share" class="lp-section share-guide-section">
-          <div class="container">
-            <div class="section-heading compact-heading">
-              <h2 class="underline-heading">チームへの共有もかんたん</h2>
-              <p class="share-guide-lead">正式利用ではチーム専用ページを発行。URLやQRコードをLINEなどで配るだけで、メンバーがすぐ練習できます。</p>
-            </div>
-            <div class="share-steps" aria-label="チームページの共有手順">
-              <div class="share-step"><span class="share-step-no">1</span><div><strong>専用ページを発行</strong><p>チーム登録後に、推測されにくい専用URLを用意します。</p></div></div>
-              <div class="share-step"><span class="share-step-no">2</span><div><strong>URL・QRを共有</strong><p>リンクコピー、QRコード、LINEやスマホの共有メニューから送れます。</p></div></div>
-              <div class="share-step"><span class="share-step-no">3</span><div><strong>合言葉は別に伝える</strong><p>合言葉はURLやQRには入れず、チーム内で別途共有します。</p></div></div>
-            </div>
-            <div class="share-guide-actions">
-              <button class="button button-primary" id="share-site" type="button">${icons.share} このサイトを共有</button>
-              <button class="button button-secondary" id="share-sample-team" type="button">${icons.qr} サンプルチームのQRを見る</button>
-            </div>
-          </div>
-        </section>
-
-
-        <section id="install" class="lp-section install-section">
-          <div class="container">
-            <div class="section-heading compact-heading install-heading">
-              <h2 class="underline-heading">アプリとしてインストールする方法</h2>
-              <p>SIGN TRAINERはホーム画面へ追加して、アプリのようにすぐ開けます。端末を選ぶと、その端末だけの手順を大きく表示します。</p>
-            </div>
-
-            <div class="install-tabs" role="tablist" aria-label="インストール方法の端末選択">
-              <button class="install-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="install-panel-iphone" id="install-tab-iphone" data-install-tab="iphone">
-                <span class="install-tab-icon" aria-hidden="true">●</span>
-                <span><strong>iPhone</strong><small>Safari</small></span>
-              </button>
-              <button class="install-tab" type="button" role="tab" aria-selected="false" aria-controls="install-panel-android" id="install-tab-android" data-install-tab="android">
-                <span class="install-tab-icon install-tab-icon-android" aria-hidden="true">●</span>
-                <span><strong>Android</strong><small>Chrome</small></span>
-              </button>
-            </div>
-
-            <div class="install-panel" id="install-panel-iphone" role="tabpanel" aria-labelledby="install-tab-iphone" data-install-panel="iphone">
-              <div class="install-panel-head">
-                <div>
-                  <span class="install-chip">iPhone</span>
-                  <h3>Safariからホーム画面に追加</h3>
-                </div>
-                <p>説明と画面を分けて、操作位置が見つけやすいようにしています。</p>
-              </div>
-              <div class="install-step-list">
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">1</span>
-                    <div><h4>SafariでSIGN TRAINERを開く</h4><p>Safariでサイトを開きます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=48" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">2</span>
-                    <div><h4>共有ボタンをタップ</h4><p>画面下の共有ボタン（四角から上向き矢印）をタップします。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=48" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">3</span>
-                    <div><h4>「ホーム画面に追加」を選ぶ</h4><p>共有メニューを下へ見て、「ホーム画面に追加」をタップします。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=48" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">4</span>
-                    <div><h4>右上の「追加」で完了</h4><p>確認画面の右上にある「追加」をタップするとホーム画面に追加されます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=48" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
-                </article>
-              </div>
-              <p class="install-note">一度追加すれば、次回からホーム画面のSIGN TRAINERアイコンですぐ開けます。</p>
-            </div>
-
-            <div class="install-panel" id="install-panel-android" role="tabpanel" aria-labelledby="install-tab-android" data-install-panel="android" hidden>
-              <div class="install-panel-head">
-                <div>
-                  <span class="install-chip install-chip-android">Android</span>
-                  <h3>Chromeからホーム画面に追加</h3>
-                </div>
-                <p>インストールボタンが出る場合と、出ない場合の両方を案内します。</p>
-              </div>
-              <div class="install-step-list">
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">1</span>
-                    <div><h4>ChromeでSIGN TRAINERを開く</h4><p>AndroidのChromeでサイトを開きます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=48" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">2</span>
-                    <div><h4>「インストール」が出たらタップ</h4><p>インストール案内が表示された場合は、そのまま「インストール」をタップします。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=48" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">3</span>
-                    <div><h4>出ない場合は右上の︙を開く</h4><p>「インストール」が見つからない場合は、右上の︙から「ホーム画面に追加」を選びます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=48" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">4</span>
-                    <div><h4>追加・インストールで完了</h4><p>確認画面で「追加」または「インストール」を押すと完了です。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=48" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
-                </article>
-              </div>
-              <p class="install-note">インストールボタンが見つからない場合でも、右上の︙メニューから追加できます。</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="reference-cta-band">
-          <div class="container reference-cta-grid">
-            <div class="cta-hand-note">⌁ 今日からはじめよう！</div>
-            <div class="cta-center">
-              <a class="button button-primary reference-cta-button" href="${SAMPLE_LINE_TEAM_PATH}" data-nav>サンプルチームで試す ${icons.arrow}</a>
-              <span>登録不要でサンプルを体験できます</span>
-            </div>
-            <div class="cta-hand-note is-right">覚えた分だけ<br>チームは強くなる。</div>
-          </div>
-        </section>
-
-        <section id="faq" class="lp-section faq-section">
-          <div class="container">
-            <div class="section-heading compact-heading">
-              <h2 class="underline-heading">よくある質問</h2>
-            </div>
-            <div class="faq-list">
-              <details><summary>動画はどのように登録されていますか？</summary><p>YouTubeの限定公開動画を利用します。練習ページの合言葉認証前には、サイン名やYouTube動画IDをブラウザへ返しません。</p></details>
-              <details><summary>スマホ以外でも使えますか？</summary><p>はい。スマートフォンを中心に設計していますが、タブレットやPCのブラウザでも利用できます。</p></details>
-              <details><summary>チームではどのように利用しますか？</summary><p>チーム登録後に、そのチーム専用の練習ページとURLを発行します。監督・コーチがLINEなどでURLやQRコードをメンバーへ共有し、メンバーはチームの合言葉を入力して練習します。</p></details>
-              <details><summary>サインや動画はあとから変更できますか？</summary><p>はい。チーム管理者専用画面から、サイン名・YouTube URL・並び順・有効／無効を変更できます。同じサインに複数の動画を登録することもできます。</p></details>
-              <details><summary>練習結果はあとから見られますか？</summary><p>はい。この端末に練習履歴を最大50件保存し、正答率・練習時間・各問題の○×・間違えたサインを見返せます。履歴から間違えた問題だけ再練習することもできます。</p></details>
-              <details><summary>回答や練習履歴はどこに保存されますか？</summary><p>○×の回答、正答率、練習時間、間違えたサインなどの練習結果は、今使っている端末のブラウザ内に保存します。SIGN TRAINERのサーバーには練習結果を保存せず、別端末にも自動では同期しません。ブラウザデータを削除すると履歴が消える場合があります。</p></details>
-              <details><summary>間違えたサインだけ復習できますか？</summary><p>できます。結果画面や履歴詳細から、間違えたサインの動画をもう一度確認し、その問題だけで再練習できます。</p></details>
-              <details><summary>料金はかかりますか？</summary><p>料金体系はサービス提供時に案内します。現在のトップページではサンプルチームを体験できます。</p></details>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer class="site-footer reference-footer">
-        <div class="container footer-inner">
-          ${brand({ footer: true })}
-          <nav class="footer-nav" aria-label="フッターナビゲーション">
-            <a href="/" data-nav>トップ</a><a href="#features">特徴</a><a href="#capabilities">できること</a><a href="#howto">使い方</a><a href="#for-team">こんな方に</a><a href="#share">共有方法</a><a href="#install">インストール</a><a href="#faq">よくある質問</a>
-          </nav>
-          <div class="footer-tagline">野球を、もっとシンプルに。<br>もっと楽しく。</div>
-          <div class="footer-meta">© 2026 SIGN TRAINER. All rights reserved.</div>
-        </div>
-      </footer>
-    </div>`;
-
-  wireLandingNavigation();
-}
-
-function wireLandingNavigation() {
-  initShareDialog();
-  document.querySelector("#share-site")?.addEventListener("click", () => openShareDialog("site"));
-  document.querySelector("#share-sample-team")?.addEventListener("click", () => openShareDialog("team"));
-
-  const installTabs = [...document.querySelectorAll("[data-install-tab]")];
-  const installPanels = [...document.querySelectorAll("[data-install-panel]")];
-  installTabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const target = tab.dataset.installTab;
-      installTabs.forEach((item) => {
-        const active = item === tab;
-        item.classList.toggle("is-active", active);
-        item.setAttribute("aria-selected", active ? "true" : "false");
-      });
-      installPanels.forEach((panel) => {
-        panel.hidden = panel.dataset.installPanel !== target;
-      });
-    });
-  });
-  const menuButton = document.querySelector("#mobile-menu-button");
-  const mobileNav = document.querySelector("#mobile-nav");
-  if (menuButton && mobileNav) {
-    menuButton.addEventListener("click", () => {
-      const open = mobileNav.classList.toggle("is-open");
-      menuButton.setAttribute("aria-expanded", String(open));
-      menuButton.setAttribute("aria-label", open ? "メニューを閉じる" : "メニューを開く");
-      menuButton.innerHTML = open ? icons.close : icons.menu;
-    });
-    mobileNav.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => {
-        mobileNav.classList.remove("is-open");
-        menuButton.setAttribute("aria-expanded", "false");
-        menuButton.innerHTML = icons.menu;
-      });
-    });
-  }
-}
-
-function featureItem(icon, title, text) {
-  return `<div class="feature-item"><div class="feature-icon">${icon}</div><div><strong>${title}</strong><span>${text}</span></div></div>`;
-}
-
-function audienceCard(icon, text) {
-  return `<article class="audience-card"><div class="audience-icon">${icon}</div><strong>${text.replace("\n", "<br>")}</strong></article>`;
-}
-
-function capabilityCard(icon, title, text) {
-  return `<article class="capability-card"><div class="capability-icon">${icon}</div><div><h3>${title}</h3><p>${text}</p></div></article>`;
-}
-
-function lineStep(no, title, text) {
-  return `<article class="line-step"><span class="line-step-no">STEP ${no}</span><strong>${title}</strong><span>${text}</span></article>`;
-}
-
-function stepCard(no, title, text, phone) {
-  return `<article class="step-card"><div class="step-label"><span class="step-number">${no}</span><div><h3>${title}</h3><p>${text}</p></div></div>${phone}</article>`;
-}
-
-function phoneSetupMock() {
-  return `<div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">練習設定</div><div class="phone-body"><div class="phone-title">問題数を選ぶ</div><div class="phone-choice">5問</div><div class="phone-choice is-green">10問</div><div class="phone-choice">全てのサイン</div><div class="phone-btn green">スタート</div></div></div></div>`;
-}
-
-function phoneQuestionMock() {
-  return `<div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">問題 1 / 10</div><div class="phone-body"><div class="phone-video"></div><div class="phone-question">このサインは<br>何でしょう？</div><div class="phone-btn green">答えを見る</div></div></div></div>`;
-}
-
-function phoneAnswerMock() {
-  return `<div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">問題 1 / 10</div><div class="phone-body"><div class="phone-answer-box"><small>正解は…</small><strong>エンドラン</strong></div><div class="phone-btn green">○ 正解した</div><div class="phone-btn red">× 間違えた</div></div></div></div>`;
 }
 
 function appTopbar(action = "") {
@@ -974,6 +582,28 @@ async function loadSigns() {
   }
 }
 
+function getPracticeOptions(signCount) {
+  const count = Math.max(0, Number(signCount) || 0);
+  if (count === 0) return [];
+  if (count < 5) {
+    return [{ count: "all", main: `${count}問で練習する`, sub: `登録されている全${count}サイン`, recommended: true, badge: "全サイン" }];
+  }
+  if (count === 5) {
+    return [{ count: "all", main: "5問で練習する", sub: "登録されている全サイン", recommended: true, badge: "全サイン" }];
+  }
+  if (count < 10) {
+    return [
+      { count: 5, main: "5問ではじめる", sub: "サクッと練習", recommended: false },
+      { count: "all", main: `${count}問で練習する`, sub: `全${count}サインをじっくり練習`, recommended: true, badge: "全サイン" }
+    ];
+  }
+  return [
+    { count: 10, main: "10問ではじめる", sub: "しっかり練習", recommended: true, badge: "おすすめ" },
+    { count: 5, main: "5問ではじめる", sub: "サクッと練習", recommended: false },
+    { count: "all", main: "全てのサイン", sub: `じっくり練習 · ${count}種類`, recommended: false }
+  ];
+}
+
 function renderPracticeSetup() {
   document.title = "サイン練習 | SIGN TRAINER";
   const history = getPracticeHistory();
@@ -981,6 +611,10 @@ function renderPracticeSetup() {
   const historySub = latest
     ? `前回 ${latest.correct}/${latest.total}問正解 · ${formatHistoryDate(latest.completedAt, { short: true })}`
     : "練習すると、この端末に結果が残ります";
+  const practiceOptions = getPracticeOptions(state.signs.length);
+  const choicesHtml = practiceOptions.length
+    ? practiceOptions.map((option) => `<button class="choice${option.recommended ? " recommended" : ""}" data-count="${option.count}" type="button"><span class="choice-copy"><span class="choice-main">${escapeHtml(option.main)}</span><span class="choice-sub">${escapeHtml(option.sub)}</span></span>${option.badge ? `<span class="choice-badge">${escapeHtml(option.badge)}</span>` : `<span class="choice-arrow">${icons.arrow}</span>`}</button>`).join("")
+    : `<div class="practice-empty-notice" role="status"><strong>まだ練習できるサインがありません</strong><span>チーム管理者がサイン名とYouTube動画を登録すると、ここから練習を始められます。</span></div>`;
 
   app.innerHTML = `<div class="app-bg">
     ${appTopbar('<a class="button button-ghost" href="/" data-nav>トップへ</a>')}
@@ -989,11 +623,7 @@ function renderPracticeSetup() {
         <h1>サイン練習</h1>
         <p class="panel-lead">動画を見て、何のサインか答えよう！</p>
         <div class="setup-ball" aria-hidden="true">${logo}</div>
-        <div class="choice-list">
-          <button class="choice recommended" data-count="10" type="button"><span class="choice-copy"><span class="choice-main">10問ではじめる</span><span class="choice-sub">しっかり練習</span></span><span class="choice-badge">おすすめ</span></button>
-          <button class="choice" data-count="5" type="button"><span class="choice-copy"><span class="choice-main">5問ではじめる</span><span class="choice-sub">サクッと練習</span></span><span class="choice-arrow">${icons.arrow}</span></button>
-          <button class="choice" data-count="all" type="button"><span class="choice-copy"><span class="choice-main">全てのサイン</span><span class="choice-sub">じっくり練習 · ${state.signs.length}種類</span></span><span class="choice-arrow">${icons.arrow}</span></button>
-        </div>
+        <div class="choice-list">${choicesHtml}</div>
         <button class="history-entry-button" id="open-history" type="button">
           <span class="history-entry-icon">${icons.clock}</span>
           <span class="history-entry-copy"><strong>練習履歴を見る</strong><span>${escapeHtml(historySub)}</span></span>
@@ -1001,7 +631,7 @@ function renderPracticeSetup() {
         </button>
         <button class="share-entry-button" id="open-team-share" type="button">
           <span class="share-entry-icon">${icons.share}</span>
-          <span class="share-entry-copy"><strong>チームに共有</strong><span>URL・QRコード・LINEでこの練習ページを配布</span></span>
+          <span class="share-entry-copy"><strong>チームメンバーに共有</strong><span>参加リンク・QRコード・LINEでこの練習ページを共有</span></span>
           <span class="history-entry-arrow">›</span>
         </button>
         <div class="practice-points" aria-label="練習のポイント">
@@ -1048,12 +678,14 @@ async function logout() {
 }
 
 function startQuiz(count, sourceSigns = state.signs, { review = false } = {}) {
-  if (!sourceSigns.length) {
-    renderAppError("練習するサインがありません", "サインデータを確認してください。", renderPracticeSetup);
+  const availableSigns = (sourceSigns || []).filter((sign) => Array.isArray(sign?.videos) && sign.videos.length > 0);
+  if (!availableSigns.length) {
+    renderAppError("練習するサインがありません", "チーム管理者がサイン名とYouTube動画を登録してください。", renderPracticeSetup);
     return;
   }
-  const targetCount = count === "all" ? sourceSigns.length : Math.max(1, Number(count));
-  state.deck = buildDeck(sourceSigns, targetCount);
+  const requestedCount = count === "all" ? availableSigns.length : Math.max(1, Number(count) || 1);
+  const targetCount = Math.min(requestedCount, availableSigns.length);
+  state.deck = buildDeck(availableSigns, targetCount);
   state.currentIndex = 0;
   state.results = [];
   state.startedAt = Date.now();
@@ -1066,20 +698,11 @@ function startQuiz(count, sourceSigns = state.signs, { review = false } = {}) {
 }
 
 function buildDeck(signs, count) {
-  const deck = [];
-  let previousId = null;
-  while (deck.length < count) {
-    const batch = shuffle([...signs]);
-    if (previousId && batch.length > 1 && batch[0].id === previousId) {
-      [batch[0], batch[1]] = [batch[1], batch[0]];
-    }
-    for (const sign of batch) {
-      if (deck.length >= count) break;
-      deck.push({ ...sign, videoId: randomItem(sign.videos) });
-      previousId = sign.id;
-    }
-  }
-  return deck;
+  const availableSigns = (signs || []).filter((sign) => Array.isArray(sign?.videos) && sign.videos.length > 0);
+  const safeCount = Math.min(Math.max(0, Number(count) || 0), availableSigns.length);
+  return shuffle([...availableSigns])
+    .slice(0, safeCount)
+    .map((sign) => ({ ...sign, videoId: randomItem(sign.videos) }));
 }
 
 function shuffle(items) {
@@ -1375,7 +998,7 @@ function renderResults() {
         <div class="mistake-summary"><h3>${mistakes.length ? `間違えたサイン：${mistakes.length}種類` : "間違えたサインはありません"}</h3><p>${mistakes.length ? mistakes.map((sign) => escapeHtml(sign.name)).join("・") : "このセットはしっかり確認できました。"}</p></div>
         <div class="result-actions">
           ${mistakes.length ? `<button class="button button-primary button-full" id="review-mistakes" type="button">間違えた${mistakes.length}問をもう一度</button>` : ""}
-          <button class="button button-secondary button-full" id="retry-10" type="button">もう一度10問</button>
+          <button class="button button-secondary button-full" id="retry-practice" type="button">${state.reviewMode ? `同じ${totalQuestions}問をもう一度` : state.practiceMode === "all" ? `もう一度全サイン（${totalQuestions}問）` : `もう一度${totalQuestions}問`}</button>
           <button class="result-text-button" id="back-setup" type="button">問題数を選び直す</button>
         </div>
       </section>
@@ -1386,7 +1009,15 @@ function renderResults() {
   if (score) score.style.setProperty("--score", String(rate));
   runResultCelebration(celebration);
   if (mistakes.length) document.querySelector("#review-mistakes").addEventListener("click", () => renderMistakeReview(mistakes));
-  document.querySelector("#retry-10").addEventListener("click", () => startQuiz(10));
+  document.querySelector("#retry-practice").addEventListener("click", () => {
+    if (state.reviewMode) {
+      startQuiz(totalQuestions, state.deck, { review: true });
+    } else if (state.practiceMode === "all") {
+      startQuiz("all");
+    } else {
+      startQuiz(totalQuestions);
+    }
+  });
   document.querySelector("#back-setup").addEventListener("click", renderPracticeSetup);
 }
 
@@ -1674,7 +1305,7 @@ function renderPracticeHistoryDetail(historyId) {
         </div>
         <div class="result-actions">
           ${mistakes.length ? `<button class="button button-primary button-full" id="history-review" type="button">間違えた${mistakes.length}問を練習する</button>` : ""}
-          <button class="button button-secondary button-full" id="history-retry" type="button">もう一度${entry.mode === "all" ? "全サイン" : entry.total + "問"}</button>
+          <button class="button button-secondary button-full" id="history-retry" type="button">もう一度${entry.mode === "all" ? `全サイン（現在${state.signs.length}問）` : `${Math.min(Math.max(1, entry.total || 1), Math.max(1, state.signs.length))}問`}</button>
           <button class="result-text-button" id="history-detail-back-bottom" type="button">練習履歴に戻る</button>
         </div>
       </section>

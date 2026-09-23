@@ -1,4 +1,3 @@
-TEAM_PASSPHRASE=ここに合言葉
-SESSION_SECRET=十分に長いランダム文字列
-# 任意: src/signs.js を編集せずJSONで上書きしたい場合
-# SIGNS_JSON=[{"id":"steal","name":"盗塁","videos":["YOUTUBE_VIDEO_ID"]}]
+# ローカル開発専用。production / dev / staging のremote Secretには使わないでください。
+SESSION_SECRET=replace-with-a-long-random-string
+SYSTEM_ADMIN_SECRET=replace-with-a-local-system-admin-key
