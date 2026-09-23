@@ -1,0 +1,15 @@
+{
+  "name": "サイントレーナー",
+  "short_name": "サイントレーナー",
+  "description": "チームの野球サインを動画でくり返し練習するWebアプリ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#079b52",
+  "theme_color": "#078b4d",
+  "icons": [
+    {"src":"/icon-192.png?v=27","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"/icon-512.png?v=27","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"/icon-maskable-192.png?v=27","sizes":"192x192","type":"image/png","purpose":"maskable"},
+    {"src":"/icon-maskable-512.png?v=27","sizes":"512x512","type":"image/png","purpose":"maskable"}
+  ]
+}

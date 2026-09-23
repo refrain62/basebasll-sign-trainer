@@ -1,4 +1,4 @@
-const APP_BUILD = "42";
+const APP_BUILD = "40";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const PUBLIC_SITE_URL = "https://basebasll-sign-trainer.refrain62.workers.dev";
@@ -568,100 +568,35 @@ function renderLanding() {
           <div class="container">
             <div class="section-heading compact-heading install-heading">
               <h2 class="underline-heading">アプリとしてインストールする方法</h2>
-              <p>SIGN TRAINERはホーム画面へ追加して、アプリのようにすぐ開けます。端末を選ぶと、その端末だけの手順を大きく表示します。</p>
+              <p>SIGN TRAINERはブラウザだけでなく、ホーム画面へ追加してアプリのように開けます。iPhoneとAndroidそれぞれの流れを、画面全体が分かる画像付きで案内します。</p>
             </div>
-
-            <div class="install-tabs" role="tablist" aria-label="インストール方法の端末選択">
-              <button class="install-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="install-panel-iphone" id="install-tab-iphone" data-install-tab="iphone">
-                <span class="install-tab-icon" aria-hidden="true">●</span>
-                <span><strong>iPhone</strong><small>Safari</small></span>
-              </button>
-              <button class="install-tab" type="button" role="tab" aria-selected="false" aria-controls="install-panel-android" id="install-tab-android" data-install-tab="android">
-                <span class="install-tab-icon install-tab-icon-android" aria-hidden="true">●</span>
-                <span><strong>Android</strong><small>Chrome</small></span>
-              </button>
-            </div>
-
-            <div class="install-panel" id="install-panel-iphone" role="tabpanel" aria-labelledby="install-tab-iphone" data-install-panel="iphone">
-              <div class="install-panel-head">
-                <div>
-                  <span class="install-chip">iPhone</span>
-                  <h3>Safariからホーム画面に追加</h3>
+            <div class="install-platform-grid">
+              <article class="install-card">
+                <div class="install-card-head">
+                  <div>
+                    <span class="install-chip">iPhone</span>
+                    <h3>Safariからホーム画面に追加</h3>
+                  </div>
+                  <span class="install-jump is-static">Safari</span>
                 </div>
-                <p>説明と画面を分けて、操作位置が見つけやすいようにしています。</p>
-              </div>
-              <div class="install-step-list">
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">1</span>
-                    <div><h4>SafariでSIGN TRAINERを開く</h4><p>Safariでサイトを開きます。</p></div>
+                <p class="install-copy">Safariで開く → 共有 → 「ホーム画面に追加」 → 「追加」の4ステップです。</p>
+                <figure class="install-figure">
+                  <img src="/assets/install-iphone.png?v=40" alt="iPhoneでSIGN TRAINERをホーム画面に追加する4ステップの画像ガイド" loading="lazy" decoding="async">
+                </figure>
+              </article>
+              <article class="install-card">
+                <div class="install-card-head">
+                  <div>
+                    <span class="install-chip install-chip-android">Android</span>
+                    <h3>Chromeからホーム画面に追加</h3>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=42" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">2</span>
-                    <div><h4>共有ボタンをタップ</h4><p>画面下の共有ボタン（四角から上向き矢印）をタップします。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=42" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">3</span>
-                    <div><h4>「ホーム画面に追加」を選ぶ</h4><p>共有メニューを下へ見て、「ホーム画面に追加」をタップします。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=42" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">4</span>
-                    <div><h4>右上の「追加」で完了</h4><p>確認画面の右上にある「追加」をタップするとホーム画面に追加されます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=42" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
-                </article>
-              </div>
-              <p class="install-note">一度追加すれば、次回からホーム画面のSIGN TRAINERアイコンですぐ開けます。</p>
-            </div>
-
-            <div class="install-panel" id="install-panel-android" role="tabpanel" aria-labelledby="install-tab-android" data-install-panel="android" hidden>
-              <div class="install-panel-head">
-                <div>
-                  <span class="install-chip install-chip-android">Android</span>
-                  <h3>Chromeからホーム画面に追加</h3>
+                  <span class="install-jump is-static">Chrome</span>
                 </div>
-                <p>インストールボタンが出る場合と、出ない場合の両方を案内します。</p>
-              </div>
-              <div class="install-step-list">
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">1</span>
-                    <div><h4>ChromeでSIGN TRAINERを開く</h4><p>AndroidのChromeでサイトを開きます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=42" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">2</span>
-                    <div><h4>「インストール」が出たらタップ</h4><p>インストール案内が表示された場合は、そのまま「インストール」をタップします。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=42" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">3</span>
-                    <div><h4>出ない場合は右上の︙を開く</h4><p>「インストール」が見つからない場合は、右上の︙から「ホーム画面に追加」を選びます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=42" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">4</span>
-                    <div><h4>追加・インストールで完了</h4><p>確認画面で「追加」または「インストール」を押すと完了です。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=42" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
-                </article>
-              </div>
-              <p class="install-note">インストールボタンが見つからない場合でも、右上の︙メニューから追加できます。</p>
+                <p class="install-copy">Chromeで開く → インストール（または右上メニュー） → 「ホーム画面に追加」 → 追加の流れです。</p>
+                <figure class="install-figure">
+                  <img src="/assets/install-android.png?v=40" alt="AndroidでSIGN TRAINERをホーム画面に追加する4ステップの画像ガイド" loading="lazy" decoding="async">
+                </figure>
+              </article>
             </div>
           </div>
         </section>
@@ -713,22 +648,6 @@ function wireLandingNavigation() {
   initShareDialog();
   document.querySelector("#share-site")?.addEventListener("click", () => openShareDialog("site"));
   document.querySelector("#share-sample-team")?.addEventListener("click", () => openShareDialog("team"));
-
-  const installTabs = [...document.querySelectorAll("[data-install-tab]")];
-  const installPanels = [...document.querySelectorAll("[data-install-panel]")];
-  installTabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const target = tab.dataset.installTab;
-      installTabs.forEach((item) => {
-        const active = item === tab;
-        item.classList.toggle("is-active", active);
-        item.setAttribute("aria-selected", active ? "true" : "false");
-      });
-      installPanels.forEach((panel) => {
-        panel.hidden = panel.dataset.installPanel !== target;
-      });
-    });
-  });
   const menuButton = document.querySelector("#mobile-menu-button");
   const mobileNav = document.querySelector("#mobile-nav");
   if (menuButton && mobileNav) {
