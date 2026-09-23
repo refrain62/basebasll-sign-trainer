@@ -1361,7 +1361,6 @@ svg { display: block; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .result-confetti-canvas { display: none; }
   .celebration-burst { animation: none; opacity: 1; }
 }
 
@@ -1450,7 +1449,7 @@ svg { display: block; }
   }
 }
 
-/* build 42: install steps use separate HTML copy and screenshot-only images */
+/* build 43: install steps use separate HTML copy and screenshot-only images */
 .install-section {
   background: linear-gradient(180deg, #f8fbfd 0%, #ffffff 100%);
 }

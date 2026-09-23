@@ -1,4 +1,11 @@
-## Build 42: インストール手順の説明文と画像を分離
+## Build 43: iPhone紙吹雪の表示修正
+
+- iPhone/Safari/PWAで `prefers-reduced-motion: reduce` の場合に紙吹雪Canvas自体を非表示にしていた問題を修正。
+- Reduce Motion時はアニメーションせず、静止した紙吹雪を約2.2秒表示。
+- 通常時はiOS向けに3フレーム待ってからCanvasサイズ確定・描画開始。
+- クラッカー、成績別演出、履歴から開いた結果では演出しない既存仕様を維持。
+
+## Build 43: インストール手順の説明文と画像を分離
 
 - iPhone / Android とも手順説明をHTMLテキストに分離
 - 画像は操作画面だけを表示

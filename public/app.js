@@ -150,14 +150,10 @@ function runResultCelebration(celebration) {
   const canvas = createResultCelebrationLayer(celebration);
   if (!(canvas instanceof HTMLCanvasElement) || !celebration.pieces) return;
 
-  // Reduce Motion の場合はクラッカーだけを静止表示して、紙吹雪の移動は行わない。
-  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-    window.setTimeout(removeResultCelebrationLayer, 1800);
-    return;
-  }
-
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { alpha: true });
   if (!ctx) return;
+
+  const reducedMotion = Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
 
   const level = celebration.level;
   const duration = level === "max" ? 3600 : level === "high" ? 3200 : level === "mid" ? 2800 : 2300;
@@ -176,6 +172,31 @@ function runResultCelebration(celebration) {
     canvas.width = Math.max(1, Math.round(width * dpr));
     canvas.height = Math.max(1, Math.round(height * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+
+  const drawStaticConfetti = () => {
+    const staticPieces = Math.max(12, Math.round(celebration.pieces * 0.7));
+    ctx.clearRect(0, 0, width, height);
+    for (let index = 0; index < staticPieces; index += 1) {
+      const x = 12 + Math.random() * Math.max(1, width - 24);
+      const y = 14 + Math.random() * Math.max(80, Math.min(height * 0.58, 520));
+      const w = 7 + Math.random() * 8;
+      const h = 10 + Math.random() * 12;
+      const angle = Math.random() * Math.PI;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.globalAlpha = 0.96;
+      ctx.fillStyle = colors[index % colors.length];
+      if (index % 5 === 0) {
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.max(3, w * 0.42), 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(-w / 2, -h / 2, w, h);
+      }
+      ctx.restore();
+    }
   };
 
   const makeParticle = (index) => {
@@ -236,14 +257,25 @@ function runResultCelebration(celebration) {
     }
   };
 
-  // iOS Safari で結果DOM確定前に0px判定されるのを避けるため、2フレーム待って開始する。
+  // iOS Safari / PWA で結果DOM確定前に0px判定されるのを避けるため、3フレーム待って開始する。
   requestAnimationFrame(() => {
-    requestAnimationFrame((now) => {
-      if (!document.body.contains(canvas)) return;
-      sizeCanvas();
-      particles = Array.from({ length: celebration.pieces }, (_, index) => makeParticle(index));
-      start = now;
-      draw(now);
+    requestAnimationFrame(() => {
+      requestAnimationFrame((now) => {
+        if (!document.body.contains(canvas)) return;
+        sizeCanvas();
+
+        // 「視差効果を減らす」が有効でも、動かない紙吹雪は表示する。
+        // アニメーションは行わないので reduced motion の意図は維持する。
+        if (reducedMotion) {
+          drawStaticConfetti();
+          window.setTimeout(removeResultCelebrationLayer, 2200);
+          return;
+        }
+
+        particles = Array.from({ length: celebration.pieces }, (_, index) => makeParticle(index));
+        start = now;
+        draw(now);
+      });
     });
   });
 }
@@ -596,28 +628,28 @@ function renderLanding() {
                     <span class="install-step-badge">1</span>
                     <div><h4>SafariでSIGN TRAINERを開く</h4><p>Safariでサイトを開きます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=42" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=43" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">2</span>
                     <div><h4>共有ボタンをタップ</h4><p>画面下の共有ボタン（四角から上向き矢印）をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=42" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=43" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">3</span>
                     <div><h4>「ホーム画面に追加」を選ぶ</h4><p>共有メニューを下へ見て、「ホーム画面に追加」をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=42" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=43" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">4</span>
                     <div><h4>右上の「追加」で完了</h4><p>確認画面の右上にある「追加」をタップするとホーム画面に追加されます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=42" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=43" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
                 </article>
               </div>
               <p class="install-note">一度追加すれば、次回からホーム画面のSIGN TRAINERアイコンですぐ開けます。</p>
@@ -637,28 +669,28 @@ function renderLanding() {
                     <span class="install-step-badge">1</span>
                     <div><h4>ChromeでSIGN TRAINERを開く</h4><p>AndroidのChromeでサイトを開きます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=42" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=43" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">2</span>
                     <div><h4>「インストール」が出たらタップ</h4><p>インストール案内が表示された場合は、そのまま「インストール」をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=42" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=43" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">3</span>
                     <div><h4>出ない場合は右上の︙を開く</h4><p>「インストール」が見つからない場合は、右上の︙から「ホーム画面に追加」を選びます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=42" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=43" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">4</span>
                     <div><h4>追加・インストールで完了</h4><p>確認画面で「追加」または「インストール」を押すと完了です。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=42" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=43" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
                 </article>
               </div>
               <p class="install-note">インストールボタンが見つからない場合でも、右上の︙メニューから追加できます。</p>
