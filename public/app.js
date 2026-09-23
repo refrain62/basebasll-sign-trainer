@@ -1,4 +1,4 @@
-const APP_BUILD = "42";
+const APP_BUILD = "45";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const PUBLIC_SITE_URL = "https://basebasll-sign-trainer.refrain62.workers.dev";
@@ -156,7 +156,12 @@ function runResultCelebration(celebration) {
   const reducedMotion = Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
 
   const level = celebration.level;
-  const duration = level === "max" ? 3600 : level === "high" ? 3200 : level === "mid" ? 2800 : 2300;
+  // iPhone/Safari では Reduce Motion が有効でも完全停止させず、
+  // 紙吹雪の量と速度だけ控えめにして「散る」動きを残す。
+  const motionScale = reducedMotion ? 0.62 : 1;
+  const pieceCount = reducedMotion ? Math.max(10, Math.round(celebration.pieces * 0.48)) : celebration.pieces;
+  const durationBase = level === "max" ? 3600 : level === "high" ? 3200 : level === "mid" ? 2800 : 2300;
+  const duration = reducedMotion ? Math.round(durationBase * 0.88) : durationBase;
   const colors = ["#ffdc3d", "#16a865", "#173d73", "#ff7a59", "#ffffff", "#72d6ff"];
   let particles = [];
   let start = 0;
@@ -174,43 +179,18 @@ function runResultCelebration(celebration) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   };
 
-  const drawStaticConfetti = () => {
-    const staticPieces = Math.max(12, Math.round(celebration.pieces * 0.7));
-    ctx.clearRect(0, 0, width, height);
-    for (let index = 0; index < staticPieces; index += 1) {
-      const x = 12 + Math.random() * Math.max(1, width - 24);
-      const y = 14 + Math.random() * Math.max(80, Math.min(height * 0.58, 520));
-      const w = 7 + Math.random() * 8;
-      const h = 10 + Math.random() * 12;
-      const angle = Math.random() * Math.PI;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(angle);
-      ctx.globalAlpha = 0.96;
-      ctx.fillStyle = colors[index % colors.length];
-      if (index % 5 === 0) {
-        ctx.beginPath();
-        ctx.arc(0, 0, Math.max(3, w * 0.42), 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.fillRect(-w / 2, -h / 2, w, h);
-      }
-      ctx.restore();
-    }
-  };
-
   const makeParticle = (index) => {
     const fromLeft = index % 2 === 0;
-    const instant = index < Math.ceil(celebration.pieces * 0.38);
+    const instant = index < Math.ceil(pieceCount * 0.38);
     return {
       x: instant ? Math.random() * width : (fromLeft ? -16 - Math.random() * 30 : width + 16 + Math.random() * 30),
       y: instant ? Math.random() * Math.min(height * 0.20, 150) : -24 - Math.random() * 80,
-      vx: instant ? (Math.random() - 0.5) * 2.8 : (fromLeft ? 1.5 + Math.random() * 2.8 : -1.5 - Math.random() * 2.8),
-      vy: instant ? 1.2 + Math.random() * 2.3 : 1.0 + Math.random() * 2.0,
+      vx: (instant ? (Math.random() - 0.5) * 2.8 : (fromLeft ? 1.5 + Math.random() * 2.8 : -1.5 - Math.random() * 2.8)) * motionScale,
+      vy: (instant ? 1.2 + Math.random() * 2.3 : 1.0 + Math.random() * 2.0) * motionScale,
       w: 7 + Math.random() * 8,
       h: 10 + Math.random() * 13,
       angle: Math.random() * Math.PI,
-      spin: (Math.random() - 0.5) * 0.24,
+      spin: (Math.random() - 0.5) * 0.24 * motionScale,
       delay: instant ? Math.random() * 80 : 80 + Math.random() * (level === "max" ? 520 : 340),
       color: colors[index % colors.length],
       circle: index % 5 === 0
@@ -237,7 +217,7 @@ function runResultCelebration(celebration) {
     if (!document.body.contains(canvas)) return;
     const elapsed = now - start;
     ctx.clearRect(0, 0, width, height);
-    const gravity = level === "max" ? 0.060 : 0.072;
+    const gravity = (level === "max" ? 0.060 : 0.072) * (reducedMotion ? 0.72 : 1);
 
     for (const p of particles) {
       if (elapsed < p.delay) continue;
@@ -264,15 +244,9 @@ function runResultCelebration(celebration) {
         if (!document.body.contains(canvas)) return;
         sizeCanvas();
 
-        // 「視差効果を減らす」が有効でも、動かない紙吹雪は表示する。
-        // アニメーションは行わないので reduced motion の意図は維持する。
-        if (reducedMotion) {
-          drawStaticConfetti();
-          window.setTimeout(removeResultCelebrationLayer, 2200);
-          return;
-        }
-
-        particles = Array.from({ length: celebration.pieces }, (_, index) => makeParticle(index));
+        // Reduce Motion 時も完全停止にはせず、量・速度・回転を抑えた穏やかな紙吹雪にする。
+        // iPhone/PWA でも静止せず、上から散って落ちる動きを維持する。
+        particles = Array.from({ length: pieceCount }, (_, index) => makeParticle(index));
         start = now;
         draw(now);
       });
@@ -628,28 +602,28 @@ function renderLanding() {
                     <span class="install-step-badge">1</span>
                     <div><h4>SafariでSIGN TRAINERを開く</h4><p>Safariでサイトを開きます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=43" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=45" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">2</span>
                     <div><h4>共有ボタンをタップ</h4><p>画面下の共有ボタン（四角から上向き矢印）をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=43" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=45" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">3</span>
                     <div><h4>「ホーム画面に追加」を選ぶ</h4><p>共有メニューを下へ見て、「ホーム画面に追加」をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=43" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=45" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">4</span>
                     <div><h4>右上の「追加」で完了</h4><p>確認画面の右上にある「追加」をタップするとホーム画面に追加されます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=43" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=45" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
                 </article>
               </div>
               <p class="install-note">一度追加すれば、次回からホーム画面のSIGN TRAINERアイコンですぐ開けます。</p>
@@ -669,28 +643,28 @@ function renderLanding() {
                     <span class="install-step-badge">1</span>
                     <div><h4>ChromeでSIGN TRAINERを開く</h4><p>AndroidのChromeでサイトを開きます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=43" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=45" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">2</span>
                     <div><h4>「インストール」が出たらタップ</h4><p>インストール案内が表示された場合は、そのまま「インストール」をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=43" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=45" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">3</span>
                     <div><h4>出ない場合は右上の︙を開く</h4><p>「インストール」が見つからない場合は、右上の︙から「ホーム画面に追加」を選びます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=43" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=45" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">4</span>
                     <div><h4>追加・インストールで完了</h4><p>確認画面で「追加」または「インストール」を押すと完了です。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=43" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=45" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
                 </article>
               </div>
               <p class="install-note">インストールボタンが見つからない場合でも、右上の︙メニューから追加できます。</p>
@@ -835,6 +809,7 @@ function renderAuth({ error = "", value = "", configError = false } = {}) {
           <h1>チームのサイン練習</h1>
           <p class="panel-lead">合言葉を入力してください</p>
           <p class="team-label">${escapeHtml(state.teamName)}</p>
+          ${TEAM_ID === "6BnWv2K3zo" ? '<p class="sample-passphrase-note">サンプルチームの合言葉は「<strong>ホームラン</strong>」を入力してください。</p>' : ''}
           <form id="auth-form" class="auth-form" novalidate>
             <label class="form-label" for="passphrase">合言葉</label>
             <div class="input-wrap">

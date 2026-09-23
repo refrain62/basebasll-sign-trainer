@@ -591,6 +591,8 @@ svg { display: block; }
 .auth-panel h1 { font-size: 30px; }
 .auth-panel .panel-lead { margin-top: 8px; }
 .auth-panel .team-label { margin-top: 6px; }
+.sample-passphrase-note { margin: 14px 0 0; padding: 12px 14px; border: 1px solid #bfe8d2; border-radius: 12px; background: #eefaf4; color: #174a32; font-size: 15px; font-weight: 800; line-height: 1.65; }
+.sample-passphrase-note strong { color: #0d7b4c; font-size: 1.08em; }
 
 /* Auth */
 .auth-form { margin-top: 24px; }
@@ -816,10 +818,10 @@ svg { display: block; }
 .result-celebration-screen { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; z-index: 2147483000; overflow: hidden; pointer-events: none; touch-action: none; }
 .result-confetti-canvas { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; pointer-events: none; }
 .celebration-bursts { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-.celebration-burst { position: absolute; top: max(18px, env(safe-area-inset-top)); font-size: clamp(38px, 8vw, 64px); line-height: 1; filter: drop-shadow(0 8px 18px rgba(3,35,57,.18)); animation: burst-pop .72s cubic-bezier(.2,.85,.25,1.15) both; }
-.celebration-burst--left { left: max(16px, env(safe-area-inset-left)); transform-origin: 50% 100%; }
-.celebration-burst--right { right: max(16px, env(safe-area-inset-right)); transform-origin: 50% 100%; animation-delay: .08s; }
-.celebration-burst--center { left: 50%; top: max(8px, env(safe-area-inset-top)); translate: -50% 0; animation-delay: .16s; }
+.celebration-burst { position: absolute; bottom: max(14px, calc(env(safe-area-inset-bottom) + 10px)); font-size: clamp(38px, 8vw, 64px); line-height: 1; filter: drop-shadow(0 8px 18px rgba(3,35,57,.18)); animation: burst-pop .72s cubic-bezier(.2,.85,.25,1.15) both; }
+.celebration-burst--left { left: max(16px, calc(env(safe-area-inset-left) + 8px)); transform-origin: 50% 100%; }
+.celebration-burst--right { right: max(16px, calc(env(safe-area-inset-right) + 8px)); transform-origin: 50% 100%; animation-delay: .08s; }
+.celebration-burst--center { left: 50%; translate: -50% 0; animation-delay: .16s; }
 @keyframes burst-pop {
   0% { opacity: 0; transform: translateY(14px) scale(.45) rotate(-12deg); }
   65% { opacity: 1; transform: translateY(-4px) scale(1.16) rotate(5deg); }
@@ -1449,7 +1451,7 @@ svg { display: block; }
   }
 }
 
-/* build 43: install steps use separate HTML copy and screenshot-only images */
+/* build 45: install steps use separate HTML copy and screenshot-only images */
 .install-section {
   background: linear-gradient(180deg, #f8fbfd 0%, #ffffff 100%);
 }
