@@ -646,8 +646,25 @@ svg { display: block; }
   line-height: 1.7;
 }
 .trust-note svg { width: 18px; height: 18px; flex: 0 0 auto; color: var(--green-700); }
-.back-link { margin-top: 20px; text-align: center; }
-.back-link a, .text-link { color: var(--navy-700); font-size: 12px; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
+ .back-link { margin-top: 20px; text-align: center; }
+.back-link a, .text-link {
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--navy-800);
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(8,40,68,.04);
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.35;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
 
 /* Practice setup */
 .setup-ball { width: 82px; height: 82px; margin: 20px auto 24px; display: grid; place-items: center; }
@@ -679,7 +696,24 @@ svg { display: block; }
 .practice-points { margin-top: 26px; padding-top: 21px; border-top: 1px solid var(--line); display: grid; gap: 10px; }
 .practice-point { display: flex; gap: 10px; align-items: flex-start; color: var(--ink-2); font-size: 13px; line-height: 1.6; font-weight: 700; }
 .practice-point svg { width: 18px; height: 18px; flex: 0 0 auto; color: var(--green-600); }
-.logout-link { margin: 26px auto 0; display: block; border: 0; color: var(--navy-700); background: transparent; font-size: 11px; text-decoration: underline; text-underline-offset: 3px; }
+.logout-link {
+  width: min(100%, 320px);
+  min-height: 50px;
+  margin: 26px auto 0;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d9e3e9;
+  border-radius: 12px;
+  color: var(--navy-800);
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(8,40,68,.035);
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
 
 /* Quiz */
 .quiz-page { min-height: 100dvh; color: #fff; background: linear-gradient(180deg, #041d31 0%, #062942 55%, #031827 100%); }
@@ -688,13 +722,15 @@ svg { display: block; }
 .quiz-exit, .quiz-back {
   appearance: none;
   min-height: 46px;
-  padding: 0;
-  border: 0;
-  color: rgba(255,255,255,.88);
-  background: transparent;
+  padding: 0 11px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 11px;
+  color: rgba(255,255,255,.94);
+  background: rgba(255,255,255,.06);
   text-align: left;
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 850;
+  -webkit-tap-highlight-color: transparent;
 }
 .quiz-progress { text-align: center; color: #fff; font-size: 16px; font-weight: 900; }
 .progress-track { height: 3px; background: rgba(255,255,255,.12); }
@@ -745,7 +781,15 @@ svg { display: block; }
 }
 .quiz-button-primary { color: #fff; border-color: #16ac65; background: linear-gradient(180deg, #0ba55e, #078048); box-shadow: 0 10px 24px rgba(0,0,0,.18); }
 .quiz-button-secondary { color: #fff; background: rgba(255,255,255,.04); }
-.quiz-button-quiet { min-height: 44px; border: 0; color: rgba(255,255,255,.72); background: transparent; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
+.quiz-button-quiet {
+  min-height: 52px;
+  border: 1px solid rgba(255,255,255,.22);
+  color: rgba(255,255,255,.88);
+  background: rgba(255,255,255,.055);
+  font-size: 15px;
+  text-decoration: none;
+  box-shadow: none;
+}
 
 /* Video loading/error */
 .video-loading { min-height: 100%; display: grid; place-items: center; align-content: center; gap: 10px; }
@@ -787,7 +831,17 @@ svg { display: block; }
 .grade-correct { color: #fff; border: 1px solid var(--green-600); background: linear-gradient(180deg, #0aa35c, #078048); }
 .grade-wrong { color: var(--red-600); border: 2px solid var(--red-600); background: #fff; }
 .grade-status { min-height: 32px; margin-top: 12px; text-align: center; color: var(--muted); font-size: 11px; }
-.grade-status button { border: 0; color: var(--navy-700); background: transparent; text-decoration: underline; text-underline-offset: 3px; font-weight: 750; }
+.grade-status button {
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
+  color: var(--navy-800);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+}
 
 /* Grade transition */
 .grade-transition {
@@ -878,7 +932,19 @@ svg { display: block; }
 .mistake-summary h3 { margin: 0; color: var(--navy-900); font-size: 15px; }
 .mistake-summary p { margin: 7px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .result-actions { display: grid; gap: 10px; margin-top: 22px; }
-.result-text-button { min-height: 40px; border: 0; color: var(--navy-700); background: transparent; font-size: 11px; text-decoration: underline; text-underline-offset: 3px; }
+.result-text-button {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  color: var(--navy-800);
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(8,40,68,.035);
+  font-size: 14px;
+  font-weight: 850;
+  text-decoration: none;
+}
 
 /* Mistake review list */
 .review-list { display: grid; gap: 10px; margin-top: 24px; }
@@ -1644,3 +1710,75 @@ svg { display: block; }
 }
 
 /* build 40: keep result score perfectly circular on iPhone Safari */
+
+
+/* build 46: mobile-first tap targets for actions that previously looked like text links */
+@media (max-width: 680px) {
+  .back-link a,
+  .text-link,
+  .logout-link,
+  .result-text-button {
+    width: 100%;
+    min-height: 52px;
+    font-size: 15px;
+  }
+
+  .mobile-nav {
+    gap: 6px;
+    padding: 10px;
+  }
+  .mobile-nav a:not(.button) {
+    min-height: 50px;
+    border: 1px solid #e0e9ee;
+    background: #f8fbfc;
+  }
+
+  .footer-nav {
+    width: 100%;
+    gap: 8px;
+    justify-content: center;
+  }
+  .footer-nav a {
+    min-height: 44px;
+    padding: 0 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 999px;
+    background: rgba(255,255,255,.055);
+    font-size: 12px;
+  }
+
+  .quiz-exit, .quiz-back {
+    min-height: 48px;
+    padding-inline: 12px;
+  }
+
+  .grade-status button {
+    min-width: 160px;
+    min-height: 48px;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .button,
+  .choice,
+  .review-item,
+  .history-entry-button,
+  .share-entry-button,
+  .back-link a,
+  .text-link,
+  .logout-link,
+  .result-text-button,
+  .quiz-button,
+  .grade-button,
+  .quiz-exit,
+  .quiz-back,
+  .grade-status button,
+  .mobile-nav a,
+  .footer-nav a {
+    -webkit-tap-highlight-color: rgba(16,168,97,.12);
+    touch-action: manipulation;
+  }
+}

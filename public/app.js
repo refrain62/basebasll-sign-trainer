@@ -1,4 +1,4 @@
-const APP_BUILD = "45";
+const APP_BUILD = "46";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const PUBLIC_SITE_URL = "https://basebasll-sign-trainer.refrain62.workers.dev";
@@ -602,28 +602,28 @@ function renderLanding() {
                     <span class="install-step-badge">1</span>
                     <div><h4>SafariでSIGN TRAINERを開く</h4><p>Safariでサイトを開きます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=45" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=46" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">2</span>
                     <div><h4>共有ボタンをタップ</h4><p>画面下の共有ボタン（四角から上向き矢印）をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=45" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=46" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">3</span>
                     <div><h4>「ホーム画面に追加」を選ぶ</h4><p>共有メニューを下へ見て、「ホーム画面に追加」をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=45" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=46" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">4</span>
                     <div><h4>右上の「追加」で完了</h4><p>確認画面の右上にある「追加」をタップするとホーム画面に追加されます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=45" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=46" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
                 </article>
               </div>
               <p class="install-note">一度追加すれば、次回からホーム画面のSIGN TRAINERアイコンですぐ開けます。</p>
@@ -643,28 +643,28 @@ function renderLanding() {
                     <span class="install-step-badge">1</span>
                     <div><h4>ChromeでSIGN TRAINERを開く</h4><p>AndroidのChromeでサイトを開きます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=45" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=46" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">2</span>
                     <div><h4>「インストール」が出たらタップ</h4><p>インストール案内が表示された場合は、そのまま「インストール」をタップします。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=45" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=46" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">3</span>
                     <div><h4>出ない場合は右上の︙を開く</h4><p>「インストール」が見つからない場合は、右上の︙から「ホーム画面に追加」を選びます。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=45" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=46" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
                 </article>
                 <article class="install-step-card">
                   <div class="install-step-copy">
                     <span class="install-step-badge">4</span>
                     <div><h4>追加・インストールで完了</h4><p>確認画面で「追加」または「インストール」を押すと完了です。</p></div>
                   </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=45" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
+                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=46" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
                 </article>
               </div>
               <p class="install-note">インストールボタンが見つからない場合でも、右上の︙メニューから追加できます。</p>
