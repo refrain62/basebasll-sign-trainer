@@ -1,4 +1,4 @@
-import { qrImageUrl, teamUrl } from "./share-utils.js?v=64";
+import { qrImageUrl, teamUrl } from "./share-utils.js?v=69";
 
 const app = document.querySelector("#app");
 const ICON = "/assets/sign-trainer-icon.png";

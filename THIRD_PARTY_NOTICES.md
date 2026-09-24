@@ -10,3 +10,14 @@
 - Integrity: see `public/vendor/SHA256SUMS`.
 
 The file is served from this application itself; there is no runtime CDN dependency for QR generation.
+
+## Hono
+
+Backend HTTP routing uses Hono 4.13.8.
+
+- License: MIT
+- Project: Hono (honojs/hono)
+- Purpose: route grouping and middleware composition on Cloudflare Workers.
+- Runtime dependencies of Hono: none.
+- Version policy: pinned exactly in `package.json`.
+

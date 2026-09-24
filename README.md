@@ -1,4 +1,4 @@
-# SIGN TRAINER — build 63
+# SIGN TRAINER — build 69
 
 野球チーム固有のサインを動画で反復練習する Web / PWA です。D1 は local / dev / staging / production で分離し、チーム情報・サイン・YouTube URLのみを保存します。選手の回答・正答率・練習履歴は端末の `localStorage` のみに保存します。
 
@@ -297,3 +297,112 @@ npm run db:migrate:local
 ## build 64: LP機能説明
 
 トップページに、サイングループ・グループ説明動画・2ステップ練習選択・スマホ管理画面・複数動画コメント・共有/PWAの説明セクションを追加しました。
+
+
+## build 65: LP Workerスナップショット同期
+
+LPの最新機能説明（サイングループ、グループ説明動画、2ステップ練習など）を `public/index.html` から Worker 配信用の `public/__pages/index.txt` へ同期しました。`team.html` / `admin.html` についても対応する TXT スナップショットを正本HTMLと再同期しています。DB変更はありません。
+
+## build 66: Honoへバックエンドルーティングを移行
+
+バックエンドのルーティングを手書きの `if (pathname...)` / 正規表現ディスパッチから **Hono 4.13.8** へ移行しました。Honoは完全固定バージョンで追加し、Cloudflare Workers / D1 の構成はそのまま維持しています。
+
+```text
+src/
+├── index.js              # Honoアプリ / 共通middleware / Assets配信
+├── backend.js            # 認証・業務ロジック・D1アクセス
+└── routes/
+    ├── player.js         # 選手API
+    ├── team-admin.js     # チーム管理API
+    └── system.js         # システム管理API
+```
+
+DBはORMへ変更していません。従来どおり **Cloudflare D1 Binding (`env.DB`) + `prepare().bind()`** を直接利用します。既存のprepared statement、PBKDF2、D1レート制限、CSRF、Cloudflare Access、Cookie、soft delete、audit logなどのセキュリティ処理も維持しています。
+
+Honoを追加したため、このbuildを展開した後は一度依存関係を更新してください。
+
+```bash
+npm install --ignore-scripts
+npm run check
+npm run security:preflight
+```
+
+`security:preflight` は従来どおり `package-lock.json` が無い状態ではdeployを止めます。DBスキーマ変更はないため migration は不要です。
+
+
+
+## build 67: Unit tests
+
+Node.js 22〜24 で利用できる標準の `node:test` を使ったユニットテストを追加しました。テスト専用の外部依存はありません。
+
+```bash
+npm test
+npm run test:watch
+npm run test:coverage
+```
+
+`npm run check` に `npm run test:unit` を組み込んでいるため、構文チェック・ルート整合性チェックと一緒にユニットテストも実行されます。`.github/workflows/ci.yml` の GitHub Actions でも `npm run check` 経由でテストが走ります。`package-lock.json` が存在する場合は依存関係の `npm audit` も実行します。
+
+主なテスト対象:
+
+- 管理者パスワード要件と Secret 設定エラー
+- PBKDF2 パスワードハッシュ / 検証
+- 署名付きセッショントークン改ざん検知
+- CSRF / Content-Type / Cloudflare Access 判定
+- Cookie セキュリティ属性と CSP
+- YouTube URL パース
+- サイングループ / サイン / 動画コメントの D1 行マッピング
+- メンバー画面のグループ絞り込みと問題数選択ロジック
+- `admin12345678` がシステム管理者 Secret として受理される回帰テスト
+
+フロントの問題数選択ロジックは `public/practice-utils.js` に切り出し、DOM に依存せず直接テストできるようにしています。DB スキーマ変更はありません。
+
+テスト方針の詳細は `docs/testing.md` を参照してください。
+
+
+## build 68: SOLID-oriented backend refactor
+
+Hono / Cloudflare Workers / D1 の技術スタックとAPI互換を維持したまま、バックエンドを責務別に再構成しました。DBスキーマ変更はありません。
+
+```text
+src/
+├── index.js                 # Hono composition root / Assets
+├── routes/                  # URL と controller の対応だけ
+├── middleware/              # API guard / Cloudflare Access
+├── controllers/             # HTTP Request/Response 境界
+├── services/                # 業務ルール。HTTP/D1へ直接依存しない
+├── repositories/            # Cloudflare D1 SQLアクセス
+├── security/                # session / password / auth / rate limit
+├── validation/              # 入力正規化・YouTube検証
+├── http/                    # JSON response / security headers / page serving
+└── backend.js               # 後方互換用の薄いexport facade
+```
+
+### SOLIDで特に改善した点
+
+- **S (Single Responsibility)**: 旧 `backend.js` のルーティング・認証・SQL・バリデーション・業務処理を分離。`backend.js` は互換exportのみ。
+- **O (Open/Closed)**: 新しいサイン種別や管理APIは、既存の巨大dispatcherを変更せずService/Repositoryを追加して拡張可能。
+- **I (Interface Segregation)**: Group / Sign / Video / Team ごとに小さいRepository/Serviceへ分割。
+- **D (Dependency Inversion)**: ServiceはD1を直接触らず、Repository interfaceを受け取る。ユニットテストではfake repositoryを注入可能。
+- **L (Liskov Substitution)**: 継承を使わず関数・object interfaceで構成し、fake実装への置換をテストで確認。
+
+`node scripts/architecture-check.mjs` を追加し、ServiceでのD1直接アクセス、Controller/RouteでのSQL、Routeから互換 `backend.js` への依存をCIで禁止しています。
+
+ユニットテストは **31件** に増え、Group/Sign/System Team serviceをD1なしのfake repositoryで検証します。
+
+```bash
+npm test
+npm run test:architecture
+npm run check
+```
+
+DB migrationは不要です。
+
+
+## build 69: Node 24 / npm 11 compatibility
+
+- `engines.node` を `>=22 <25` に変更し、Node.js 22〜24 を許可しました。
+- `engines.npm` は `>=10 <12` とし、npm 10 / 11 を許可します。
+- `packageManager` は npm 11.6.2 に更新しました。
+- Hono 4.13.8 は引き続き完全固定です。
+- `npm install` が `EBADENGINE` で停止して Hono が未インストールになる問題を解消しました。

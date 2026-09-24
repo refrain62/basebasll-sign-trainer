@@ -1,6 +1,7 @@
-import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=64";
+import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=69";
+import { filterPracticeSigns, findPracticeGroup, getPracticeOptions } from "./practice-utils.js?v=69";
 
-const APP_BUILD = "64";
+const APP_BUILD = "69";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const SAMPLE_TEAM_ID = "6BnWv2K3zo";
@@ -600,17 +601,11 @@ function isPracticeReadySign(sign) {
 }
 
 function currentPracticeSigns() {
-  if (state.activeGroupId === "all") return state.signs;
-  if (state.activeGroupId === null || state.activeGroupId === undefined) return [];
-  return state.signs.filter((sign) => Number(sign.groupId) === Number(state.activeGroupId));
+  return filterPracticeSigns(state.signs, state.activeGroupId);
 }
 
 function selectedPracticeGroup() {
-  if (state.activeGroupId === "all") {
-    return { id: "all", name: "すべてのサイン", description: "登録されているすべてのサインをまとめて練習します。", videoId: "" };
-  }
-  if (state.activeGroupId === null || state.activeGroupId === undefined) return null;
-  return state.groups.find((group) => Number(group.id) === Number(state.activeGroupId)) || null;
+  return findPracticeGroup(state.groups, state.activeGroupId);
 }
 
 function selectPracticeGroup(groupId) {
@@ -683,28 +678,6 @@ function openGroupReview(group) {
   const close = () => layer.remove();
   layer.querySelectorAll("[data-group-review-close]").forEach((el) => el.addEventListener("click", close));
   layer.querySelector("#group-review-practice")?.addEventListener("click", () => { if (!playable) return; close(); selectPracticeGroup(Number(group.id)); });
-}
-
-function getPracticeOptions(signCount) {
-  const count = Math.max(0, Number(signCount) || 0);
-  if (count === 0) return [];
-  if (count < 5) {
-    return [{ count: "all", main: `${count}問で練習する`, sub: `登録されている全${count}サイン`, recommended: true, badge: "全サイン" }];
-  }
-  if (count === 5) {
-    return [{ count: "all", main: "5問で練習する", sub: "登録されている全サイン", recommended: true, badge: "全サイン" }];
-  }
-  if (count < 10) {
-    return [
-      { count: 5, main: "5問ではじめる", sub: "サクッと練習", recommended: false },
-      { count: "all", main: `${count}問で練習する`, sub: `全${count}サインをじっくり練習`, recommended: true, badge: "全サイン" }
-    ];
-  }
-  return [
-    { count: 10, main: "10問ではじめる", sub: "しっかり練習", recommended: true, badge: "おすすめ" },
-    { count: 5, main: "5問ではじめる", sub: "サクッと練習", recommended: false },
-    { count: "all", main: "全てのサイン", sub: `じっくり練習 · ${count}種類`, recommended: false }
-  ];
 }
 
 function renderPracticeSetup() {

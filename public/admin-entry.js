@@ -1,4 +1,4 @@
-const APP_BUILD = "64";
+const APP_BUILD = "69";
 console.info(`[SIGN TRAINER] build ${APP_BUILD} admin`);
 
 const { renderSystemAdmin, renderTeamAdmin } = await import(`/admin.js?v=${APP_BUILD}`);

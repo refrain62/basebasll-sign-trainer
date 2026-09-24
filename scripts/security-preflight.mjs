@@ -8,6 +8,9 @@ const failures = [];
 if (pkg.devDependencies?.wrangler !== "4.136.3") {
   failures.push("wrangler must be pinned exactly to 4.136.3");
 }
+if (pkg.dependencies?.hono !== "4.13.8") {
+  failures.push("hono must be pinned exactly to 4.13.8");
+}
 if (!fs.existsSync(path.join(root, "package-lock.json"))) {
   failures.push("package-lock.json is missing. Run `npm install --package-lock-only --ignore-scripts` once and commit it before deploy.");
 }
@@ -16,9 +19,10 @@ for (const secretFile of [".dev.vars", ".dev.vars.dev", ".env", ".env.local"]) {
     console.warn(`[security] local secret file exists: ${secretFile} (allowed for local dev; never include it in distributed ZIP/Git)`);
   }
 }
-const allowedDirect = new Set(["wrangler"]);
-for (const name of Object.keys(pkg.dependencies || {})) if (!allowedDirect.has(name)) failures.push(`unexpected runtime dependency: ${name}`);
-for (const name of Object.keys(pkg.devDependencies || {})) if (!allowedDirect.has(name)) failures.push(`unexpected dev dependency: ${name}`);
+const allowedRuntime = new Set(["hono"]);
+const allowedDev = new Set(["wrangler"]);
+for (const name of Object.keys(pkg.dependencies || {})) if (!allowedRuntime.has(name)) failures.push(`unexpected runtime dependency: ${name}`);
+for (const name of Object.keys(pkg.devDependencies || {})) if (!allowedDev.has(name)) failures.push(`unexpected dev dependency: ${name}`);
 
 if (failures.length) {
   console.error("Security preflight failed:\n- " + failures.join("\n- "));
