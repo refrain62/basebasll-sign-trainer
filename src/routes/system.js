@@ -7,7 +7,9 @@ import {
   systemListTeams,
   systemLogout,
   systemSession,
-  systemUpdateTeam
+  systemUpdateTeam,
+  systemDataProtectionStatus,
+  systemProtectData
 } from "../controllers/system-controller.js";
 
 const systemRoutes = new Hono();
@@ -29,5 +31,7 @@ systemRoutes.get("/teams", (c) => systemListTeams(c.req.raw, c.env));
 systemRoutes.post("/teams", (c) => systemCreateTeam(c.req.raw, c.env));
 systemRoutes.put("/teams/:teamId", withTeamId((c, teamId) => systemUpdateTeam(c.req.raw, c.env, teamId)));
 systemRoutes.delete("/teams/:teamId", withTeamId((c, teamId) => systemDeleteTeam(c.req.raw, c.env, teamId)));
+systemRoutes.get("/security/data-protection", (c) => systemDataProtectionStatus(c.req.raw, c.env));
+systemRoutes.post("/security/data-protection", (c) => systemProtectData(c.req.raw, c.env));
 
 export { systemRoutes };

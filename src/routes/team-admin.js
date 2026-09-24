@@ -5,6 +5,12 @@ import {
   teamAdminCreateGroup,
   teamAdminCreateSign,
   teamAdminCreateVideo,
+  teamAdminCreateInvite,
+  teamAdminRevokeInvite,
+  teamAdminRemoveAdmin,
+  teamAdminTransferOwner,
+  teamAdminLeave,
+  teamAdminDisableLegacyPassword,
   teamAdminDeleteGroup,
   teamAdminDeleteSign,
   teamAdminDeleteVideo,
@@ -23,6 +29,12 @@ const numericParam = (c, name) => {
   const value = Number(c.req.param(name));
   return Number.isInteger(value) && value > 0 ? value : null;
 };
+
+const safeIdParam = (c, name, pattern) => {
+  const value = String(c.req.param(name) || "");
+  return pattern.test(value) ? value : null;
+};
+
 const withNumericParam = (name, handler) => (c) => {
   const value = numericParam(c, name);
   if (value === null) return apiJson({ error: "not_found" }, 404);
@@ -34,6 +46,21 @@ teamAdminRoutes.post("/auth", (c) => teamAdminAuth(c.req.raw, c.env, requestUrl(
 teamAdminRoutes.post("/logout", (c) => teamAdminLogout(c.req.raw, requestUrl(c)));
 teamAdminRoutes.get("/team", (c) => teamAdminGetTeam(c.req.raw, c.env, requestUrl(c)));
 teamAdminRoutes.put("/team", (c) => teamAdminUpdateTeam(c.req.raw, c.env, requestUrl(c)));
+
+teamAdminRoutes.post("/admins/invites", (c) => teamAdminCreateInvite(c.req.raw, c.env, requestUrl(c)));
+teamAdminRoutes.delete("/admins/invites/:inviteId", (c) => {
+  const inviteId = safeIdParam(c, "inviteId", /^inv_[A-Za-z0-9_-]{8,40}$/);
+  if (!inviteId) return apiJson({ error: "not_found" }, 404);
+  return teamAdminRevokeInvite(c.req.raw, c.env, requestUrl(c), inviteId);
+});
+teamAdminRoutes.delete("/admins/:userId", (c) => {
+  const userId = safeIdParam(c, "userId", /^u_[A-Za-z0-9_-]{8,40}$/);
+  if (!userId) return apiJson({ error: "not_found" }, 404);
+  return teamAdminRemoveAdmin(c.req.raw, c.env, requestUrl(c), userId);
+});
+teamAdminRoutes.post("/admins/transfer", (c) => teamAdminTransferOwner(c.req.raw, c.env, requestUrl(c)));
+teamAdminRoutes.delete("/membership", (c) => teamAdminLeave(c.req.raw, c.env, requestUrl(c)));
+teamAdminRoutes.post("/legacy-password/disable", (c) => teamAdminDisableLegacyPassword(c.req.raw, c.env, requestUrl(c)));
 
 teamAdminRoutes.post("/groups", (c) => teamAdminCreateGroup(c.req.raw, c.env, requestUrl(c)));
 teamAdminRoutes.put("/groups/:groupId", withNumericParam("groupId", (c, groupId) => teamAdminUpdateGroup(c.req.raw, c.env, requestUrl(c), groupId)));

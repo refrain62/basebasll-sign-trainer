@@ -1,22 +1,58 @@
+async function decryptTeamContent(row, protector) {
+  if (!row || !protector) return row;
+  return { ...row, name: await protector.decrypt(row.name, "teams.name") };
+}
+
+async function decryptVideoRow(row, protector) {
+  if (!row || !protector) return row;
+  return {
+    ...row,
+    youtube_url: await protector.decrypt(row.youtube_url, "sign_videos.youtube_url"),
+    youtube_video_id: await protector.decrypt(row.youtube_video_id, "sign_videos.youtube_video_id"),
+    comment: await protector.decrypt(row.comment, "sign_videos.comment")
+  };
+}
+
+async function decryptSignRow(row, protector) {
+  if (!row || !protector) return row;
+  return { ...row, name: await protector.decrypt(row.name, "signs.name") };
+}
+
+async function decryptGroupRow(row, protector) {
+  if (!row || !protector) return row;
+  return {
+    ...row,
+    name: await protector.decrypt(row.name, "sign_groups.name"),
+    description: await protector.decrypt(row.description, "sign_groups.description"),
+    explanation_youtube_url: await protector.decrypt(row.explanation_youtube_url, "sign_groups.explanation_youtube_url"),
+    explanation_youtube_video_id: await protector.decrypt(row.explanation_youtube_video_id, "sign_groups.explanation_youtube_video_id")
+  };
+}
+
 export function publicTeam(team) {
   return { id: team.id, name: team.name, status: team.status, createdAt: team.created_at, updatedAt: team.updated_at };
 }
 
-export async function getTeam(db, teamId) {
-  return db.prepare("SELECT id,name,passphrase_hash,admin_password_hash,status,player_session_version,admin_session_version,created_at,updated_at FROM teams WHERE id=? AND deleted_at IS NULL")
+export async function getTeam(db, teamId, protector = null) {
+  const row = await db.prepare("SELECT id,name,passphrase_hash,admin_password_hash,admin_password_enabled,status,player_session_version,admin_session_version,created_at,updated_at FROM teams WHERE id=? AND deleted_at IS NULL")
     .bind(teamId).first();
+  return decryptTeamContent(row, protector);
 }
 
-export async function getTeamSigns(db, teamId, { onlyEnabled = false } = {}) {
+export async function getTeamSigns(db, teamId, { onlyEnabled = false } = {}, protector = null) {
   const signSql = onlyEnabled
     ? "SELECT * FROM signs WHERE team_id=? AND enabled=1 AND deleted_at IS NULL ORDER BY sort_order,id"
     : "SELECT * FROM signs WHERE team_id=? AND deleted_at IS NULL ORDER BY sort_order,id";
-  const signRows = (await db.prepare(signSql).bind(teamId).all()).results || [];
+  const rawSignRows = (await db.prepare(signSql).bind(teamId).all()).results || [];
+  const signRows = [];
+  for (const row of rawSignRows) signRows.push(await decryptSignRow(row, protector));
   if (!signRows.length) return [];
   const ids = signRows.map((s) => s.id);
   const placeholders = ids.map(() => "?").join(",");
   const videoSql = `SELECT * FROM sign_videos WHERE sign_id IN (${placeholders}) AND deleted_at IS NULL${onlyEnabled ? " AND enabled=1" : ""} ORDER BY sort_order,id`;
-  const videoRows = (await db.prepare(videoSql).bind(...ids).all()).results || [];
+  const rawVideoRows = (await db.prepare(videoSql).bind(...ids).all()).results || [];
+  const videoRows = [];
+  for (const row of rawVideoRows) videoRows.push(await decryptVideoRow(row, protector));
   const bySign = new Map();
   for (const row of videoRows) {
     if (!bySign.has(row.sign_id)) bySign.set(row.sign_id, []);
@@ -41,22 +77,27 @@ export async function getTeamSigns(db, teamId, { onlyEnabled = false } = {}) {
   })).filter((sign) => !onlyEnabled || sign.videos.length > 0);
 }
 
-export async function getTeamGroups(db, teamId, { onlyEnabled = false } = {}) {
+export async function getTeamGroups(db, teamId, { onlyEnabled = false } = {}, protector = null) {
   const sql = `SELECT id,name,description,explanation_youtube_url,explanation_youtube_video_id,sort_order,enabled FROM sign_groups WHERE team_id=? AND deleted_at IS NULL${onlyEnabled ? " AND enabled=1" : ""} ORDER BY sort_order,id`;
   const rows = (await db.prepare(sql).bind(teamId).all()).results || [];
-  return rows.map((row) => ({
-    id: Number(row.id),
-    name: row.name,
-    description: String(row.description || ""),
-    youtubeUrl: String(row.explanation_youtube_url || ""),
-    videoId: String(row.explanation_youtube_video_id || ""),
-    sortOrder: Number(row.sort_order || 0),
-    enabled: Boolean(row.enabled)
-  }));
+  const output = [];
+  for (const raw of rows) {
+    const row = await decryptGroupRow(raw, protector);
+    output.push({
+      id: Number(row.id),
+      name: row.name,
+      description: String(row.description || ""),
+      youtubeUrl: String(row.explanation_youtube_url || ""),
+      videoId: String(row.explanation_youtube_video_id || ""),
+      sortOrder: Number(row.sort_order || 0),
+      enabled: Boolean(row.enabled)
+    });
+  }
+  return output;
 }
 
-export async function getGroup(db, teamId, groupId) {
-  const groups = await getTeamGroups(db, teamId, { onlyEnabled: false });
+export async function getGroup(db, teamId, groupId, protector = null) {
+  const groups = await getTeamGroups(db, teamId, { onlyEnabled: false }, protector);
   return groups.find((group) => Number(group.id) === Number(groupId)) || null;
 }
 
@@ -68,17 +109,17 @@ export async function validGroupId(db, teamId, value) {
   return row ? id : null;
 }
 
-export async function getSignWithVideos(db, teamId, signId) {
-  const signs = await getTeamSigns(db, teamId, { onlyEnabled: false });
+export async function getSignWithVideos(db, teamId, signId, protector = null) {
+  const signs = await getTeamSigns(db, teamId, { onlyEnabled: false }, protector);
   return signs.find((sign) => Number(sign.dbId) === Number(signId)) || null;
 }
 
-export function createTeamRepository(db) {
+export function createTeamRepository(db, protector = null) {
   return {
-    findById: (teamId) => getTeam(db, teamId),
+    findById: (teamId) => getTeam(db, teamId, protector),
     publicTeam,
-    getSigns: (teamId, options) => getTeamSigns(db, teamId, options),
-    getGroups: (teamId, options) => getTeamGroups(db, teamId, options),
+    getSigns: (teamId, options) => getTeamSigns(db, teamId, options, protector),
+    getGroups: (teamId, options) => getTeamGroups(db, teamId, options, protector),
     async rehashPassphrase(teamId, passphraseHash) {
       return db.prepare("UPDATE teams SET passphrase_hash=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(passphraseHash, teamId).run();
     },
@@ -86,8 +127,9 @@ export function createTeamRepository(db) {
       return db.prepare("UPDATE teams SET admin_password_hash=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(passwordHash, teamId).run();
     },
     async updateFromTeamAdmin({ teamId, name, passphraseHash, adminHash, passphraseChanged, adminPasswordChanged }) {
+      const protectedName = protector ? await protector.encrypt(name, "teams.name") : name;
       return db.prepare("UPDATE teams SET name=?, passphrase_hash=?, admin_password_hash=?, player_session_version=player_session_version+?, admin_session_version=admin_session_version+?, updated_at=CURRENT_TIMESTAMP WHERE id=?")
-        .bind(name, passphraseHash, adminHash, passphraseChanged ? 1 : 0, adminPasswordChanged ? 1 : 0, teamId).run();
+        .bind(protectedName, passphraseHash, adminHash, passphraseChanged ? 1 : 0, adminPasswordChanged ? 1 : 0, teamId).run();
     },
     async listWithCounts() {
       const result = await db.prepare(`
@@ -99,18 +141,28 @@ export function createTeamRepository(db) {
         GROUP BY t.id
         ORDER BY t.created_at DESC
       `).all();
-      return (result.results || []).map((row) => ({ ...row, sign_count: Number(row.sign_count || 0), video_count: Number(row.video_count || 0) }));
+      const output = [];
+      for (const row of result.results || []) {
+        output.push({ ...row, name: protector ? await protector.decrypt(row.name, "teams.name") : row.name, sign_count: Number(row.sign_count || 0), video_count: Number(row.video_count || 0) });
+      }
+      return output;
     },
     async idExists(teamId) {
       return Boolean(await db.prepare("SELECT id FROM teams WHERE id=?").bind(teamId).first());
     },
-    async create({ teamId, name, passphraseHash, adminHash }) {
-      return db.prepare("INSERT INTO teams(id,name,passphrase_hash,admin_password_hash,status) VALUES(?,?,?,?, 'active')")
-        .bind(teamId, name, passphraseHash, adminHash).run();
+    async create({ teamId, name, passphraseHash, adminHash, adminPasswordEnabled = true }) {
+      const protectedName = protector ? await protector.encrypt(name, "teams.name") : name;
+      return db.prepare("INSERT INTO teams(id,name,passphrase_hash,admin_password_hash,admin_password_enabled,status) VALUES(?,?,?,?,?, 'active')")
+        .bind(teamId, protectedName, passphraseHash, adminHash, adminPasswordEnabled ? 1 : 0).run();
+    },
+    async disableAdminPassword(teamId) {
+      return db.prepare("UPDATE teams SET admin_password_enabled=0,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL")
+        .bind(teamId).run();
     },
     async updateFromSystem({ teamId, name, status, passphraseHash, adminHash, invalidatePlayer, invalidateAdmin }) {
+      const protectedName = protector ? await protector.encrypt(name, "teams.name") : name;
       return db.prepare("UPDATE teams SET name=?,status=?,passphrase_hash=?,admin_password_hash=?,player_session_version=player_session_version+?,admin_session_version=admin_session_version+?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
-        .bind(name, status, passphraseHash, adminHash, invalidatePlayer ? 1 : 0, invalidateAdmin ? 1 : 0, teamId).run();
+        .bind(protectedName, status, passphraseHash, adminHash, invalidatePlayer ? 1 : 0, invalidateAdmin ? 1 : 0, teamId).run();
     },
     async softDelete(teamId) {
       return db.prepare("UPDATE teams SET status='suspended',deleted_at=CURRENT_TIMESTAMP,player_session_version=player_session_version+1,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?")

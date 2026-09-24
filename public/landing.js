@@ -1,10 +1,90 @@
-import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=69";
+import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=77";
 
-const APP_BUILD = "69";
+const APP_BUILD = "77";
+const TERMS_VERSION = "2026-09-25";
+const PRIVACY_VERSION = "2026-09-25";
 console.info(`[SIGN TRAINER] build ${APP_BUILD} landing`);
 
 const SAMPLE_TEAM_ID = "6BnWv2K3zo";
 const shareDialog = document.querySelector("#share-dialog");
+
+const registerDialog = document.querySelector("#team-register-dialog");
+
+function updateRegistrationButtons() {
+  if (!registerDialog) return;
+  const consent = Boolean(registerDialog.querySelector("#register-legal-consent")?.checked);
+  for (const id of ["#register-google", "#register-line"]) {
+    const link = registerDialog.querySelector(id);
+    if (!link) continue;
+    const enabled = link.dataset.providerEnabled === "true" && consent;
+    link.classList.toggle("is-disabled", !enabled);
+    link.setAttribute("aria-disabled", enabled ? "false" : "true");
+    if (enabled) {
+      const base = link.dataset.oauthBase || "";
+      const separator = base.includes("?") ? "&" : "?";
+      link.href = `${base}${separator}terms=${encodeURIComponent(TERMS_VERSION)}&privacy=${encodeURIComponent(PRIVACY_VERSION)}`;
+    } else {
+      link.removeAttribute("href");
+    }
+  }
+}
+
+async function loadRegistrationProviders() {
+  if (!registerDialog) return;
+  const status = registerDialog.querySelector("#team-register-provider-status");
+  try {
+    const response = await fetch("/api/account/providers", { cache: "no-store" });
+    const data = await response.json().catch(() => ({}));
+    const providers = data.providers || {};
+    for (const [provider, id] of [["google", "#register-google"], ["line", "#register-line"]]) {
+      const link = registerDialog.querySelector(id);
+      if (!link) continue;
+      const enabled = Boolean(providers[provider]);
+      link.dataset.providerEnabled = enabled ? "true" : "false";
+    }
+    if (!providers.google || !providers.line) {
+      if (status) status.innerHTML = `<div class="notice notice-warning">現在利用できない認証方法があります。運営側のOAuth設定後に有効になります。</div>`;
+    } else if (status) status.innerHTML = "";
+    updateRegistrationButtons();
+  } catch {
+    if (status) status.innerHTML = `<div class="notice notice-error">認証方法を確認できませんでした。もう一度お試しください。</div>`;
+  }
+}
+
+async function openRegistrationDialog() {
+  try {
+    const response = await fetch("/api/account/session", { cache: "no-store" });
+    const data = await response.json().catch(() => ({}));
+    if (data.authenticated) {
+      location.href = "/account?create=1";
+      return;
+    }
+  } catch {
+    // Fall back to the provider chooser when account state cannot be loaded.
+  }
+  if (!registerDialog) {
+    location.href = "/account?create=1";
+    return;
+  }
+  const consent = registerDialog.querySelector("#register-legal-consent");
+  if (consent) consent.checked = false;
+  await loadRegistrationProviders();
+  updateRegistrationButtons();
+  if (registerDialog.showModal) registerDialog.showModal();
+  else registerDialog.setAttribute("open", "");
+}
+
+function initRegistrationDialog() {
+  document.querySelectorAll("[data-open-register]").forEach((button) => button.addEventListener("click", () => {
+    document.querySelector("#mobile-nav")?.classList.remove("is-open");
+    openRegistrationDialog();
+  }));
+  registerDialog?.querySelector("#register-legal-consent")?.addEventListener("change", updateRegistrationButtons);
+  registerDialog?.querySelector("#team-register-close")?.addEventListener("click", () => registerDialog.close?.());
+  registerDialog?.addEventListener("click", (event) => {
+    if (event.target === registerDialog) registerDialog.close?.();
+  });
+}
 
 function sharePayload(target) {
   if (target === "team") {
@@ -132,6 +212,7 @@ function initMobileMenu() {
 }
 
 initShareDialog();
+initRegistrationDialog();
 initInstallTabs();
 initMobileMenu();
 document.querySelector("#share-site")?.addEventListener("click", () => openShareDialog("site"));

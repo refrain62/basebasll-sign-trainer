@@ -14,14 +14,14 @@
     <link rel="canonical" href="https://basebasll-sign-trainer.refrain62.workers.dev/" />
     <meta name="robots" content="noindex,nofollow" />
     <title>管理画面 | SIGN TRAINER</title>
-    <link rel="icon" href="/favicon-32.png?v=69" sizes="32x32" type="image/png" />
-    <link rel="icon" href="/favicon-48.png?v=69" sizes="48x48" type="image/png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=69" />
-    <link rel="manifest" href="/manifest.webmanifest?v=69" />
-    <link rel="stylesheet" href="/styles.css?v=69" />
+    <link rel="icon" href="/favicon-32.png?v=77" sizes="32x32" type="image/png" />
+    <link rel="icon" href="/favicon-48.png?v=77" sizes="48x48" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=77" />
+    <link rel="manifest" href="/manifest.webmanifest?v=77" />
+    <link rel="stylesheet" href="/styles.css?v=77" />
   </head>
   <body>
     <div id="app" aria-live="polite"></div>
-    <script src="/admin-entry.js?v=69" type="module"></script>
+    <script src="/admin-entry.js?v=77" type="module"></script>
   </body>
 </html>

@@ -17,9 +17,11 @@ export {
   teamUrls
 } from "./validation/common.js";
 export { hashPassword, isSupportedPasswordHash, verifyPassword, verifyPasswordDetailed } from "./security/password.js";
+export { createDataProtector, createDataProtectorFromEnv, dataProtectionConfigError, isEncryptedValue, isLookupValue } from "./security/data-protection.js";
 export {
   cookieValue,
   createSessionToken,
+  isFreshAccountSession,
   isLocalHostname,
   parseCookies,
   readRoleSession,
@@ -29,8 +31,9 @@ export {
   verifySessionToken
 } from "./security/session.js";
 export { isSystemAdminPath, validateCloudflareAccess, validateMutationRequest } from "./security/request-guards.js";
-export { requireSystem, requireTeamAdmin } from "./security/authorization.js";
-export { auditEvent, createAuditRepository } from "./repositories/audit-repository.js";
+export { verifyCloudflareAccessJwt } from "./security/cloudflare-access.js";
+export { requireLegacyTeamAdmin, requireSystem, requireTeamAdmin, requireTeamOwner, requireUser } from "./security/authorization.js";
+export { auditEvent, createAuditRepository, sanitizeAuditDetail } from "./repositories/audit-repository.js";
 export {
   createTeamRepository,
   getGroup,
@@ -44,13 +47,22 @@ export {
 export { createGroupRepository } from "./repositories/group-repository.js";
 export { createSignRepository } from "./repositories/sign-repository.js";
 export { createVideoRepository } from "./repositories/video-repository.js";
+export { createUserRepository, publicUser } from "./repositories/user-repository.js";
+export { createAdminMembershipRepository } from "./repositories/admin-membership-repository.js";
+export { createAdminInviteRepository } from "./repositories/admin-invite-repository.js";
+export { createAdminTransitionRepository } from "./repositories/admin-transition-repository.js";
+export { createAccountProvisioningRepository } from "./repositories/account-provisioning-repository.js";
 export { createGroupService } from "./services/group-service.js";
 export { createSignService } from "./services/sign-service.js";
 export { createTeamService } from "./services/team-service.js";
 export { createSystemTeamService } from "./services/system-team-service.js";
 export { createVideoService } from "./services/video-service.js";
+export { createAccountService } from "./services/account-service.js";
+export { createAdminMembershipService } from "./services/admin-membership-service.js";
 export { createServices } from "./services/service-factory.js";
 export { ServiceError } from "./services/errors.js";
+export { createPkcePair, decodeJwt, redirectUri, validateOidcClaims } from "./oauth/common.js";
+export { providerConfigured, providerStatus } from "./oauth/providers.js";
 export { playerAuth, playerLogout, playerSession, playerSigns } from "./controllers/player-controller.js";
 export {
   teamAdminAuth,
@@ -75,5 +87,7 @@ export {
   systemListTeams,
   systemLogout,
   systemSession,
-  systemUpdateTeam
+  systemUpdateTeam,
+  systemDataProtectionStatus,
+  systemProtectData
 } from "./controllers/system-controller.js";

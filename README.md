@@ -1,6 +1,6 @@
-# SIGN TRAINER — build 69
+# SIGN TRAINER — build 76
 
-野球チーム固有のサインを動画で反復練習する Web / PWA です。D1 は local / dev / staging / production で分離し、チーム情報・サイン・YouTube URLのみを保存します。選手の回答・正答率・練習履歴は端末の `localStorage` のみに保存します。
+野球チーム固有のサインを動画で反復練習する Web / PWA です。D1 は local / dev / staging / production で分離し、チーム・サイン・動画設定に加えて、管理者アカウントの識別情報・チーム権限・招待状態を保存します。選手の回答・正答率・練習履歴は端末の `localStorage` のみに保存します。OAuthのaccess token / refresh tokenは保存しません。
 
 本番URL: `https://basebasll-sign-trainer.refrain62.workers.dev/`
 
@@ -60,10 +60,10 @@ production bdd534e9-1c42-4db7-adbe-c62e35e123b5
 
 ## ローカル開発
 
-`.dev.vars.example` をコピーして `.dev.vars` を作り、**32文字以上**の `SESSION_SECRET` と **12文字以上で英字・数字を含む** `SYSTEM_ADMIN_SECRET` を設定します。
+`.dev.vars.example` をコピーして `.dev.vars.dev` を作り、**32文字以上**の `SESSION_SECRET` と **12文字以上で英字・数字を含む** `SYSTEM_ADMIN_SECRET` を設定します。
 
 ```powershell
-Copy-Item .dev.vars.example .dev.vars
+Copy-Item .dev.vars.example .dev.vars.dev
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
 
@@ -95,6 +95,8 @@ LP              http://localhost:8787/
 
 ローカルホストでは Cloudflare Access チェックを自動的にスキップします。
 
+`npm run dev` は `scripts/dev.mjs` 経由で `CLOUDFLARE_CF_FETCH_ENABLED=false` をローカルWranglerプロセスに設定します。SIGN TRAINERは `Request.cf` を利用していないため、MiniflareがCloudflareから疑似CF情報を取得する際のタイムアウトを避けつつ、本番Workerの挙動には影響しません。
+
 ## migration
 
 ```bash
@@ -107,6 +109,13 @@ npm run db:migrate:prod
 - `0001_initial.sql` — 基本テーブル
 - `0002_seed_sample.sql` — サンプルチーム + 10サイン
 - `0003_security_hardening.sql` — セッション世代、rate limit、audit log、soft delete
+- `0004_video_comments.sql` — 動画用途コメント
+- `0005_sign_groups.sql` — サイングループ・グループ説明動画
+- `0006_accounts_and_team_admins.sql` — Google / LINE管理者アカウント、オーナー・管理者・ワンタイム招待
+- `0007_rate_limit_cleanup_index.sql` — 認証レート制限の期限切れデータ削除を支えるインデックス
+- `0008_legal_consent.sql` — 利用規約・プライバシーポリシー同意履歴
+- `0009_plans_and_entitlements.sql` — Free運用と将来有料化に備えたプラン・Entitlement・Usage基盤
+- `0010_data_protection.sql` — OAuth識別子暗号文・audit保護状態。既存本文の暗号化は管理画面の段階移行で実行
 
 サンプルチーム:
 
@@ -123,17 +132,26 @@ Team ID: 6BnWv2K3zo
 # dev
 npx wrangler secret put SESSION_SECRET --env dev
 npx wrangler secret put SYSTEM_ADMIN_SECRET --env dev
+npx wrangler secret put PASSWORD_PEPPER --env dev
+npx wrangler secret put DATA_ENCRYPTION_KEY --env dev
+npx wrangler secret put DATA_LOOKUP_KEY --env dev
 
 # staging
 npx wrangler secret put SESSION_SECRET --env staging
 npx wrangler secret put SYSTEM_ADMIN_SECRET --env staging
+npx wrangler secret put PASSWORD_PEPPER --env staging
+npx wrangler secret put DATA_ENCRYPTION_KEY --env staging
+npx wrangler secret put DATA_LOOKUP_KEY --env staging
 
 # production
 npx wrangler secret put SESSION_SECRET
 npx wrangler secret put SYSTEM_ADMIN_SECRET
+npx wrangler secret put PASSWORD_PEPPER
+npx wrangler secret put DATA_ENCRYPTION_KEY
+npx wrangler secret put DATA_LOOKUP_KEY
 ```
 
-`SESSION_SECRET` は32文字以上、`SYSTEM_ADMIN_SECRET` は12文字以上かつ英字・数字をそれぞれ1文字以上含む値を必須としています。
+`SESSION_SECRET` は32文字以上、`SYSTEM_ADMIN_SECRET` は12文字以上かつ英字・数字をそれぞれ1文字以上含む値を必須としています。`PASSWORD_PEPPER` / `DATA_ENCRYPTION_KEY` / `DATA_LOOKUP_KEY` は各32文字以上のランダムな値を環境ごとに別々に設定します。`npm run security:generate-secrets` で候補値を生成できます。
 
 ## Cloudflare Access（必須）
 
@@ -146,9 +164,18 @@ Cloudflare Zero Trust で各Workerに Self-hosted Application を作り、最低
 /api/system/*
 ```
 
-Access policyで許可するメール/IdPユーザーを限定してください。Worker側でも `Cf-Access-Authenticated-User-Email` と `Cf-Access-Jwt-Assertion` の存在を確認し、その上で `SYSTEM_ADMIN_SECRET` を要求する二重防御です。
+Access policyで許可するメール/IdPユーザーを限定してください。Worker側では `Cf-Access-Jwt-Assertion` を **RS256署名・issuer・audience・有効期限まで検証**し、検証済みJWTの `email` claimだけを使用します。その上で `SYSTEM_ADMIN_SECRET` も要求する二重防御です。
 
 必要なら `SYSTEM_ADMIN_ALLOWED_EMAILS` にカンマ区切りで許可メールを設定できます。空欄の場合はAccess policy側の許可設定を信頼します。
+
+Access JWT検証には次の2つを各remote環境で設定してください。値自体はSecretではありません。
+
+```text
+CF_ACCESS_TEAM_DOMAIN=https://<your-team>.cloudflareaccess.com
+CF_ACCESS_POLICY_AUD=<Access Application の AUD tag>
+```
+
+`REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN=true` のremote環境では、これらが未設定またはJWT検証に失敗するとシステム管理画面を **fail closed (403)** します。ローカルホストだけは従来どおりAccess検証をスキップします。
 
 ## デプロイ
 
@@ -170,15 +197,16 @@ npm run deploy:prod
 
 ## 認証・セッション
 
-認証は3種類です。
+認証は4系統です。
 
 1. 選手用合言葉 — `/t/{teamId}`
-2. チーム管理者パスワード — `/t/{teamId}/admin`
-3. システム管理者 — Cloudflare Access + `SYSTEM_ADMIN_SECRET` — `/admin`
+2. 管理者アカウント — Google / LINE OAuth + SIGN TRAINER account session — `/account`
+3. 既存チーム用の旧管理者パスワード — `/t/{teamId}/admin`（移行互換。任意で無効化可能）
+4. システム管理者 — Cloudflare Access + `SYSTEM_ADMIN_SECRET` — `/admin`
 
-チーム管理者パスワードは新規設定/変更時 **12文字以上＋英字1文字以上＋数字1文字以上**です。記号は必須ではありません。
+旧チーム管理者パスワードは新規設定/変更時 **12文字以上＋英字1文字以上＋数字1文字以上**です。記号は必須ではありません。LPから新規登録したチームは共有管理者パスワードを作らず、最初に認証したアカウントがオーナーになります。
 
-合言葉・管理者パスワードはD1に平文保存しません。PBKDF2-SHA256でsalt付きハッシュとして保存します。
+合言葉・管理者パスワードはD1に平文保存しません。新規ハッシュは、16-byteランダムsalt + Cloudflare Secretの`PASSWORD_PEPPER`を使ったPBKDF2-SHA256（600,000 iterations）です。旧salt-onlyハッシュは正常ログイン時にpepper付き形式へ自動再ハッシュします。
 
 ## 認証レート制限
 
@@ -388,7 +416,7 @@ src/
 
 `node scripts/architecture-check.mjs` を追加し、ServiceでのD1直接アクセス、Controller/RouteでのSQL、Routeから互換 `backend.js` への依存をCIで禁止しています。
 
-ユニットテストは **31件** に増え、Group/Sign/System Team serviceをD1なしのfake repositoryで検証します。
+ユニットテストはService / Security / OAuth / Repository境界を中心に整備し、D1なしのfake repositoryでも業務ロジックを検証します。
 
 ```bash
 npm test
@@ -396,7 +424,7 @@ npm run test:architecture
 npm run check
 ```
 
-DB migrationは不要です。
+build 68単体ではDB migrationは不要です。
 
 
 ## build 69: Node 24 / npm 11 compatibility
@@ -406,3 +434,249 @@ DB migrationは不要です。
 - `packageManager` は npm 11.6.2 に更新しました。
 - Hono 4.13.8 は引き続き完全固定です。
 - `npm install` が `EBADENGINE` で停止して Hono が未インストールになる問題を解消しました。
+
+## build 70: LPセルフ登録 / Google・LINE管理者アカウント
+
+LPの「チームを登録する」からGoogleまたはLINEで管理者登録し、そのままチームを新規作成できます。新規チームは共有の管理者パスワードを持たず、管理者ごとのOAuthアカウントで管理します。
+
+### 権限モデル
+
+- **オーナー**: チームごとに1人。管理者追加・削除、オーナー交代、旧管理者パスワード無効化を実行できます。
+- **管理者**: サイン・グループ・動画・チーム情報を管理できます。自分でチーム管理者から退会できます。
+- オーナーは、そのまま退会できません。別の管理者へオーナーを交代してから退会します。
+- オーナー交代は、登録済み管理者への即時交代またはワンタイム交代リンクで行えます。
+- オーナー交代時は旧共有管理者パスワードを自動無効化し、古い承認待ち招待も無効化します。
+- SIGN TRAINERアカウント自体の退会は、オーナー権限が残っている間はできません。
+
+### 既存チームの移行
+
+既存の管理者パスワードでチーム管理画面へ入り、「管理者アカウントへ移行」からGoogle / LINEを連携できます。最初に連携したアカウントがオーナーになります。**移行成立と同じD1 transaction内で旧共有管理者パスワードを自動無効化し、旧管理者セッション世代も更新**します。既存のチーム・サイン・動画は変更されません。
+
+### OAuthセキュリティ設計
+
+- Google / LINEとも Authorization Code Flow + `state` + `nonce` + PKCE (`S256`) を使用。
+- OAuth途中状態とPKCE verifierは、10分で失効する署名済みHttpOnly Cookieへ保存。
+- Google ID tokenはGoogle JWKSで署名・`aud`・`iss`・`exp`・`nonce`を検証。
+- LINE ID tokenはLINE公式verify endpointへ`client_id`と`nonce`を渡して検証。
+- OAuth access token / refresh tokenはD1へ保存しません。
+- GoogleとLINEをメールアドレスだけで自動的に同一人物へ統合しません。provider + subjectを本人識別子とします。
+- SIGN TRAINERの「アカウント退会」はD1上のOAuth identityとチーム所属を削除し、ユーザー行を匿名化する処理です。監査ログの整合性のため匿名IDは残ります。Google / LINE側で付与済みのアプリ連携許可は、各サービスのアカウント設定から必要に応じて解除します。
+- 管理者招待の生トークンは発行時に一度だけ表示し、D1にはSHA-256ハッシュのみ保存します。
+- 招待は1回限り・1〜72時間。承認待ちは1チーム10件までです。
+- 招待URLからOAuth認証しただけでは権限を付与せず、認証後の確認画面で「招待を承認する」を押した時点で参加・オーナー交代を確定します。
+- 登録済み管理者への直接オーナー交代は、交代先が処理直前まで管理者であることをD1更新条件でも再確認し、競合時にオーナー不在にならないよう防御しています。
+- 新規チーム作成APIはアカウント＋クライアント単位で24時間10回までに制限しています。
+
+### Google OAuth設定
+
+Google Cloud Consoleで OAuth 2.0 Client の種類を **Web application** として作成し、利用する環境ごとに正確なredirect URIを登録してください。
+
+production:
+
+```text
+https://basebasll-sign-trainer.refrain62.workers.dev/api/account/oauth/google/callback
+```
+
+ローカルGoogle確認では、たとえば以下を登録できます。
+
+```text
+http://127.0.0.1:8787/api/account/oauth/google/callback
+```
+
+ローカルの `.dev.vars.dev`:
+
+```env
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+```
+
+remote環境:
+
+```bash
+npx wrangler secret put GOOGLE_CLIENT_ID --env dev
+npx wrangler secret put GOOGLE_CLIENT_SECRET --env dev
+npx wrangler secret put GOOGLE_CLIENT_ID --env staging
+npx wrangler secret put GOOGLE_CLIENT_SECRET --env staging
+npx wrangler secret put GOOGLE_CLIENT_ID
+npx wrangler secret put GOOGLE_CLIENT_SECRET
+```
+
+### LINE Login設定
+
+LINE Developers Consoleで **LINE Login v2.1** のチャネルを作り、各環境のcallback URLを登録します。productionは以下です。
+
+```text
+https://basebasll-sign-trainer.refrain62.workers.dev/api/account/oauth/line/callback
+```
+
+LINEはcallback URLにHTTPSを使用する運用を推奨しているため、ローカルで実認証まで確認する場合はHTTPSトンネルまたはdeploy済みdev Workerを使い、その**実際のURLと完全一致するcallback**を登録してください。
+
+ローカルの `.dev.vars.dev`:
+
+```env
+LINE_CHANNEL_ID=...
+LINE_CHANNEL_SECRET=...
+LINE_REQUEST_EMAIL=false
+```
+
+remote環境:
+
+```bash
+npx wrangler secret put LINE_CHANNEL_ID --env dev
+npx wrangler secret put LINE_CHANNEL_SECRET --env dev
+npx wrangler secret put LINE_CHANNEL_ID --env staging
+npx wrangler secret put LINE_CHANNEL_SECRET --env staging
+npx wrangler secret put LINE_CHANNEL_ID
+npx wrangler secret put LINE_CHANNEL_SECRET
+```
+
+LINEからメールアドレスを取得する場合だけ、LINE Developers側で必要な申請・権限設定を完了したうえで `LINE_REQUEST_EMAIL=true` にしてください。通常は `false` のままで動作します。
+
+### migration 0006
+
+このbuildをdeployする前に、**必ずDB migrationを先に適用**してください。
+
+```bash
+npm run db:migrate:local
+npm run db:migrate:dev
+npm run db:migrate:staging
+npm run db:migrate:prod
+```
+
+### ローカル `Request.cf` timeout対策
+
+`npm run dev` は `scripts/dev.mjs` 経由になり、SIGN TRAINERが使用していないMiniflareの `Request.cf` リモート取得をローカルだけ自動で無効化します。Windows/macOS/Linuxで同じコマンドを使えます。
+
+
+
+## build 71: 公開運用向けセキュリティ強化
+
+### Cloudflare Access JWTを暗号学的に検証
+
+remote のシステム管理画面では、Accessヘッダーの「存在確認」ではなく `Cf-Access-Jwt-Assertion` を検証します。
+
+- RS256署名をCloudflare Access JWKSで検証
+- `iss` を `CF_ACCESS_TEAM_DOMAIN` と完全一致で確認
+- `aud` に `CF_ACCESS_POLICY_AUD` が含まれることを確認
+- `exp` / `nbf` / `iat` を時刻検証
+- 検証済みJWTの `email` claimだけをallowlist判定に使用
+- JWKSは5分キャッシュし、鍵ローテーション時だけ再取得
+- 不正JWTによるJWKS fetch連打を抑えるため強制refreshを30秒に1回へ制限
+
+### 重要操作はOAuth再本人確認
+
+通常の管理者セッションは利便性のため長期間利用できますが、次の重要操作は **直近10分以内のGoogle / LINE認証**を必須にしました。
+
+- オーナー交代 / オーナー交代招待の発行
+- 他の管理者の削除
+- 管理者自身の退会
+- 旧共有管理者パスワードの無効化・変更
+- SIGN TRAINERアカウントの退会
+- オーナー交代招待の承認
+
+再認証のOAuth stateは現在ログイン中の `userId` に署名付きで束縛し、別のGoogle / LINEアカウントで認証しても管理アカウントがすり替わらないようにしています。
+
+### 旧共有管理者パスワードの自動失効
+
+既存チームをOAuth管理へ移行する処理は、オーナー作成・旧共有パスワード無効化・旧管理者セッション世代更新をD1 `batch()`で一体化しました。移行後に古い共有パスワードが攻撃経路として残りません。
+
+### 認証Rate LimitのDoS / ストレージ対策
+
+- 選手ログインはglobal client limitの後、**存在するチームだけ**team単位のrate-limit行を作成
+- チーム管理者ログインも同様に、存在しないteamIdごとのD1行を作らない
+- client IPはCloudflareの `CF-Connecting-IP` のみ使用し、spoof可能な `X-Forwarded-For` は信用しない
+- 期限切れ `auth_rate_limits` を最大1時間に1回、7日より古いものからopportunistic GC
+- `0007_rate_limit_cleanup_index.sql` でcleanup対象列にindex追加
+
+公開時はコード内のrate limitに加えて、Cloudflare WAF / Rate Limiting Rulesでログイン・OAuth・管理APIへedge側制限を設定することを推奨します。Worker bindingのnamespace IDはアカウント固有なので、配布テンプレートには架空値を埋め込んでいません。
+
+### build 71 migration
+
+`0007` はインデックス追加だけですが、build 71をremoteへdeployする前に各環境へ適用してください。
+
+```bash
+npm run db:migrate:local
+npm run db:migrate:dev
+npm run db:migrate:staging
+npm run db:migrate:prod
+```
+
+## build 72: 利用規約・プライバシー・運用整備
+
+LPと管理者登録導線に、利用規約・プライバシーポリシー・外部送信・運営者/問い合わせ情報を追加しました。
+
+公開URL:
+
+- `/terms`
+- `/privacy`
+- `/external-transmission`
+- `/support`
+
+管理者のOAuth開始時に規約/プライバシーの版を署名済みOAuth stateへ保持し、OAuth完了後に `app_users.terms_version` / `privacy_version` / `legal_accepted_at` へ記録します。新規チーム作成には現行版への同意が必要です。
+
+LINE identityを持つアカウントの退会では、LINEで再本人確認したうえで連動アプリ権限をDeauthorize APIで解除してからSIGN TRAINERアカウントを削除します。
+
+追加migration:
+
+```bash
+npm run db:migrate:local
+npm run db:migrate:dev
+npm run db:migrate:staging
+npm run db:migrate:prod
+```
+
+本番公開前に `wrangler.jsonc` の `PUBLIC_OPERATOR_NAME` と `PUBLIC_SUPPORT_URL` を実運用値へ変更し、`npm run ops:preflight` を通してください。詳細は `docs/operations.md` を参照してください。
+
+
+## build 73: Freeプラン / 将来有料化の基盤
+
+現在の基本機能をFree（¥0）として明示し、将来の画像・動画直接アップロード等を有料化できるよう、決済処理とは分離したPlan / Entitlement / Usage基盤を追加しました。
+
+- 既存・新規チームは自動的に `free`。
+- `team_plus` / `team_pro` は将来用の非販売プランで、価格は未確定・購入不可。
+- 商品機能はStripeの契約状態を直接見ず、`EntitlementService` を経由して利用可否を判定。
+- 管理画面とアカウント画面に現在のプランを表示。
+- LPに「基本機能は現在¥0」と、将来クラウド保存機能のみ有料化予定であることを明記。
+- `team_usage` で将来の保存量・画像数・動画量を追跡できるよう準備。
+
+設計方針・R2アップロード構成・Stripe導入時の境界・価格検討レンジ・法務チェックは `docs/monetization.md` にまとめています。
+
+追加migration:
+
+```bash
+npm run db:migrate:local
+npm run db:migrate:dev
+npm run db:migrate:staging
+npm run db:migrate:prod
+```
+
+現時点ではStripe Checkout・クレジットカード入力・自動課金は実装していません。
+
+
+## build 74: Windows / Node 24 のローカル起動修正
+
+Node 24 on Windows で `spawn("npx.cmd", ...)` が `EINVAL` になる問題を修正しました。`npm run dev` は Windows では `cmd.exe` 経由でローカルの Wrangler を起動し、macOS / Linux では従来どおり `npx --no-install` を利用します。`CLOUDFLARE_CF_FETCH_ENABLED=false` の自動設定も維持しています。
+
+```bash
+npm run dev
+```
+
+Windows向け起動コマンドの回帰テストも追加しています。
+
+
+## build 75: アプリケーションレベルのデータ保護 / Password Pepper
+
+- `PASSWORD_PEPPER` をCloudflare Secretに追加し、新規の選手合言葉・旧管理者パスワードは `PBKDF2-SHA256 + 16-byte random salt + pepper` で保存します。旧ハッシュはログイン成功時に自動移行します。
+- `DATA_ENCRYPTION_KEY` を使った AES-256-GCM で、チーム名、管理者の表示名・メール・アバター、サイン名、サイングループ名/説明、YouTube URL/Video ID、動画コメントをD1保存前に暗号化します。暗号文は `enc:v1:` 形式でversionを持ちます。
+- Google / LINE の provider subject は `DATA_LOOKUP_KEY` による HMAC-SHA256 (`hmac:v1:`) を検索キーとして保存し、元値はAES-GCM暗号文として別カラムに保持します。メールアドレスによる自動アカウント統合は行いません。
+- audit logは秘密値・個人情報・サイン本文を保存しないようキー単位でredactし、既存audit detailも保護メンテナンスで書き換えます。
+- migration `0010_data_protection.sql` を**build 75のコードをdeployする前に**適用してください。migration後、`/admin` の「保存データの保護」から既存平文データを暗号化してください。
+- 暗号鍵/lookup鍵/pepperはD1には保存しません。dev / staging / productionで別値を使い、production値は安全なパスワードマネージャー等にもバックアップしてください。鍵を失うと暗号化済みデータを復号できません。
+- 詳細とローテーション時の注意は `docs/data-protection.md` を参照してください。
+
+
+## build 76: 問い合わせをGoogleフォームへ移行
+
+公開メールアドレスをHTMLへ出さない構成へ変更しました。`PUBLIC_SUPPORT_EMAIL` は廃止し、HTTPSの問い合わせフォームURLを指定する `PUBLIC_SUPPORT_URL` を使用します。`/support`、利用規約、プライバシーポリシー、外部送信ページはいずれも同じフォームURLへリンクします。アプリ側はフォームURLへ氏名・メールアドレス等の個人情報を追加しません。
+
+例: `PUBLIC_SUPPORT_URL=https://forms.gle/...`

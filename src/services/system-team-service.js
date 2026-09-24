@@ -1,10 +1,13 @@
 import { cleanName, isAdminCredential, normalizeSecret, randomId, teamUrls } from "../validation/common.js";
 import { ServiceError } from "./errors.js";
 
-export function createSystemTeamService({ teamRepository, auditRepository, hashPassword, createId = () => randomId(10) }) {
+export function createSystemTeamService({ teamRepository, auditRepository, hashPassword, entitlementService = null, createId = () => randomId(10) }) {
   return {
     async list() {
-      return teamRepository.listWithCounts();
+      const teams = await teamRepository.listWithCounts();
+      if (!entitlementService) return teams;
+      const plans = await entitlementService.planSummaries(teams.map((team) => team.id));
+      return teams.map((team) => ({ ...team, plan: plans[team.id] || null }));
     },
 
     async create(input) {

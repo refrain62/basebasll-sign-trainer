@@ -8,7 +8,7 @@ export async function systemAccessMiddleware(c, next) {
     String(c.env.REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN || "false") === "true" &&
     !isLocalHostname(url.hostname)
   ) {
-    const accessError = validateCloudflareAccess(c.req.raw, c.env);
+    const accessError = await validateCloudflareAccess(c.req.raw, c.env);
     if (accessError) return accessError;
   }
   await next();

@@ -4,6 +4,11 @@ export function pageAssetForPath(pathname) {
   const clean = pathname.replace(/\/$/, "") || "/";
   if (clean === "/") return "/__pages/index.txt";
   if (clean === "/admin" || clean === "/register") return "/__pages/admin.txt";
+  if (clean === "/account" || /^\/join-admin\/[^/]+$/.test(clean)) return "/__pages/account.txt";
+  if (clean === "/terms") return "/__pages/terms.txt";
+  if (clean === "/privacy") return "/__pages/privacy.txt";
+  if (clean === "/external-transmission") return "/__pages/external-transmission.txt";
+  if (clean === "/support") return "/__pages/support.txt";
   if (/^\/t\/[^/]+\/admin$/.test(clean)) return "/__pages/admin.txt";
   if (/^\/t\/[^/]+$/.test(clean)) return "/__pages/team.txt";
   return null;

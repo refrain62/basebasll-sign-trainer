@@ -32,17 +32,25 @@ npm run check
 - Sign service group assignment and invalid-video rollback
 - System-team service ID collision handling, password policy and injected hashing
 - Architecture boundaries between routes/controllers/services/repositories
+- OAuth PKCE / OIDC claim validation
+- Account creation, OAuth identity upsert and ownership-safe account deletion
+- Admin invite hashing, pending-invite limits, ownership transfer and administrator resignation
 
 ## Test structure
 
 ```text
 tests/unit/
+├── account-service.test.js
+├── admin-membership-service.test.js
+├── admin-transition-repository.test.js
 ├── backend-validation.test.js
 ├── backend-security.test.js
 ├── backend-data.test.js
+├── oauth-common.test.js
 ├── practice-utils.test.js
 ├── group-service.test.js
 ├── sign-service.test.js
+├── team-service.test.js
 └── system-team-service.test.js
 ```
 
@@ -55,3 +63,5 @@ Browser-independent practice selection logic lives in `public/practice-utils.js`
 ## Boundaries
 
 These tests are still primarily unit-level. They do not replace D1 migration smoke tests, Wrangler/Miniflare integration tests, or real-browser E2E tests. A later stage can add integration tests for the complete Hono request pipeline and Playwright tests for the player/admin flows.
+
+- `admin-transition-repository.test.js`: owner-transfer race guards and repository mutation boundary.

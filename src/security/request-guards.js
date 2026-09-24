@@ -1,5 +1,6 @@
 import { apiJson, withHeaders } from "../http/response.js";
 import { isLocalHostname } from "./session.js";
+import { verifyCloudflareAccessJwt } from "./cloudflare-access.js";
 
 export { isLocalHostname };
 
@@ -7,11 +8,26 @@ export function isSystemAdminPath(pathname) {
   return pathname === "/admin" || pathname === "/register" || pathname.startsWith("/api/system/");
 }
 
-export function validateCloudflareAccess(request, env) {
-  const email = (request.headers.get("cf-access-authenticated-user-email") || "").trim().toLowerCase();
+export async function validateCloudflareAccess(request, env, { fetcher = fetch, nowSeconds } = {}) {
   const assertion = request.headers.get("cf-access-jwt-assertion") || "";
-  if (!email || !assertion) {
+  if (!assertion) {
     return withHeaders(new Response("System admin is protected by Cloudflare Access.", { status: 403 }), { noIndex: true, noCache: true });
+  }
+  let payload;
+  try {
+    payload = await verifyCloudflareAccessJwt(assertion, {
+      teamDomain: env.CF_ACCESS_TEAM_DOMAIN,
+      policyAud: env.CF_ACCESS_POLICY_AUD,
+      fetcher,
+      ...(nowSeconds === undefined ? {} : { nowSeconds })
+    });
+  } catch (error) {
+    console.warn("Cloudflare Access JWT validation failed", error?.message || error);
+    return withHeaders(new Response("Cloudflare Access token validation failed.", { status: 403 }), { noIndex: true, noCache: true });
+  }
+  const email = String(payload?.email || "").trim().toLowerCase();
+  if (!email) {
+    return withHeaders(new Response("Cloudflare Access identity is missing an email claim.", { status: 403 }), { noIndex: true, noCache: true });
   }
   const allowed = String(env.SYSTEM_ADMIN_ALLOWED_EMAILS || "").split(",").map((v) => v.trim().toLowerCase()).filter(Boolean);
   if (allowed.length && !allowed.includes(email)) {

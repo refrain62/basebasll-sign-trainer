@@ -2,6 +2,8 @@ import { apiJson } from "../http/response.js";
 import { base64UrlEncode, encoder } from "./encoding.js";
 import { nowSeconds } from "./session.js";
 
+let lastPruneAt = 0;
+
 async function keyedHash(value, secret) {
   const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(value)));
@@ -9,7 +11,18 @@ async function keyedHash(value, secret) {
 }
 
 function clientIp(request) {
-  return request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "local";
+  return request.headers.get("cf-connecting-ip") || "local";
+}
+
+
+async function maybePruneRateLimits(db, now) {
+  if (now - lastPruneAt < 3600) return;
+  lastPruneAt = now;
+  try {
+    await db.prepare("DELETE FROM auth_rate_limits WHERE window_start < ?").bind(now - 7 * 24 * 3600).run();
+  } catch (error) {
+    console.warn("rate-limit cleanup failed", error?.message || error);
+  }
 }
 
 function limiterKey(request, scope, identity, secret) {
@@ -19,6 +32,7 @@ function limiterKey(request, scope, identity, secret) {
 export async function enforceRateLimit({ db, sessionSecret, request, scope, identity, maxAttempts, windowSeconds }) {
   const key = await limiterKey(request, scope, identity, sessionSecret || "local");
   const now = nowSeconds();
+  await maybePruneRateLimits(db, now);
   const row = await db.prepare("SELECT window_start,count FROM auth_rate_limits WHERE key=?").bind(key).first();
   if (!row || now - Number(row.window_start) >= windowSeconds) {
     await db.prepare("INSERT INTO auth_rate_limits(key,window_start,count) VALUES(?,?,1) ON CONFLICT(key) DO UPDATE SET window_start=excluded.window_start,count=1").bind(key, now).run();

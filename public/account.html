@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#082844" />
+    <title>管理者アカウント | SIGN TRAINER</title>
+    <link rel="icon" href="/favicon-32.png?v=77" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=77" />
+    <link rel="manifest" href="/manifest.webmanifest?v=77" />
+    <link rel="stylesheet" href="/styles.css?v=77" />
+    <script src="/account.js?v=77" type="module"></script>
+  </head>
+  <body class="account-page">
+    <header class="site-header account-header">
+      <div class="container header-inner">
+        <a class="brand" href="/" aria-label="SIGN TRAINER トップページ">
+          <span class="brand-mark" aria-hidden="true"><img class="brand-icon-img" src="/assets/sign-trainer-icon.png" alt="" width="128" height="128"></span>
+          <span class="brand-copy"><span class="brand-name">SIGN TRAINER</span><span class="brand-sub">管理者アカウント</span></span>
+        </a>
+        <a class="button button-ghost button-small" href="/">トップへ</a>
+      </div>
+    </header>
+    <main class="account-main">
+      <div class="container account-container" id="account-app" aria-live="polite">
+        <section class="account-loading"><div class="spinner"></div><p>アカウントを確認しています…</p></section>
+      </div>
+    </main>
+    <footer class="account-legal-footer"><a href="/terms">利用規約</a><a href="/privacy">プライバシーポリシー</a><a href="/external-transmission">外部送信</a><a href="/support">お問い合わせ</a></footer>
+    <dialog class="account-dialog" id="account-dialog"><div id="account-dialog-body"></div></dialog>
+  </body>
+</html>

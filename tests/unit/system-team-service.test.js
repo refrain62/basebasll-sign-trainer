@@ -42,3 +42,18 @@ test("system team service enforces admin password policy independently of HTTP",
     return true;
   });
 });
+
+
+test("system team list can include plan summaries without coupling the repository to billing", async () => {
+  const calls = [];
+  const teamRepository = {
+    listWithCounts: async () => [{ id: "T1", name: "Team", sign_count: 2, video_count: 3 }]
+  };
+  const entitlementService = {
+    async planSummaries(ids) { calls.push(ids); return { T1: { code: "free", name: "Free", isFree: true } }; }
+  };
+  const service = createSystemTeamService({ teamRepository, auditRepository: {}, hashPassword: async () => "", entitlementService });
+  const teams = await service.list();
+  assert.deepEqual(calls[0], ["T1"]);
+  assert.equal(teams[0].plan.name, "Free");
+});

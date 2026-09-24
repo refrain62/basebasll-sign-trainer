@@ -1,7 +1,7 @@
-import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=69";
-import { filterPracticeSigns, findPracticeGroup, getPracticeOptions } from "./practice-utils.js?v=69";
+import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=77";
+import { filterPracticeSigns, findPracticeGroup, getPracticeOptions } from "./practice-utils.js?v=77";
 
-const APP_BUILD = "69";
+const APP_BUILD = "77";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const SAMPLE_TEAM_ID = "6BnWv2K3zo";

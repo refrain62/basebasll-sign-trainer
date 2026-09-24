@@ -1,4 +1,4 @@
-# SIGN TRAINER 仕様書 — build 50
+# SIGN TRAINER 仕様書 — build 73
 
 ## 目的
 
@@ -12,13 +12,15 @@
 - 動画クイズ・自己採点・復習・端末内履歴
 
 ### チーム管理者
-- `/t/{teamId}/admin`
-- 管理者パスワードで認証
-- チーム情報・合言葉・サイン・YouTube動画を管理
+- `/account` でGoogle / LINE認証
+- `/t/{teamId}/admin` でチーム情報・合言葉・サイングループ・説明動画・サイン・YouTube動画を管理
+- チームごとにオーナー1人 + 複数管理者
+- オーナーはワンタイムリンクで管理者追加・オーナー交代が可能
+- 既存チームは旧管理者パスワードからアカウント管理へ移行可能
 
 ### システム管理者
 - `/admin`
-- Worker Secret `SYSTEM_ADMIN_SECRET` で認証
+- Cloudflare Access JWT（RS256署名 / issuer / audience / expiry検証）+ Worker Secret `SYSTEM_ADMIN_SECRET` の二重認証
 - 全チーム登録・編集・利用停止・削除
 
 
@@ -35,7 +37,7 @@ D1はチームごとではなく環境ごとに分離する。
 
 ## データ
 
-Cloudflare D1に `teams`, `signs`, `sign_videos` を保存する。
+Cloudflare D1に `teams`, `signs`, `sign_videos`, `sign_groups`, `app_users`, `user_identities`, `team_admin_memberships`, `team_admin_invites`, `plans`, `plan_entitlements`, `team_subscriptions`, `team_usage` を保存する。
 
 練習結果・回答内容はサーバーへ保存せず、利用端末のlocalStorageへ保存する。
 
@@ -44,7 +46,8 @@ Cloudflare D1に `teams`, `signs`, `sign_videos` を保存する。
 - ランダムなURL-safe ID
 - チーム名
 - 選手用合言葉のハッシュ
-- チーム管理者パスワードのハッシュ
+- 旧チーム管理者パスワードのハッシュ（アカウント移行後は無効化可能）
+- オーナー / 管理者アカウント
 - active / suspended
 
 ## サイン
@@ -62,6 +65,10 @@ Cloudflare D1に `teams`, `signs`, `sign_videos` を保存する。
 - HttpOnly / SameSite=Lax / 本番Secure Cookie
 - セッションtokenはSESSION_SECRETでHMAC署名
 - 合言葉・チーム管理者パスワードはPBKDF2-SHA256で保存
+- 管理者アカウントの通常セッションとは別に、オーナー交代・退会・管理者削除など重要な管理者操作は直近10分以内のGoogle / LINE OAuth再認証を要求する
+- OAuth再認証は現在のSIGN TRAINER userIdへ署名付きstateで束縛し、別アカウントへのすり替えを拒否する
+- 既存チームをOAuthアカウント管理へ移行した時点で旧共有管理者パスワードを同一D1 batch内で自動無効化する
+- 認証rate limitはglobal client制限を先に適用し、存在するチームだけteam単位制限を作成する。期限切れrate-limit行は定期的に削除する
 
 ## サイン情報の保護
 
@@ -79,3 +86,13 @@ Cloudflare D1に `teams`, `signs`, `sign_videos` を保存する。
 - 日時、モード、○×、正答率、練習時間、利用したvideo ID
 - 別端末へ同期しない
 
+
+
+## プラン
+
+- 現在の基本機能は `free`（¥0）。
+- 既存・新規チームは自動的にFreeへ所属する。
+- 将来用の `team_plus` / `team_pro` は非販売状態で保持し、価格は未確定。
+- 画像/動画の直接アップロード等は `EntitlementService` で利用可否を判定する。
+- 現時点では決済・Stripe Checkout・自動課金を行わない。
+- 将来のクラウド保存量は `team_usage` で管理する。

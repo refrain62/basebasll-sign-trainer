@@ -5,6 +5,8 @@ import { pageAssetForPath, serveHtmlPage } from "./http/pages.js";
 import { apiGuardMiddleware } from "./middleware/api-guard.js";
 import { systemAccessMiddleware } from "./middleware/system-access.js";
 import { playerRoutes } from "./routes/player.js";
+import { publicRoutes } from "./routes/public.js";
+import { accountRoutes } from "./routes/account.js";
 import { systemRoutes } from "./routes/system.js";
 import { teamAdminRoutes } from "./routes/team-admin.js";
 
@@ -13,7 +15,9 @@ const app = new Hono();
 app.use("*", systemAccessMiddleware);
 app.use("/api/*", apiGuardMiddleware);
 
+app.route("/api/public", publicRoutes);
 app.route("/api", playerRoutes);
+app.route("/api/account", accountRoutes);
 app.route("/api/team-admin", teamAdminRoutes);
 app.route("/api/system", systemRoutes);
 app.all("/api/*", () => apiJson({ error: "not_found" }, 404));

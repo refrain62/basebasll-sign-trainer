@@ -22,7 +22,10 @@
   "secrets": {
     "required": [
       "SESSION_SECRET",
-      "SYSTEM_ADMIN_SECRET"
+      "SYSTEM_ADMIN_SECRET",
+      "PASSWORD_PEPPER",
+      "DATA_ENCRYPTION_KEY",
+      "DATA_LOOKUP_KEY"
     ]
   },
   "vars": {
@@ -30,7 +33,13 @@
     "ADMIN_SESSION_HOURS": "12",
     "ENVIRONMENT": "production",
     "REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN": "true",
-    "SYSTEM_ADMIN_ALLOWED_EMAILS": ""
+    "CF_ACCESS_TEAM_DOMAIN": "",
+    "CF_ACCESS_POLICY_AUD": "",
+    "SYSTEM_ADMIN_ALLOWED_EMAILS": "",
+    "ACCOUNT_SESSION_DAYS": "30",
+    "LINE_REQUEST_EMAIL": "false",
+    "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
+    "PUBLIC_SUPPORT_URL": ""
   },
   "env": {
     "dev": {
@@ -46,7 +55,10 @@
       "secrets": {
         "required": [
           "SESSION_SECRET",
-          "SYSTEM_ADMIN_SECRET"
+          "SYSTEM_ADMIN_SECRET",
+          "PASSWORD_PEPPER",
+          "DATA_ENCRYPTION_KEY",
+          "DATA_LOOKUP_KEY"
         ]
       },
       "vars": {
@@ -54,7 +66,13 @@
         "ADMIN_SESSION_HOURS": "12",
         "ENVIRONMENT": "dev",
         "REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN": "true",
-        "SYSTEM_ADMIN_ALLOWED_EMAILS": ""
+        "SYSTEM_ADMIN_ALLOWED_EMAILS": "",
+        "ACCOUNT_SESSION_DAYS": "30",
+        "LINE_REQUEST_EMAIL": "false",
+        "CF_ACCESS_TEAM_DOMAIN": "",
+        "CF_ACCESS_POLICY_AUD": "",
+        "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
+        "PUBLIC_SUPPORT_URL": ""
       }
     },
     "staging": {
@@ -70,7 +88,10 @@
       "secrets": {
         "required": [
           "SESSION_SECRET",
-          "SYSTEM_ADMIN_SECRET"
+          "SYSTEM_ADMIN_SECRET",
+          "PASSWORD_PEPPER",
+          "DATA_ENCRYPTION_KEY",
+          "DATA_LOOKUP_KEY"
         ]
       },
       "vars": {
@@ -78,7 +99,13 @@
         "ADMIN_SESSION_HOURS": "12",
         "ENVIRONMENT": "staging",
         "REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN": "true",
-        "SYSTEM_ADMIN_ALLOWED_EMAILS": ""
+        "SYSTEM_ADMIN_ALLOWED_EMAILS": "",
+        "ACCOUNT_SESSION_DAYS": "30",
+        "LINE_REQUEST_EMAIL": "false",
+        "CF_ACCESS_TEAM_DOMAIN": "",
+        "CF_ACCESS_POLICY_AUD": "",
+        "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
+        "PUBLIC_SUPPORT_URL": ""
       }
     }
   }

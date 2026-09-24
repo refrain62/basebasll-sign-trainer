@@ -1,10 +1,10 @@
 {
   "name": "sign-trainer",
-  "version": "1.2.1",
+  "version": "1.3.7",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --env dev",
+    "dev": "node scripts/dev.mjs",
     "deploy:dev": "wrangler deploy --env dev",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:prod": "wrangler deploy",
@@ -20,13 +20,15 @@
     "security:check": "npm audit --audit-level=high",
     "predeploy:dev": "node scripts/security-preflight.mjs",
     "predeploy:staging": "node scripts/security-preflight.mjs",
-    "predeploy:prod": "node scripts/security-preflight.mjs",
+    "predeploy:prod": "node scripts/security-preflight.mjs && node scripts/operations-preflight.mjs",
     "security:preflight": "node scripts/security-preflight.mjs",
     "test": "node --test --test-reporter=spec tests/unit/*.test.js",
     "test:unit": "node --test --test-reporter=spec tests/unit/*.test.js",
     "test:watch": "node --test --watch tests/unit/*.test.js",
     "test:coverage": "node --test --experimental-test-coverage --test-reporter=spec tests/unit/*.test.js",
-    "test:architecture": "node scripts/architecture-check.mjs"
+    "test:architecture": "node scripts/architecture-check.mjs",
+    "ops:preflight": "node scripts/operations-preflight.mjs",
+    "security:generate-secrets": "node scripts/generate-security-secrets.mjs"
   },
   "devDependencies": {
     "wrangler": "4.136.3"

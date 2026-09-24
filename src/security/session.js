@@ -74,6 +74,11 @@ export async function readRoleSession(request, env, cookieName, role) {
   return payload;
 }
 
+export function isFreshAccountSession(session, maxAgeSeconds = 10 * 60, now = nowSeconds()) {
+  const authAt = Number(session?.authAt || 0);
+  return Boolean(session?.userId && Number.isFinite(authAt) && authAt > 0 && now - authAt >= 0 && now - authAt <= maxAgeSeconds);
+}
+
 export async function systemSecretVersion(secret) {
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(normalizeSecret(secret))));
   return base64UrlEncode(digest).slice(0, 16);

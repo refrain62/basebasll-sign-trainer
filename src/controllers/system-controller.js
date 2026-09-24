@@ -49,7 +49,7 @@ export async function systemLogout(_request, url) {
 
 export async function systemListTeams(request, env) {
   if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
-  return apiJson({ teams: await createServices(env.DB).systemTeams.list() });
+  return apiJson({ teams: await createServices(env.DB, env).systemTeams.list() });
 }
 
 export async function systemCreateTeam(request, env) {
@@ -57,7 +57,7 @@ export async function systemCreateTeam(request, env) {
   const { body, response } = await parseBody(request);
   if (response) return response;
   try {
-    const result = await createServices(env.DB).systemTeams.create(body);
+    const result = await createServices(env.DB, env).systemTeams.create(body);
     return apiJson({ ok: true, ...result }, 201);
   } catch (error) {
     return serviceErrorResponse(error);
@@ -69,7 +69,7 @@ export async function systemUpdateTeam(request, env, teamId) {
   const { body, response } = await parseBody(request);
   if (response) return response;
   try {
-    const team = await createServices(env.DB).systemTeams.update(teamId, body);
+    const team = await createServices(env.DB, env).systemTeams.update(teamId, body);
     return apiJson({ ok: true, team });
   } catch (error) {
     return serviceErrorResponse(error);
@@ -79,8 +79,38 @@ export async function systemUpdateTeam(request, env, teamId) {
 export async function systemDeleteTeam(request, env, teamId) {
   if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
   try {
-    await createServices(env.DB).systemTeams.remove(teamId);
+    await createServices(env.DB, env).systemTeams.remove(teamId);
     return apiJson({ ok: true });
+  } catch (error) {
+    return serviceErrorResponse(error);
+  }
+}
+
+export async function systemDataProtectionStatus(request, env) {
+  if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
+  try {
+    const remaining = await createServices(env.DB, env).dataProtection.status();
+    return apiJson({ ok: true, remaining, complete: Object.values(remaining).every((value) => Number(value) === 0) });
+  } catch (error) {
+    return serviceErrorResponse(error);
+  }
+}
+
+export async function systemProtectData(request, env) {
+  if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
+  const { body, response } = await parseBody(request);
+  if (response) return response;
+  try {
+    const result = await createServices(env.DB, env).dataProtection.protectExisting({
+      batchSize: body?.batchSize,
+      maxBatches: body?.maxBatches
+    });
+    await createAuditRepository(env.DB).record("system", null, "data_protection.migrate", "system", null, {
+      complete: result.complete,
+      protectedCounts: result.protected,
+      remainingCounts: result.remaining
+    });
+    return apiJson({ ok: true, ...result });
   } catch (error) {
     return serviceErrorResponse(error);
   }

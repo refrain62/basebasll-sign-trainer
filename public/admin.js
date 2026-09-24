@@ -1,4 +1,7 @@
-import { qrImageUrl, teamUrl } from "./share-utils.js?v=69";
+import { qrImageUrl, teamUrl } from "./share-utils.js?v=77";
+
+const TERMS_VERSION = "2026-09-25";
+const PRIVACY_VERSION = "2026-09-25";
 
 const app = document.querySelector("#app");
 const ICON = "/assets/sign-trainer-icon.png";
@@ -27,29 +30,50 @@ function notice(message, kind = "info") {
   return `<div class="admin-notice admin-notice--${esc(kind)}" role="status">${esc(message)}</div>`;
 }
 
+let adminModalKeyHandler = null;
+let adminModalRestoreFocus = null;
+
 function closeAdminModal() {
   const modal = document.querySelector("#admin-modal-layer");
-  if (!modal) return;
-  modal.remove();
+  if (adminModalKeyHandler) document.removeEventListener("keydown", adminModalKeyHandler);
+  adminModalKeyHandler = null;
+  modal?.remove();
   document.body.classList.remove("admin-modal-open");
+  if (app) app.inert = false;
+  const restore = adminModalRestoreFocus;
+  adminModalRestoreFocus = null;
+  if (restore?.isConnected && typeof restore.focus === "function") restore.focus({ preventScroll: true });
 }
 
 function openAdminModal({ title, kicker = "", body = "", wide = false, onOpen } = {}) {
   closeAdminModal();
+  adminModalRestoreFocus = document.activeElement;
   const layer = document.createElement("div");
   layer.id = "admin-modal-layer";
   layer.className = "admin-modal-layer";
   layer.innerHTML = `<div class="admin-modal-backdrop" data-modal-close></div><section class="admin-modal ${wide ? "admin-modal--wide" : ""}" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title"><div class="admin-modal-handle" aria-hidden="true"></div><header class="admin-modal-header"><div>${kicker ? `<p class="admin-kicker">${esc(kicker)}</p>` : ""}<h2 id="admin-modal-title">${esc(title || "編集")}</h2></div><button class="admin-modal-close" type="button" data-modal-close aria-label="閉じる">×</button></header><div class="admin-modal-body">${body}</div></section>`;
   document.body.appendChild(layer);
   document.body.classList.add("admin-modal-open");
+  if (app) app.inert = true;
   layer.querySelectorAll("[data-modal-close]").forEach((el) => el.addEventListener("click", closeAdminModal));
   const dialog = layer.querySelector(".admin-modal");
   dialog?.addEventListener("click", (event) => event.stopPropagation());
-  document.addEventListener("keydown", function escClose(event) {
-    if (event.key !== "Escape") return;
-    document.removeEventListener("keydown", escClose);
-    closeAdminModal();
-  }, { once: true });
+  adminModalKeyHandler = (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeAdminModal();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = [...layer.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+      .filter((element) => !element.hidden && element.getClientRects().length);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  };
+  document.addEventListener("keydown", adminModalKeyHandler);
   requestAnimationFrame(() => layer.classList.add("is-open"));
   onOpen?.(layer);
   layer.querySelector("input, textarea, select, button")?.focus({ preventScroll: true });
@@ -154,6 +178,55 @@ function adminCredentialMessage() {
   return "12文字以上で、英字と数字をそれぞれ1文字以上含めてください。記号は必須ではありません。";
 }
 
+async function wireOAuthAvailability(root = document) {
+  const links = [...root.querySelectorAll("[data-oauth-provider]")];
+  if (!links.length) return;
+  try {
+    const { data } = await requestJson("/api/account/providers");
+    const providers = data.providers || {};
+    for (const link of links) {
+      const enabled = Boolean(providers[link.dataset.oauthProvider]);
+      link.classList.toggle("is-disabled", !enabled);
+      link.setAttribute("aria-disabled", enabled ? "false" : "true");
+      if (!enabled) { link.dataset.oauthHref = link.getAttribute("href") || ""; link.removeAttribute("href"); }
+    }
+  } catch {
+    for (const link of links) link.classList.add("is-disabled");
+  }
+}
+
+function adminOAuthButtons({ intent = "login", teamId = "", returnTo = "" } = {}) {
+  const query = new URLSearchParams({ intent });
+  if (teamId) query.set("teamId", teamId);
+  if (returnTo) query.set("returnTo", returnTo);
+  if (intent !== "reauth") {
+    query.set("terms", TERMS_VERSION);
+    query.set("privacy", PRIVACY_VERSION);
+  }
+  const suffix = intent === "reauth" ? "で本人確認" : "で続ける";
+  return `<div class="admin-oauth-actions">
+    <a class="button button-secondary admin-oauth-button" data-oauth-provider="google" href="/api/account/oauth/google/start?${query}">Google${suffix}</a>
+    <a class="button admin-oauth-button admin-oauth-button--line" data-oauth-provider="line" href="/api/account/oauth/line/start?${query}">LINE${suffix}</a>
+  </div>`;
+}
+
+function openFreshAuthModal(data, returnTo) {
+  const destination = data?.returnTo || returnTo || location.pathname;
+  const preferred = data?.provider ? `<p class="admin-help">前回の認証: ${esc(data.provider === "google" ? "Google" : "LINE")}</p>` : "";
+  openAdminModal({
+    title: "本人確認が必要です",
+    kicker: "SECURITY CHECK",
+    body: `<div class="admin-security-note"><strong>重要な操作を保護しています</strong><p>${esc(data?.message || "Google / LINEで本人確認をもう一度行ってください。")}</p></div>${preferred}${adminOAuthButtons({ intent: "reauth", returnTo: destination })}<p class="admin-help">認証後、この画面に戻ります。戻ったら操作をもう一度実行してください。</p>`,
+    onOpen(layer) { wireOAuthAvailability(layer); }
+  });
+}
+
+function handleFreshAuthResponse(response, data, returnTo) {
+  if (response?.status !== 428 || data?.error !== "reauth_required") return false;
+  openFreshAuthModal(data, returnTo);
+  return true;
+}
+
 // ---------------- System admin ----------------
 export async function renderSystemAdmin({ initialView = "list" } = {}) {
   shell("システム管理", `<section class="admin-card admin-loading"><div class="spinner"></div><h1>システム管理を確認しています…</h1></section>`);
@@ -217,6 +290,10 @@ async function renderSystemDashboard({ view = "list", message = "" } = {}) {
       <div><strong>${teams.length - active}</strong><span>停止中</span></div>
       <div><strong>${teams.reduce((sum, t) => sum + Number(t.sign_count || 0), 0)}</strong><span>登録サイン</span></div>
     </section>
+    <section class="admin-card">
+      <div class="admin-section-heading admin-section-heading--actions"><div><p class="admin-kicker">DATA PROTECTION</p><h2>保存データの保護</h2><p class="admin-section-caption">既存のチーム名・個人情報・サイン名・グループ説明・動画情報をAES-256-GCMで暗号化します。OAuth識別子はHMAC検索キーへ移行します。</p></div><button class="button button-secondary" id="protect-data-now" type="button">既存データを保護</button></div>
+      <div id="data-protection-status" class="admin-help">状態を確認しています…</div>
+    </section>
     <section class="admin-card admin-card--flush-mobile">
       <div class="admin-section-heading"><div><p class="admin-kicker">TEAMS</p><h2>登録チーム</h2><p class="admin-section-caption">チーム名・利用状態・登録数を一覧で確認できます。</p></div></div>
       ${teams.length ? `<div class="admin-team-list">${teams.map(systemTeamCard).join("")}</div>` : `<div class="admin-empty"><strong>まだチームがありません</strong><p>「チームを登録」から作成してください。</p></div>`}
@@ -229,9 +306,10 @@ async function renderSystemDashboard({ view = "list", message = "" } = {}) {
 
 function systemTeamCard(team) {
   const statusLabel = team.status === "active" ? "利用中" : "停止中";
+  const plan = team.plan || { name: "Free", isFree: true };
   return `<article class="admin-team-card" data-team-id="${esc(team.id)}">
     <div class="admin-team-card-main">
-      <div class="admin-team-title"><span class="admin-status admin-status--${esc(team.status)}">${statusLabel}</span><h3>${esc(team.name)}</h3><p class="admin-id">${esc(team.id)}</p></div>
+      <div class="admin-team-title"><div class="admin-team-badges"><span class="admin-status admin-status--${esc(team.status)}">${statusLabel}</span><span class="admin-plan-mini">${esc(plan.name || "Free")}</span></div><h3>${esc(team.name)}</h3><p class="admin-id">${esc(team.id)}</p></div>
       <div class="admin-team-counts"><span><strong>${Number(team.sign_count || 0)}</strong><small>サイン</small></span><span><strong>${Number(team.video_count || 0)}</strong><small>動画</small></span></div>
     </div>
     <div class="admin-row-meta"><span>登録 ${esc(formatDate(team.created_at))}</span></div>
@@ -243,10 +321,37 @@ function systemTeamCard(team) {
   </article>`;
 }
 
+async function refreshDataProtectionStatus() {
+  const status = document.querySelector("#data-protection-status");
+  if (!status) return;
+  const { response, data } = await requestJson("/api/system/security/data-protection");
+  if (!response.ok) { status.textContent = data.message || "データ保護状態を確認できませんでした。"; return; }
+  if (data.complete) { status.textContent = "保護対象の既存データはすべて暗号化済みです。"; return; }
+  const r = data.remaining || {};
+  const total = Object.values(r).reduce((sum, value) => sum + Number(value || 0), 0);
+  status.textContent = `未保護データが ${total} 件あります。ボタンを押すと安全に段階移行します。`;
+}
+
 function wireSystemDashboard(teams) {
   document.querySelector("#system-logout")?.addEventListener("click", async () => {
     await fetch("/api/system/logout", { method: "POST" });
     renderSystemLogin();
+  });
+
+  refreshDataProtectionStatus();
+  document.querySelector("#protect-data-now")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    setButtonBusy(button, true, "保護しています…");
+    const { response, data } = await requestJson("/api/system/security/data-protection", { method: "POST", body: JSON.stringify({ batchSize: 100, maxBatches: 20 }) });
+    setButtonBusy(button, false);
+    if (!response.ok) {
+      const status = document.querySelector("#data-protection-status");
+      if (status) status.textContent = data.message || "既存データを保護できませんでした。";
+      return;
+    }
+    const status = document.querySelector("#data-protection-status");
+    const protectedTotal = Object.entries(data.protected || {}).filter(([key]) => key !== "skippedIdentities").reduce((sum, [, value]) => sum + Number(value || 0), 0);
+    if (status) status.textContent = data.complete ? `完了しました。${protectedTotal}件を保護しました。` : `${protectedTotal}件を保護しました。まだ未保護データがあります。もう一度実行してください。`;
   });
 
   document.querySelector("#create-team-open")?.addEventListener("click", () => {
@@ -328,7 +433,12 @@ export async function renderTeamAdmin(teamId) {
   shell("チーム管理", `<section class="admin-card admin-loading"><div class="spinner"></div><h1>チーム管理を確認しています…</h1></section>`);
   const { response, data } = await requestJson(`/api/team-admin/session?teamId=${encodeURIComponent(teamId)}`);
   if (response.status === 404) return renderTeamAdminNotFound();
-  if (!response.ok || !data.authenticated) return renderTeamAdminLogin(teamId, { teamName: data.teamName || "", error: response.status === 503 ? (data.message || "サーバーの認証設定を確認してください。") : "" });
+  if (!response.ok || !data.authenticated) return renderTeamAdminLogin(teamId, {
+    teamName: data.teamName || "",
+    error: response.status === 503 ? (data.message || "サーバーの認証設定を確認してください。") : "",
+    accountManaged: Boolean(data.accountManaged),
+    legacyPasswordEnabled: data.legacyPasswordEnabled !== false
+  });
   renderTeamDashboard(teamId);
 }
 
@@ -336,17 +446,22 @@ function renderTeamAdminNotFound() {
   shell("チームが見つかりません", `<section class="admin-card admin-auth-card"><h1>チームが見つかりません</h1><p>管理URLを確認してください。</p><a class="button button-primary button-full" href="/">トップページへ</a></section>`);
 }
 
-function renderTeamAdminLogin(teamId, { teamName = "", error = "" } = {}) {
+function renderTeamAdminLogin(teamId, { teamName = "", error = "", accountManaged = false, legacyPasswordEnabled = true } = {}) {
+  const returnTo = `/t/${teamId}/admin`;
+  const oauth = accountManaged ? `<div class="admin-account-login"><p class="admin-kicker">ACCOUNT LOGIN</p><h2>管理者アカウントでログイン</h2><p class="admin-help">登録済みのGoogle / LINEアカウントを使います。</p>${adminOAuthButtons({ intent: "login", returnTo })}<p class="admin-help">続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p></div>` : "";
+  const passwordForm = legacyPasswordEnabled ? `<form id="team-admin-login-form" class="admin-form">
+      <label>管理者パスワード<input class="text-input" id="team-admin-password" type="password" autocomplete="current-password" required></label>
+      <p class="admin-help">${accountManaged ? "以前の共有パスワードでもログインできます。安全性のため、アカウント移行後は無効化を推奨します。" : "ログイン後にGoogle / LINEアカウントへ移行できます。"}</p>
+      <button class="button button-primary button-full" type="submit">管理者パスワードで入る</button>
+    </form>` : "";
   shell("チーム管理ログイン", `<section class="admin-card admin-auth-card">
     <div class="admin-lock">⚾</div><p class="admin-kicker">TEAM ADMIN</p><h1>チーム管理</h1><p class="admin-lead">${teamName ? esc(teamName) : "サイン・動画を管理します"}</p>
     ${error ? notice(error, "error") : ""}
-    <form id="team-admin-login-form" class="admin-form">
-      <label>管理者パスワード<input class="text-input" id="team-admin-password" type="password" autocomplete="current-password" required></label>
-      <p class="admin-help">新規設定・変更時は12文字以上で、英字と数字を含むパスワードを使用します。</p>
-      <button class="button button-primary button-full" type="submit">管理画面に入る</button>
-    </form>
+    ${oauth}${accountManaged && legacyPasswordEnabled ? `<div class="admin-auth-divider"><span>または</span></div>` : ""}${passwordForm}
+    ${!accountManaged && !legacyPasswordEnabled ? notice("このチームの管理者アカウント設定を確認してください。", "error") : ""}
     <a class="button button-secondary button-full" href="/t/${encodeURIComponent(teamId)}">選手用ページへ</a>
   </section>`);
+  wireOAuthAvailability();
   document.querySelector("#team-admin-login-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const password = document.querySelector("#team-admin-password").value;
@@ -354,19 +469,99 @@ function renderTeamAdminLogin(teamId, { teamName = "", error = "" } = {}) {
     submit.disabled = true;
     submit.textContent = "確認しています…";
     const { response, data } = await requestJson("/api/team-admin/auth", { method: "POST", body: JSON.stringify({ teamId, password }) });
-    if (!response.ok) return renderTeamAdminLogin(teamId, { teamName, error: data.message || "管理者パスワードを確認してください。" });
+    if (!response.ok) return renderTeamAdminLogin(teamId, { teamName, accountManaged, legacyPasswordEnabled, error: data.message || "管理者パスワードを確認してください。" });
     renderTeamDashboard(teamId);
+  });
+}
+
+function adminIdentitySection(teamId, team, auth, management) {
+  if (auth?.type === "legacy-password") {
+    return `<section class="admin-card admin-identity-card">
+      <div class="admin-migration-callout"><div><p class="admin-kicker">ADMIN ACCOUNT</p><h2>管理者アカウントへ移行</h2><p>現在は共有パスワードで管理しています。Google / LINEを連携すると、管理者の追加・交代・退会をアカウント単位で安全に行えます。移行完了時に旧共有パスワードは自動で無効化され、既存のサインや動画はそのままです。</p></div>${adminOAuthButtons({ intent: "claim-team", teamId, returnTo: `/t/${teamId}/admin` })}<p class="admin-help">移行を続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p></div>
+    </section>`;
+  }
+  if (auth?.type !== "account" || !management) return "";
+  const owner = management.currentRole === "owner";
+  const members = management.members || [];
+  const admins = members.filter((member) => member.role === "admin");
+  const memberRows = members.map((member) => `<div class="admin-identity-row">
+    <div class="admin-identity-person"><span class="admin-identity-avatar">${esc((member.displayName || "管").slice(0,1))}</span><div><strong>${esc(member.displayName || "管理者")}</strong><small>${esc(member.email || "メールアドレス未取得")}</small></div></div>
+    <div class="admin-card-actions"><span class="${member.role === "owner" ? "admin-owner-badge" : "admin-admin-badge"}">${member.role === "owner" ? "オーナー" : "管理者"}</span>${owner && member.role === "admin" ? `<button class="button button-ghost" data-remove-admin="${esc(member.userId)}" type="button">管理者から外す</button>` : ""}</div>
+  </div>`).join("");
+  const pending = (management.pendingInvites || []).map((invite) => `<div class="admin-identity-row"><div><strong>${invite.kind === "transfer" ? "オーナー交代" : "管理者招待"}</strong><small>有効期限 ${esc(formatDate(new Date(Number(invite.expires_at) * 1000).toISOString()))}</small></div><button class="button button-ghost" data-revoke-invite="${esc(invite.id)}" type="button">取り消す</button></div>`).join("");
+  return `<section class="admin-card admin-identity-card">
+    <div class="admin-identity-header"><div><p class="admin-kicker">ADMINISTRATORS</p><h2>管理者と権限</h2><p class="admin-section-caption">管理者ごとにGoogle / LINEで本人認証。共有パスワードに頼らず、交代や退会を安全に管理します。</p></div><a class="button button-secondary" href="/account">マイアカウント</a></div>
+    <div class="admin-identity-list">${memberRows}</div>
+    ${pending ? `<div class="admin-section-subtitle"><strong>承認待ちの招待</strong></div><div class="admin-identity-list">${pending}</div>` : ""}
+    <div class="admin-identity-actions">${owner ? `<button class="button button-primary" id="open-admin-invite" type="button">＋ 管理者を招待</button><button class="button button-secondary" id="open-owner-transfer" type="button">オーナーを交代</button>${management.legacyPasswordEnabled ? `<button class="button button-ghost" id="disable-legacy-password" type="button">旧パスワードを無効化</button>` : `<span class="admin-status admin-status--active">共有パスワード無効</span>`}` : `<button class="button button-danger" id="leave-team-admin" type="button">このチームの管理者を退会</button>`}</div>
+    ${owner && management.legacyPasswordEnabled ? `<p class="admin-help">アカウント移行が確認できたら旧管理者パスワードを無効化すると、共有パスワードを知る人からのアクセスを止められます。</p>` : ""}
+  </section>`;
+}
+
+function showInviteResult(teamId, invite, label) {
+  openAdminModal({
+    title: label,
+    kicker: "ONE-TIME INVITE",
+    body: `<div class="admin-invite-result"><strong>このリンクを交代・追加する管理者本人へ送ってください</strong><div class="admin-copy-row"><input class="text-input" id="generated-invite-url" readonly value="${esc(invite.url)}"><button class="button button-primary" id="copy-generated-invite" type="button">コピー</button></div><p class="admin-help" id="invite-copy-status" aria-live="polite"></p><button class="button line-share-button button-full" id="line-generated-invite" type="button">LINEで送る</button><p class="admin-security-note">このリンクは一度だけ使用でき、最長72時間で期限切れになります。SNSなど公開場所には貼らないでください。</p></div><button class="button button-secondary button-full" id="invite-result-close" type="button">閉じる</button>`,
+    onOpen(layer) {
+      layer.querySelector("#copy-generated-invite")?.addEventListener("click", () => copyText(invite.url, layer.querySelector("#invite-copy-status")));
+      layer.querySelector("#line-generated-invite")?.addEventListener("click", () => window.open(`https://line.me/R/share?text=${encodeURIComponent(`【SIGN TRAINER】\n${label}の招待です。\n${invite.url}`)}`, "_blank", "noopener,noreferrer"));
+      layer.querySelector("#invite-result-close")?.addEventListener("click", closeAdminModal);
+    }
+  });
+}
+
+function openAdminInviteModal(teamId) {
+  openAdminModal({
+    title: "管理者を招待",
+    kicker: "ADMIN INVITE",
+    body: `<div id="admin-modal-error"></div><p class="admin-modal-lead">招待する人だけにワンタイムリンクを送ります。相手はGoogle / LINEで本人認証して管理者になります。</p><form id="admin-invite-form" class="admin-form"><label>リンクの有効時間<select class="text-input" name="expiresHours"><option value="24">24時間</option><option value="48">48時間</option><option value="72">72時間</option></select></label><button class="button button-primary button-full" type="submit">招待リンクを発行</button></form>`,
+    onOpen(layer) {
+      layer.querySelector("#admin-invite-form")?.addEventListener("submit", async (event) => {
+        event.preventDefault(); const fd = new FormData(event.currentTarget); const submit = event.currentTarget.querySelector("button[type=submit]"); setButtonBusy(submit, true, "発行しています…");
+        const { response, data } = await requestJson("/api/team-admin/admins/invites", { method: "POST", body: JSON.stringify({ teamId, kind: "admin", expiresHours: Number(fd.get("expiresHours")) }) });
+        if (!response.ok) { setButtonBusy(submit, false); return modalError(data.message || "招待リンクを発行できませんでした。"); }
+        closeAdminModal(); showInviteResult(teamId, data.invite, "管理者追加");
+      });
+    }
+  });
+}
+
+function openOwnerTransferModal(teamId, management) {
+  const admins = (management.members || []).filter((member) => member.role === "admin");
+  openAdminModal({
+    title: "オーナーを交代",
+    kicker: "OWNER TRANSFER",
+    body: `<div id="admin-modal-error"></div><div class="notice notice-warning"><strong>重要な操作です</strong><br>交代が完了すると旧共有パスワードは自動的に無効化されます。</div><form id="owner-transfer-form" class="admin-form">${admins.length ? `<label>交代方法<select class="text-input" name="nextOwnerUserId"><option value="">新しい人へ交代リンクを発行</option>${admins.map((member) => `<option value="${esc(member.userId)}">登録済み管理者：${esc(member.displayName)}</option>`).join("")}</select></label>` : `<p class="admin-help">登録済みの管理者がいないため、新しいオーナーへ交代リンクを発行します。</p>`}<label class="admin-toggle admin-toggle--panel"><input type="checkbox" name="currentOwnerExit"><span>交代後、自分はこのチームの管理者から外れる</span></label><label>リンクの有効時間 <span class="admin-optional">新しい人へ発行する場合</span><select class="text-input" name="expiresHours"><option value="24">24時間</option><option value="48">48時間</option><option value="72">72時間</option></select></label><button class="button button-primary button-full" type="submit">交代手続きを進める</button></form>`,
+    onOpen(layer) {
+      layer.querySelector("#owner-transfer-form")?.addEventListener("submit", async (event) => {
+        event.preventDefault(); const fd = new FormData(event.currentTarget); const submit = event.currentTarget.querySelector("button[type=submit]"); const nextOwnerUserId = String(fd.get("nextOwnerUserId") || ""); const currentOwnerExit = fd.get("currentOwnerExit") === "on"; setButtonBusy(submit, true, "処理しています…");
+        if (nextOwnerUserId) {
+          if (!confirm("選択した管理者へオーナー権限を移します。続けますか？")) { setButtonBusy(submit, false); return; }
+          const { response, data } = await requestJson("/api/team-admin/admins/transfer", { method: "POST", body: JSON.stringify({ teamId, nextOwnerUserId, currentOwnerExit }) });
+          if (!response.ok) { setButtonBusy(submit, false); if (handleFreshAuthResponse(response, data, `/t/${teamId}/admin`)) return; return modalError(data.message || "交代できませんでした。"); }
+          closeAdminModal(); return renderTeamDashboard(teamId, { message: "オーナーを交代しました。" });
+        }
+        const { response, data } = await requestJson("/api/team-admin/admins/invites", { method: "POST", body: JSON.stringify({ teamId, kind: "transfer", currentOwnerExit, expiresHours: Number(fd.get("expiresHours")) }) });
+        if (!response.ok) { setButtonBusy(submit, false); if (handleFreshAuthResponse(response, data, `/t/${teamId}/admin`)) return; return modalError(data.message || "交代リンクを発行できませんでした。"); }
+        closeAdminModal(); showInviteResult(teamId, data.invite, "オーナー交代");
+      });
+    }
   });
 }
 
 async function renderTeamDashboard(teamId, { message = "" } = {}) {
   shell("チーム管理", `<section class="admin-card admin-loading"><div class="spinner"></div><h1>サイン情報を読み込んでいます…</h1></section>`, `<button class="button button-ghost" id="team-admin-logout" type="button">ログアウト</button>`);
   const { response, data } = await requestJson(`/api/team-admin/team?teamId=${encodeURIComponent(teamId)}`);
-  if (response.status === 401) return renderTeamAdminLogin(teamId);
+  if (response.status === 401) return renderTeamAdmin(teamId);
   if (!response.ok) return shell("チーム管理", `<section class="admin-card"><h1>読み込めませんでした</h1>${notice(data.message || "もう一度お試しください。", "error")}</section>`);
   const team = data.team;
   const signs = data.signs || [];
   const groups = data.groups || [];
+  const auth = data.auth || {};
+  const adminManagement = data.adminManagement || null;
+  const planState = data.plan || {};
+  const plan = planState.plan || { code: "free", name: "Free", isFree: true, availableForPurchase: false };
   const playerUrl = teamUrl(teamId);
   const qrSrc = qrImageUrl(playerUrl, 320);
   const totalVideos = signs.reduce((sum, sign) => sum + (sign.videoItems || []).length, 0);
@@ -383,6 +578,11 @@ async function renderTeamDashboard(teamId, { message = "" } = {}) {
       <div><strong>${enabledSigns}</strong><span>練習サイン</span></div>
       <div><strong>${totalVideos}</strong><span>登録動画</span></div>
     </section>
+    <section class="admin-plan-card">
+      <div><p class="admin-kicker">PLAN</p><div class="admin-plan-title"><h2>${esc(plan.name || "Free")}</h2><span class="admin-plan-price">${plan.isFree ? "¥0" : "契約中"}</span></div><p>現在のサイン登録・グループ・YouTube動画・クイズ・共有・PWAはこのプランで利用できます。</p></div>
+      <div class="admin-plan-future"><strong>クラウド保存は将来の追加機能</strong><span>画像・動画をSIGN TRAINERへ直接保存する機能は、保存コストに応じた別プランとして提供予定です。現在は課金されません。</span></div>
+    </section>
+    ${adminIdentitySection(teamId, team, auth, adminManagement)}
     <section class="admin-card admin-share-card">
       <div class="admin-section-heading"><div><p class="admin-kicker">SHARE</p><h2>チームメンバーに共有</h2><p class="admin-section-caption">参加リンクとQRコードをいつでも確認できます。</p></div></div>
       <div class="admin-share-grid">
@@ -404,7 +604,7 @@ async function renderTeamDashboard(teamId, { message = "" } = {}) {
     </section>
   </div>`;
   shell("チーム管理", body, `<button class="button button-ghost" id="team-admin-logout" type="button">ログアウト</button>`);
-  wireTeamDashboard(teamId, team, groups, signs, playerUrl);
+  wireTeamDashboard(teamId, team, groups, signs, playerUrl, auth, adminManagement);
 }
 
 function teamGroupCard(group, signs) {
@@ -436,11 +636,11 @@ function teamVideoRow(sign, video, index) {
   </div>`;
 }
 
-function openTeamSettingsModal(teamId, team) {
+function openTeamSettingsModal(teamId, team, auth = {}) {
   openAdminModal({
     title: "チーム設定",
     kicker: team.name,
-    body: `<div id="admin-modal-error"></div><form id="team-settings-modal-form" class="admin-form"><label>チーム名<input class="text-input" name="name" type="text" maxlength="80" value="${esc(team.name)}" required></label><label>選手用合言葉を変更 <span class="admin-optional">変更時のみ</span><input class="text-input" name="passphrase" type="text" autocomplete="off"></label><label>管理者パスワードを変更 <span class="admin-optional">変更時のみ・12文字以上＋英字＋数字</span><input class="text-input" name="adminPassword" type="password" minlength="12" autocomplete="new-password"></label><p class="admin-help">合言葉や管理者パスワードを変更すると、既存セッションは安全のため失効します。</p><button class="button button-primary button-full" type="submit">保存する</button></form>`,
+    body: `<div id="admin-modal-error"></div><form id="team-settings-modal-form" class="admin-form"><label>チーム名<input class="text-input" name="name" type="text" maxlength="80" value="${esc(team.name)}" required></label><label>選手用合言葉を変更 <span class="admin-optional">変更時のみ</span><input class="text-input" name="passphrase" type="text" autocomplete="off"></label>${team.legacyPasswordEnabled && (auth.type === "legacy-password" || auth.role === "owner") ? `<label>旧管理者パスワードを変更 <span class="admin-optional">変更時のみ・12文字以上＋英字＋数字</span><input class="text-input" name="adminPassword" type="password" minlength="12" autocomplete="new-password"></label><p class="admin-help">合言葉や旧管理者パスワードを変更すると、対象の既存セッションは安全のため失効します。</p>` : team.legacyPasswordEnabled ? `<div class="admin-security-note"><strong>旧管理者パスワードはオーナー管理</strong><p>管理者アカウントではチーム名・選手用合言葉を変更できます。旧共有パスワードの変更・無効化はオーナーのみ行えます。</p></div>` : `<div class="admin-security-note"><strong>管理者はアカウント認証です</strong><p>共有の管理者パスワードは無効化されています。</p></div>`}<button class="button button-primary button-full" type="submit">保存する</button></form>`,
     onOpen(layer) {
       layer.querySelector("#team-settings-modal-form")?.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -538,12 +738,39 @@ function openVideoPreview(videoId, title) {
   openAdminModal({ title: title || "動画を確認", kicker: "YOUTUBE PREVIEW", wide: true, body: `<div class="admin-video-preview"><iframe src="${src}" title="${esc(title || "YouTube動画")}" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="eager"></iframe></div><p class="admin-help">管理画面内で内容を確認できます。閉じると再生も終了します。</p>` });
 }
 
-function wireTeamDashboard(teamId, team, groups, signs, playerUrl) {
-  document.querySelector("#team-admin-logout")?.addEventListener("click", async () => { await fetch("/api/team-admin/logout", { method: "POST" }); renderTeamAdminLogin(teamId); });
+function wireTeamDashboard(teamId, team, groups, signs, playerUrl, auth = {}, adminManagement = null) {
+  document.querySelector("#team-admin-logout")?.addEventListener("click", async () => { await fetch("/api/team-admin/logout", { method: "POST" }); renderTeamAdmin(teamId); });
+  wireOAuthAvailability();
+  document.querySelector("#open-admin-invite")?.addEventListener("click", () => openAdminInviteModal(teamId));
+  document.querySelector("#open-owner-transfer")?.addEventListener("click", () => openOwnerTransferModal(teamId, adminManagement || { members: [] }));
+  document.querySelector("#disable-legacy-password")?.addEventListener("click", async () => {
+    if (!confirm("旧管理者パスワードでのログインを無効化します。Google / LINEアカウントでログインできることを確認済みですか？")) return;
+    const { response, data } = await requestJson(`/api/team-admin/legacy-password/disable?teamId=${encodeURIComponent(teamId)}`, { method: "POST" });
+    if (!response.ok) { if (handleFreshAuthResponse(response, data, `/t/${teamId}/admin`)) return; return alert(data.message || "無効化できませんでした。"); }
+    renderTeamDashboard(teamId, { message: "旧管理者パスワードを無効化しました。" });
+  });
+  document.querySelector("#leave-team-admin")?.addEventListener("click", async () => {
+    if (!confirm("このチームの管理者から退会しますか？以後、このチームの管理画面には入れません。")) return;
+    const { response, data } = await requestJson(`/api/team-admin/membership?teamId=${encodeURIComponent(teamId)}`, { method: "DELETE" });
+    if (!response.ok) { if (handleFreshAuthResponse(response, data, `/t/${teamId}/admin`)) return; return alert(data.message || "退会できませんでした。"); }
+    location.href = "/account";
+  });
+  document.querySelectorAll("[data-remove-admin]").forEach((button) => button.addEventListener("click", async () => {
+    if (!confirm("この人をチーム管理者から外しますか？")) return;
+    const { response, data } = await requestJson(`/api/team-admin/admins/${encodeURIComponent(button.dataset.removeAdmin)}?teamId=${encodeURIComponent(teamId)}`, { method: "DELETE" });
+    if (!response.ok) { if (handleFreshAuthResponse(response, data, `/t/${teamId}/admin`)) return; return alert(data.message || "管理者から外せませんでした。"); }
+    renderTeamDashboard(teamId, { message: "管理者を更新しました。" });
+  }));
+  document.querySelectorAll("[data-revoke-invite]").forEach((button) => button.addEventListener("click", async () => {
+    if (!confirm("この招待を取り消しますか？")) return;
+    const { response, data } = await requestJson(`/api/team-admin/admins/invites/${encodeURIComponent(button.dataset.revokeInvite)}?teamId=${encodeURIComponent(teamId)}`, { method: "DELETE" });
+    if (!response.ok) return alert(data.message || "招待を取り消せませんでした。");
+    renderTeamDashboard(teamId, { message: "招待を取り消しました。" });
+  }));
   document.querySelector("#copy-player-url")?.addEventListener("click", () => copyText(playerUrl, document.querySelector("#copy-player-status")));
   document.querySelector("#share-player-native")?.addEventListener("click", () => shareTeamPage(team.name, playerUrl, document.querySelector("#copy-player-status")));
   document.querySelector("#share-player-line")?.addEventListener("click", () => shareTeamOnLine(team.name, playerUrl));
-  document.querySelector("#open-team-settings")?.addEventListener("click", () => openTeamSettingsModal(teamId, team));
+  document.querySelector("#open-team-settings")?.addEventListener("click", () => openTeamSettingsModal(teamId, team, auth));
   document.querySelector("#open-add-group")?.addEventListener("click", () => openGroupModal(teamId));
   document.querySelectorAll("[data-edit-group]").forEach((button) => button.addEventListener("click", () => { const group = groups.find((item) => String(item.id) === String(button.dataset.editGroup)); if (group) openGroupModal(teamId, group); }));
   document.querySelectorAll("[data-preview-group-video]").forEach((button) => button.addEventListener("click", () => openVideoPreview(button.dataset.previewGroupVideo, `${button.dataset.groupTitle} / 説明動画`)));
