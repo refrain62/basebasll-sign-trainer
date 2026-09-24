@@ -1,6 +1,6 @@
-import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=57";
+import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=64";
 
-const APP_BUILD = "57";
+const APP_BUILD = "64";
 console.info(`[SIGN TRAINER] build ${APP_BUILD} landing`);
 
 const SAMPLE_TEAM_ID = "6BnWv2K3zo";

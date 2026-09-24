@@ -1,132 +1,112 @@
-# SIGN TRAINER
+# SIGN TRAINER — build 63
 
-野球チーム固有のサインを動画で反復練習する Web / PWA です。**build 55** では、Cloudflare D1 を **local / dev / staging / production** で分離する構成へ変更しています。
+野球チーム固有のサインを動画で反復練習する Web / PWA です。D1 は local / dev / staging / production で分離し、チーム情報・サイン・YouTube URLのみを保存します。選手の回答・正答率・練習履歴は端末の `localStorage` のみに保存します。
 
 本番URL: `https://basebasll-sign-trainer.refrain62.workers.dev/`
 
-## 環境構成
+## build 60 のセキュリティ強化
 
-SIGN TRAINER 全体で複数チームを1つのD1に保存しますが、D1自体は環境ごとに完全分離します。
+- Wrangler を **`4.136.3` に完全固定**（`^` 不使用）
+- `.npmrc` で `save-exact=true` / `ignore-scripts=true`
+- deploy 前の `security-preflight` を追加
+- GitHub Dependabot / `npm audit` ワークフローを追加
+- 配布ZIPから `.dev.vars*` を除外
+- QRコードを外部APIへ送らず、**ブラウザ内でローカル生成**
+- PBKDF2-SHA256 を新規ハッシュ **600,000 iterations** に強化
+- 旧120,000回ハッシュはログイン成功時に自動再ハッシュ
+- 認証APIにD1ベースのレート制限を追加
+- POST/PUT/PATCH/DELETE に Origin / Fetch Metadata ベースのCSRF防御を追加
+- API JSON を64KBまでに制限
+- チーム合言葉・管理者パスワード変更時に既存セッションを失効
+- `SYSTEM_ADMIN_SECRET` 変更時も既存システム管理セッションを失効
+- 管理Cookieは `SameSite=Strict`、本番では `__Host-` + `Secure`
+- CSPを縮小し、外部QR画像・外部スクリプト依存を廃止
+- チーム/サイン/動画削除をsoft delete化
+- 管理操作の `audit_log` をD1へ記録
+- production / dev / staging の `/admin` と `/api/system/*` は Cloudflare Access 必須
 
-| 環境 | Worker | D1 | 用途 |
-|---|---|---|---|
-| local | `wrangler dev --env dev` | WranglerローカルD1 | PCでの開発 |
-| dev | `basebasll-sign-trainer-dev` | `sign-trainer-dev` | 開発共有 |
-| staging | `basebasll-sign-trainer-staging` | `sign-trainer-staging` | 本番前確認 |
-| production | `basebasll-sign-trainer` | `sign-trainer-production` | 本番 |
+## 重要: package-lock.json
 
-アプリコードは全環境で `env.DB` だけを参照します。接続先D1は `wrangler.jsonc` が切り替えます。
+この配布環境では npm registry へ接続できないため、`package-lock.json` 自体は生成していません。**deploy script は lockfile がない状態では失敗するようにしています。**
 
-## 重要: 本番を誤操作しないための方針
-
-- 通常のローカル起動は `npm run dev` を使用します。これは `--env dev` かつローカルD1で起動します。
-- dev / staging / production へのmigrationはそれぞれ別コマンドです。
-- deployも `deploy:dev` / `deploy:staging` / `deploy:prod` に分けています。
-- genericな `npm run deploy` は用意していません。
-- 練習結果・回答内容はD1へ保存せず、利用端末の `localStorage` のみに保存します。
-
-## 1. 依存関係
+最初に信頼できるネットワーク上で一度だけ実行してください。
 
 ```bash
-npm install
+npm install --package-lock-only --ignore-scripts
+npm ci --ignore-scripts
+npm run security:preflight
 ```
 
-## 2. ローカル開発
+生成された `package-lock.json` は必ずGit管理してください。以後は `npm install` ではなく **`npm ci --ignore-scripts`** を使います。
 
-`.dev.vars` をプロジェクト直下に作成します。
+## 環境構成
+
+| 環境 | Worker | D1 |
+|---|---|---|
+| local | `wrangler dev --env dev` | WranglerローカルD1 |
+| dev | `basebasll-sign-trainer-dev` | `sign-trainer-dev` |
+| staging | `basebasll-sign-trainer-staging` | `sign-trainer-staging` |
+| production | `basebasll-sign-trainer` | `sign-trainer-production` |
+
+アプリコードは全環境で `env.DB` のみ参照します。
+
+## D1 ID
+
+```text
+dev        3b47491c-8e2a-412a-b2a7-1a06922b3604
+staging    2ca39d6b-e06f-44b4-862b-b0c2932d9310
+production bdd534e9-1c42-4db7-adbe-c62e35e123b5
+```
+
+## ローカル開発
+
+`.dev.vars.example` をコピーして `.dev.vars` を作り、**32文字以上**の `SESSION_SECRET` と **12文字以上で英字・数字を含む** `SYSTEM_ADMIN_SECRET` を設定します。
+
+```powershell
+Copy-Item .dev.vars.example .dev.vars
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+例:
 
 ```env
-SESSION_SECRET=local-development-secret-change-me
-SYSTEM_ADMIN_SECRET=local-system-admin
+SESSION_SECRET=<32bytes以上のランダム値>
+SYSTEM_ADMIN_SECRET=<12文字以上・英字と数字を含む管理キー>
 ```
 
-ローカルD1へmigrationを適用します。
+migration:
 
 ```bash
 npm run db:migrate:local
 ```
 
-起動します。
+起動:
 
 ```bash
 npm run dev
 ```
 
-通常は以下で確認できます。
-
 ```text
-LP                    http://localhost:8787/
-サンプルチーム        http://localhost:8787/t/6BnWv2K3zo
-システム管理          http://localhost:8787/admin
-チーム管理            http://localhost:8787/t/6BnWv2K3zo/admin
+LP              http://localhost:8787/
+サンプルチーム  http://localhost:8787/t/6BnWv2K3zo
+システム管理    http://localhost:8787/admin
+チーム管理      http://localhost:8787/t/6BnWv2K3zo/admin
 ```
 
-ローカルではCloudflare上の `sign-trainer-dev` を直接変更しません。`wrangler dev` のローカルD1を使います。
+ローカルホストでは Cloudflare Access チェックを自動的にスキップします。
 
-## 3. Cloudflare D1を3つ作成
-
-Cloudflareへログインします。
-
-```bash
-npx wrangler login
-```
-
-D1を作ります。
-
-```bash
-npx wrangler d1 create sign-trainer-dev
-npx wrangler d1 create sign-trainer-staging
-npx wrangler d1 create sign-trainer-production
-```
-
-それぞれ表示された `database_id` を `wrangler.jsonc` の次のプレースホルダーへ設定します。
-
-```text
-3b47491c-8e2a-412a-b2a7-1a06922b3604
-2ca39d6b-e06f-44b4-862b-b0c2932d9310
-bdd534e9-1c42-4db7-adbe-c62e35e123b5
-```
-
-### `wrangler.jsonc` の対応
-
-```text
-env.dev.d1_databases       -> sign-trainer-dev
-env.staging.d1_databases   -> sign-trainer-staging
-top-level d1_databases     -> sign-trainer-production
-```
-
-productionをトップレベルにしているのは、既存の本番Worker名 `basebasll-sign-trainer` と本番URLを変更しないためです。
-
-## 4. migration
-
-### local
+## migration
 
 ```bash
 npm run db:migrate:local
-```
-
-### dev
-
-```bash
 npm run db:migrate:dev
-```
-
-### staging
-
-```bash
 npm run db:migrate:staging
-```
-
-### production
-
-```bash
 npm run db:migrate:prod
 ```
 
-migrationは全環境共通です。
-
-- `migrations/0001_initial.sql` — `teams`, `signs`, `sign_videos`
-- `migrations/0002_seed_sample.sql` — サンプルチームと10サイン
+- `0001_initial.sql` — 基本テーブル
+- `0002_seed_sample.sql` — サンプルチーム + 10サイン
+- `0003_security_hardening.sql` — セッション世代、rate limit、audit log、soft delete
 
 サンプルチーム:
 
@@ -135,135 +115,114 @@ Team ID: 6BnWv2K3zo
 選手用合言葉: ホームラン
 ```
 
-## 5. Secretも環境ごとに設定
+## Secret設定
 
-Secretは環境間で共有しません。各Workerへ個別に設定します。
-
-### dev
+環境ごとに別の値を使用してください。
 
 ```bash
+# dev
 npx wrangler secret put SESSION_SECRET --env dev
 npx wrangler secret put SYSTEM_ADMIN_SECRET --env dev
-```
 
-### staging
-
-```bash
+# staging
 npx wrangler secret put SESSION_SECRET --env staging
 npx wrangler secret put SYSTEM_ADMIN_SECRET --env staging
-```
 
-### production
-
-```bash
+# production
 npx wrangler secret put SESSION_SECRET
 npx wrangler secret put SYSTEM_ADMIN_SECRET
 ```
 
-`SESSION_SECRET` は十分長いランダム値を使用してください。
+`SESSION_SECRET` は32文字以上、`SYSTEM_ADMIN_SECRET` は12文字以上かつ英字・数字をそれぞれ1文字以上含む値を必須としています。
 
-例:
+## Cloudflare Access（必須）
 
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+remote の dev / staging / production では `/admin*` と `/api/system/*` を Cloudflare Access で保護してください。`wrangler.jsonc` の `REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN` は3環境とも `true` です。
+
+Cloudflare Zero Trust で各Workerに Self-hosted Application を作り、最低でも以下を保護します。
+
+```text
+/admin*
+/api/system/*
 ```
 
-## 6. デプロイ
+Access policyで許可するメール/IdPユーザーを限定してください。Worker側でも `Cf-Access-Authenticated-User-Email` と `Cf-Access-Jwt-Assertion` の存在を確認し、その上で `SYSTEM_ADMIN_SECRET` を要求する二重防御です。
 
-事前チェック:
+必要なら `SYSTEM_ADMIN_ALLOWED_EMAILS` にカンマ区切りで許可メールを設定できます。空欄の場合はAccess policy側の許可設定を信頼します。
+
+## デプロイ
+
+lockfile生成後:
 
 ```bash
+npm ci --ignore-scripts
 npm run check
+npm run security:check
 ```
-
-### dev
 
 ```bash
 npm run deploy:dev
-```
-
-想定Worker: `basebasll-sign-trainer-dev`
-
-### staging
-
-```bash
 npm run deploy:staging
-```
-
-想定Worker: `basebasll-sign-trainer-staging`
-
-### production
-
-```bash
 npm run deploy:prod
 ```
 
-本番Worker: `basebasll-sign-trainer`
+各deployの前に `scripts/security-preflight.mjs` が実行され、Wranglerの完全固定・package-lockの存在・想定外の直接依存を検査します。
 
-## 7. migration状態確認
+## 認証・セッション
 
-```bash
-npm run db:list:local
-npm run db:list:dev
-npm run db:list:staging
-npm run db:list:prod
-```
-
-## データ構造
-
-### `teams`
-
-- `id`
-- `name`
-- `passphrase_hash`
-- `admin_password_hash`
-- `status`
-- timestamps
-
-### `signs`
-
-- `id`
-- `team_id`
-- `name`
-- `sort_order`
-- `enabled`
-- timestamps
-
-### `sign_videos`
-
-- `id`
-- `sign_id`
-- `youtube_url`
-- `youtube_video_id`
-- `sort_order`
-- `enabled`
-- timestamp
-
-## 認証
-
-認証は3種類に分離しています。
+認証は3種類です。
 
 1. 選手用合言葉 — `/t/{teamId}`
 2. チーム管理者パスワード — `/t/{teamId}/admin`
-3. `SYSTEM_ADMIN_SECRET` — `/admin`
+3. システム管理者 — Cloudflare Access + `SYSTEM_ADMIN_SECRET` — `/admin`
 
-選手用合言葉とチーム管理者パスワードは平文でD1へ保存せず、PBKDF2-SHA256で保存します。
+チーム管理者パスワードは新規設定/変更時 **12文字以上＋英字1文字以上＋数字1文字以上**です。記号は必須ではありません。
 
-## HTML / JavaScript
+合言葉・管理者パスワードはD1に平文保存しません。PBKDF2-SHA256でsalt付きハッシュとして保存します。
 
-- `public/index.html` — LP
-- `public/landing.js` — LP操作
-- `public/team.html` — 選手画面
-- `public/team.js` — 練習・動画・履歴・結果演出
-- `public/admin.html` — 管理画面
-- `public/admin-entry.js` — 管理画面ルート判定
-- `public/admin.js` — システム管理 / チーム管理
-- `public/styles.css` — 共通CSS
-- `src/index.js` — Worker / API / HTMLルーティング
+## 認証レート制限
+
+- 選手合言葉: 10回 / 10分 / team + client
+- チーム管理者: 8回 / 15分 / team + client
+- システム管理者: 6回 / 15分 / client
+
+client IPはそのまま保存せず、`SESSION_SECRET` を鍵にHMACしたキーのみD1へ保存します。ログイン成功時に該当カウンタを消去します。
+
+## CSRF / API入力制限
+
+状態変更APIは以下を要求します。
+
+- `Origin` が現在のoriginと完全一致
+- `Sec-Fetch-Site` が存在する場合 `same-origin`
+- JSONボディの場合 `application/json`
+- JSON最大64KB
+
+## セッション失効
+
+`teams` に `player_session_version` / `admin_session_version` を持ちます。
+
+- 選手用合言葉変更 → 既存選手Cookie失効
+- 管理者パスワード変更 → 既存チーム管理Cookie失効
+- チーム停止/削除 → 両方失効
+- `SYSTEM_ADMIN_SECRET` 変更 → システム管理Cookie失効
+
+## soft delete / 監査ログ
+
+チーム・サイン・動画の「削除」はD1上ではsoft deleteです。通常画面/APIからは見えなくなりますが、事故調査・復旧用データは残ります。
+
+`audit_log` には管理系の作成/変更/削除/管理ログイン成功を記録します。秘密値・合言葉・パスワードは記録しません。
+
+## QRコード
+
+QRは `public/vendor/qrcode-local.js` でブラウザ内生成します。チームURLを第三者QRサービスへ送信しません。由来とライセンスは `THIRD_PARTY_NOTICES.md`、ファイルハッシュは `public/vendor/SHA256SUMS` を参照してください。
+
+## CSP / 外部通信
+
+トップレベルページのCSPは原則 `self` のみです。動画iframeのみ `youtube-nocookie.com` を許可します。QRコード・JSライブラリを外部CDNから読み込む構成はありません。
 
 ## 選手の練習履歴
 
-選手の以下のデータはD1へ保存しません。
+以下はD1へ保存しません。
 
 - ○×回答
 - 正答率
@@ -271,87 +230,70 @@ npm run db:list:prod
 - 間違えたサイン
 - 練習履歴
 
-利用している端末の `localStorage` に保存し、別端末へ自動同期しません。
+利用端末の `localStorage` のみに保存し、別端末へ自動同期しません。
 
-## API概要
+## 主なファイル
 
-### 選手
-
-- `GET /api/session?teamId=...`
-- `POST /api/auth`
-- `POST /api/logout`
-- `GET /api/signs?teamId=...`
-
-### チーム管理者
-
-- `GET /api/team-admin/session?teamId=...`
-- `POST /api/team-admin/auth`
-- `POST /api/team-admin/logout`
-- `GET /api/team-admin/team?teamId=...`
-- `PUT /api/team-admin/team`
-- `POST /api/team-admin/signs`
-- `PUT/DELETE /api/team-admin/signs/{id}`
-- `POST /api/team-admin/signs/{id}/videos`
-- `PUT/DELETE /api/team-admin/videos/{id}`
-
-### システム管理者
-
-- `GET /api/system/session`
-- `POST /api/system/auth`
-- `POST /api/system/logout`
-- `GET/POST /api/system/teams`
-- `PUT/DELETE /api/system/teams/{teamId}`
-
-### ローカルで `/` が 307 になる場合
-
-build 55 では、LPのルート `/` を Static Assets の `/index.html` へ書き換えず、`/` のまま取得するよう修正しています。Cloudflare Static Assets の `/index.html` → `/` 正規化による 307 ループを回避します。
-
-## 307 リダイレクト対策
-
-`/admin`、`/t/:teamId`、`/t/:teamId/admin` は、Cloudflare Static Assets の HTML 正規化に依存せず、Worker が内部の `public/__pages/*.txt` を読み込んで `text/html` の 200 Response として返します。これにより `.html` への内部フェッチが 307 を返して同一URLへループする問題を避けています。
-
-## build 55: チームメンバーへの共有
-
-選手向けチームページとチーム管理画面の両方から、メンバー用URLを共有できます。
-
-- 参加リンクをコピー
-- QRコードを表示（SIGN TRAINERアイコン付き）
-- LINEで共有
-- Web Share API対応端末では「その他のアプリで共有」
-- 共有URLは現在の環境の `/t/:teamId` を使用（local/dev/staging/productionで自動的に切り替わる）
-- 合言葉はURL・QRコード・共有メッセージに含めず、チーム内で別途伝える
-
-チーム管理画面では合言葉の平文をD1から取り出すことはできません。必要な場合は「チーム設定」で新しい合言葉へ再設定してください。
+```text
+public/index.html          LP
+public/landing.js          LP操作
+public/team.html           選手画面
+public/team.js             練習・履歴・結果演出
+public/admin.html          管理画面
+public/admin.js            チーム/システム管理
+public/share-utils.js      動的共有URL + ローカルQR
+public/vendor/             vendored QR encoder
+src/index.js               Worker / API / security controls
+migrations/                D1 migration
+scripts/security-preflight.mjs
+```
 
 
-## build 55: 登録サイン数に応じた出題数
+## build 60: 管理画面UI/UX・動画コメント
 
-- 0件: 練習開始不可。管理者へサイン・動画登録を案内
-- 1〜4件: 登録済みの全サイン数だけで練習
-- 5件: 5問（全サイン）
-- 6〜9件: 5問 / 全サイン
-- 10件以上: 5問 / 10問 / 全サイン
-- 出題は1セット内で重複なし。要求数が登録数を超えても自動で実数へ丸めます。
+管理画面は一覧中心に再設計し、チーム・サイン・動画の登録/編集はページ遷移せずモーダル（スマホではボトムシート）で完結します。YouTube動画は管理画面内のプレビューモーダルで確認できます。
 
-## 現在のD1 ID
+複数動画の用途や撮影条件を残せるよう `sign_videos.comment` を追加しました。既存環境では次のmigrationを適用してください。
 
-| 環境 | D1 | Database ID |
-|---|---|---|
-| dev | `sign-trainer-dev` | `3b47491c-8e2a-412a-b2a7-1a06922b3604` |
-| staging | `sign-trainer-staging` | `2ca39d6b-e06f-44b4-862b-b0c2932d9310` |
-| production | `sign-trainer-production` | `bdd534e9-1c42-4db7-adbe-c62e35e123b5` |
+```bash
+npm run db:migrate:local
+# または db:migrate:dev / db:migrate:staging / db:migrate:prod
+```
 
-全環境のbinding名は `DB` に統一しています。ローカル開発では `remote: true` を使わず、WranglerのローカルD1を利用します。
+追加migration: `migrations/0004_video_comments.sql`
 
-## QR / 共有URLの環境追従
 
-共有URLとQRコードは固定の本番URLを持たず、ブラウザ実行時の `window.location.origin` から動的に生成します。
+## build 60: サイングループ
 
-- local: `http://localhost:8787/t/{teamId}`
-- dev: dev Worker の origin
-- staging: staging Worker の origin
-- production: production Worker の origin
+`0005_sign_groups.sql` を追加しました。日付とは紐付けず、チーム管理者がグループ名・説明・説明用YouTube動画・所属サインを管理します。選手は練習開始前にグループ説明を確認し、その日に使うグループを選んで練習できます。
 
-QR・リンクコピーには合言葉、セッション、管理画面URL、`openExternalBrowser` などのクエリを含めません。LINE共有時のみ必要に応じて外部ブラウザ用クエリを付与します。
+```bash
+npm run db:migrate:local
+# remote環境は db:migrate:dev / staging / prod
+```
 
-対象: LPサンプルチームQR、選手画面の共有QR、チーム管理画面QR、新規チーム登録完了QR。
+
+## build 61: 管理者パスワードポリシー
+
+- チーム管理者パスワード: 12文字以上、英字1文字以上、数字1文字以上。記号は任意。
+- `SYSTEM_ADMIN_SECRET`: 同じく12文字以上、英字1文字以上、数字1文字以上。
+- `SESSION_SECRET` はセッション署名用のため、従来どおり32文字以上を維持します。
+- 既存PBKDF2ハッシュは変更せず、新規設定・変更時の入力ポリシーのみ更新します。
+
+
+## build 62: 認証エラーの原因分離
+
+- 選手・チーム管理者・システム管理者のログインで、`SESSION_SECRET` 未設定/短すぎ、`SYSTEM_ADMIN_SECRET` 不備、保存済みパスワードハッシュ不備、入力ミスを別エラーとして返します。
+- `/api/system/session` と `/api/team-admin/session` でも認証設定不備を503で明示し、ログイン画面にその理由を表示します。
+- `SESSION_SECRET` は32文字以上、`SYSTEM_ADMIN_SECRET` は12文字以上かつ英字・数字を含む必要があります。
+- チーム管理者の既存パスワードはログイン時に12文字ルールを強制しません。12文字ルールは新規設定・変更時のみです。
+
+
+## build 63: メンバー画面のグループ選択を2ステップ化
+
+メンバー画面は「STEP 1: 今日練習するグループを明示的に決定」「STEP 2: 問題数を選択」の順に変更しました。グループカードを触っただけでは選択されず、「このグループで練習する」で確定します。説明は別ボタンからモーダルで確認でき、選択後は現在のグループ名と変更ボタンを常時表示します。「すべてのサイン」はグループ一覧と視覚的に分離しています。DB migrationはありません。
+
+
+## build 64: LP機能説明
+
+トップページに、サイングループ・グループ説明動画・2ステップ練習選択・スマホ管理画面・複数動画コメント・共有/PWAの説明セクションを追加しました。

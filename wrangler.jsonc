@@ -28,7 +28,9 @@
   "vars": {
     "SESSION_DAYS": "30",
     "ADMIN_SESSION_HOURS": "12",
-    "ENVIRONMENT": "production"
+    "ENVIRONMENT": "production",
+    "REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN": "true",
+    "SYSTEM_ADMIN_ALLOWED_EMAILS": ""
   },
   "env": {
     "dev": {
@@ -50,7 +52,9 @@
       "vars": {
         "SESSION_DAYS": "30",
         "ADMIN_SESSION_HOURS": "12",
-        "ENVIRONMENT": "dev"
+        "ENVIRONMENT": "dev",
+        "REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN": "true",
+        "SYSTEM_ADMIN_ALLOWED_EMAILS": ""
       }
     },
     "staging": {
@@ -72,7 +76,9 @@
       "vars": {
         "SESSION_DAYS": "30",
         "ADMIN_SESSION_HOURS": "12",
-        "ENVIRONMENT": "staging"
+        "ENVIRONMENT": "staging",
+        "REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN": "true",
+        "SYSTEM_ADMIN_ALLOWED_EMAILS": ""
       }
     }
   }

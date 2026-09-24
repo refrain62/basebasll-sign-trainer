@@ -1,6 +1,6 @@
 {
   "name": "sign-trainer",
-  "version": "1.0.6",
+  "version": "1.0.13",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
     "deploy:dev": "wrangler deploy --env dev",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:prod": "wrangler deploy",
-    "check": "node --check src/index.js && node --check public/share-utils.js && node --check public/landing.js && node --check public/team.js && node --check public/admin-entry.js && node --check public/admin.js",
+    "check": "node --check src/index.js && node --check public/vendor/qrcode-local.js && node --check public/share-utils.js && node --check public/landing.js && node --check public/team.js && node --check public/admin-entry.js && node --check public/admin.js && node --check scripts/security-preflight.mjs",
     "db:migrate:local": "wrangler d1 migrations apply DB --local --env dev",
     "db:migrate:dev": "wrangler d1 migrations apply DB --remote --env dev",
     "db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
@@ -16,9 +16,19 @@
     "db:list:local": "wrangler d1 migrations list DB --local --env dev",
     "db:list:dev": "wrangler d1 migrations list DB --remote --env dev",
     "db:list:staging": "wrangler d1 migrations list DB --remote --env staging",
-    "db:list:prod": "wrangler d1 migrations list DB --remote"
+    "db:list:prod": "wrangler d1 migrations list DB --remote",
+    "security:check": "npm audit --audit-level=high",
+    "predeploy:dev": "node scripts/security-preflight.mjs",
+    "predeploy:staging": "node scripts/security-preflight.mjs",
+    "predeploy:prod": "node scripts/security-preflight.mjs",
+    "security:preflight": "node scripts/security-preflight.mjs"
   },
   "devDependencies": {
-    "wrangler": "^4.20.0"
-  }
+    "wrangler": "4.136.3"
+  },
+  "engines": {
+    "node": ">=22 <23",
+    "npm": ">=10"
+  },
+  "packageManager": "npm@11.4.2"
 }

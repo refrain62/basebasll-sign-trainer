@@ -1,6 +1,6 @@
-import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=57";
+import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=64";
 
-const APP_BUILD = "57";
+const APP_BUILD = "64";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const SAMPLE_TEAM_ID = "6BnWv2K3zo";
@@ -28,6 +28,8 @@ const shareDialog = document.querySelector("#share-dialog");
 
 const state = {
   signs: [],
+  groups: [],
+  activeGroupId: null,
   teamName: "サイン練習チーム",
   deck: [],
   currentIndex: 0,
@@ -442,6 +444,11 @@ async function route() {
       renderAppError("このチームは現在利用できません", session.message || "チーム管理者に確認してください。", () => navigate("/"));
       return;
     }
+    if (session.error === "session_secret_not_configured" || session.error === "server_not_configured") {
+      state.teamName = session.teamName || state.teamName;
+      renderAuth({ error: session.message || "サーバーの認証設定を確認してください。", configError: true });
+      return;
+    }
     state.teamName = session.teamName || state.teamName;
     if (session.authenticated) {
       const loaded = await loadSigns();
@@ -524,7 +531,7 @@ function renderAuth({ error = "", value = "", configError = false } = {}) {
       });
       const data = await response.json();
       if (!response.ok) {
-        if (data.error === "server_not_configured") {
+        if (response.status === 503) {
           console.error("SIGN TRAINER auth configuration is missing on the deployed Worker.", data);
           renderAuth({
             error: data.message || "現在、認証設定の準備中です。管理者にお知らせください。",
@@ -566,7 +573,13 @@ async function loadSigns() {
     if (!response.ok) throw new Error("failed to load signs");
     const data = await response.json();
     state.signs = Array.isArray(data.signs) ? data.signs : [];
+    state.groups = Array.isArray(data.groups) ? data.groups : [];
     state.teamName = data.team?.name || state.teamName;
+    if (!state.groups.length) {
+      state.activeGroupId = "all";
+    } else if (state.activeGroupId !== "all" && state.activeGroupId !== null && !state.groups.some((group) => Number(group.id) === Number(state.activeGroupId))) {
+      state.activeGroupId = null;
+    }
     if (!state.signs.length) throw new Error("no signs");
     return true;
   } catch {
@@ -580,6 +593,96 @@ async function loadSigns() {
     );
     return false;
   }
+}
+
+function isPracticeReadySign(sign) {
+  return Array.isArray(sign?.videos) && sign.videos.length > 0;
+}
+
+function currentPracticeSigns() {
+  if (state.activeGroupId === "all") return state.signs;
+  if (state.activeGroupId === null || state.activeGroupId === undefined) return [];
+  return state.signs.filter((sign) => Number(sign.groupId) === Number(state.activeGroupId));
+}
+
+function selectedPracticeGroup() {
+  if (state.activeGroupId === "all") {
+    return { id: "all", name: "すべてのサイン", description: "登録されているすべてのサインをまとめて練習します。", videoId: "" };
+  }
+  if (state.activeGroupId === null || state.activeGroupId === undefined) return null;
+  return state.groups.find((group) => Number(group.id) === Number(state.activeGroupId)) || null;
+}
+
+function selectPracticeGroup(groupId) {
+  state.activeGroupId = groupId === "all" ? "all" : Number(groupId);
+  renderPracticeSetup();
+}
+
+function renderGroupSelection() {
+  const groupCards = state.groups.map((group) => {
+    const members = state.signs.filter((sign) => Number(sign.groupId) === Number(group.id));
+    const playable = members.filter(isPracticeReadySign).length;
+    const hasGuide = Boolean(group.videoId || group.description);
+    const disabled = playable === 0;
+    const countText = playable === members.length
+      ? `${members.length}サイン`
+      : `${members.length}サイン · ${playable}サイン練習可`;
+    return `<article class="practice-group-option">
+      <div class="practice-group-option-head">
+        <div class="practice-group-option-title">
+          <span class="practice-group-option-mark" aria-hidden="true">G</span>
+          <div><h3>${escapeHtml(group.name)}</h3><p>${escapeHtml(countText)}</p></div>
+        </div>
+        ${group.videoId ? `<span class="practice-group-video-badge">▶ 説明動画あり</span>` : ""}
+      </div>
+      ${group.description ? `<p class="practice-group-option-description">${escapeHtml(group.description)}</p>` : `<p class="practice-group-option-description is-muted">このグループの説明はまだ登録されていません。</p>`}
+      <div class="practice-group-option-actions">
+        ${hasGuide ? `<button class="button button-secondary" data-review-group="${Number(group.id)}" type="button">説明を見る</button>` : ""}
+        <button class="button button-primary" data-choose-group="${Number(group.id)}" type="button" ${disabled ? "disabled" : ""}>${disabled ? "練習できる動画がありません" : "このグループで練習する"}</button>
+      </div>
+    </article>`;
+  }).join("");
+
+  const allPlayable = state.signs.filter(isPracticeReadySign).length;
+  const allCount = allPlayable === state.signs.length
+    ? `${state.signs.length}サイン`
+    : `${state.signs.length}サイン · ${allPlayable}サイン練習可`;
+
+  return `<section class="practice-step practice-step--groups">
+    <div class="practice-step-label"><span>STEP 1</span><strong>練習するサインを選ぶ</strong></div>
+    <div class="practice-step-heading"><h2>今日はどのサインを練習しますか？</h2><p>チーム内で決めたグループを選んでください。必要なら説明を確認してから始められます。</p></div>
+    <div class="practice-group-options">${groupCards}</div>
+    <div class="practice-all-divider"><span>または</span></div>
+    <article class="practice-all-option">
+      <div><span class="practice-all-kicker">ALL SIGNS</span><h3>すべてのサインを練習</h3><p>${escapeHtml(allCount)}をグループに関係なくまとめて練習します。</p></div>
+      <button class="button button-secondary button-full" data-choose-group="all" type="button" ${allPlayable ? "" : "disabled"}>すべてのサインで練習する</button>
+    </article>
+  </section>`;
+}
+
+function renderSelectedGroupSummary(group, totalCount, playableCount, canChange) {
+  const canReview = group && group.id !== "all" && (group.videoId || group.description);
+  const countText = playableCount === totalCount ? `${totalCount}サイン` : `${totalCount}サイン · ${playableCount}サイン練習可`;
+  return `<section class="practice-selected-group" aria-label="今回の練習対象">
+    <div class="practice-selected-copy"><span class="practice-selected-kicker">今回の練習</span><strong>${escapeHtml(group?.name || "すべてのサイン")}</strong><span>${escapeHtml(countText)}</span></div>
+    <div class="practice-selected-actions">${canReview ? `<button class="practice-selected-guide" data-review-selected type="button">説明を見る</button>` : ""}${canChange ? `<button class="practice-selected-change" id="change-practice-group" type="button">変更</button>` : ""}</div>
+  </section>`;
+}
+
+function openGroupReview(group) {
+  document.querySelector("#group-review-layer")?.remove();
+  const layer = document.createElement("div");
+  layer.id = "group-review-layer";
+  layer.className = "group-review-layer";
+  const members = state.signs.filter((sign) => Number(sign.groupId) === Number(group.id));
+  const playable = members.filter(isPracticeReadySign).length;
+  const countText = playable === members.length ? `${members.length}サイン` : `${members.length}サイン · ${playable}サイン練習可`;
+  const video = group.videoId ? `<div class="group-review-video"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(group.videoId)}?playsinline=1&rel=0&controls=1" title="${escapeHtml(group.name)}の説明動画" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : "";
+  layer.innerHTML = `<div class="group-review-backdrop" data-group-review-close></div><section class="group-review-card" role="dialog" aria-modal="true" aria-labelledby="group-review-title"><button class="group-review-close" data-group-review-close type="button" aria-label="閉じる">×</button><p class="practice-groups-kicker">GROUP GUIDE</p><h2 id="group-review-title">${escapeHtml(group.name)}</h2><p class="group-review-count">${escapeHtml(countText)}</p>${video}${group.description ? `<p class="group-review-description">${escapeHtml(group.description)}</p>` : `<p class="group-review-description group-review-description--muted">説明文は登録されていません。</p>`}<button class="button button-primary button-full" id="group-review-practice" type="button" ${playable ? "" : "disabled"}>${playable ? "このグループで練習する" : "練習できる動画がありません"}</button></section>`;
+  document.body.appendChild(layer);
+  const close = () => layer.remove();
+  layer.querySelectorAll("[data-group-review-close]").forEach((el) => el.addEventListener("click", close));
+  layer.querySelector("#group-review-practice")?.addEventListener("click", () => { if (!playable) return; close(); selectPracticeGroup(Number(group.id)); });
 }
 
 function getPracticeOptions(signCount) {
@@ -611,19 +714,33 @@ function renderPracticeSetup() {
   const historySub = latest
     ? `前回 ${latest.correct}/${latest.total}問正解 · ${formatHistoryDate(latest.completedAt, { short: true })}`
     : "練習すると、この端末に結果が残ります";
-  const practiceOptions = getPracticeOptions(state.signs.length);
+
+  const hasGroups = state.groups.length > 0;
+  const selectedGroup = selectedPracticeGroup();
+  const isSelectingGroup = hasGroups && !selectedGroup;
+  const practiceSigns = selectedGroup ? currentPracticeSigns() : [];
+  const playableSigns = practiceSigns.filter(isPracticeReadySign);
+  const practiceOptions = selectedGroup ? getPracticeOptions(playableSigns.length) : [];
   const choicesHtml = practiceOptions.length
     ? practiceOptions.map((option) => `<button class="choice${option.recommended ? " recommended" : ""}" data-count="${option.count}" type="button"><span class="choice-copy"><span class="choice-main">${escapeHtml(option.main)}</span><span class="choice-sub">${escapeHtml(option.sub)}</span></span>${option.badge ? `<span class="choice-badge">${escapeHtml(option.badge)}</span>` : `<span class="choice-arrow">${icons.arrow}</span>`}</button>`).join("")
-    : `<div class="practice-empty-notice" role="status"><strong>まだ練習できるサインがありません</strong><span>チーム管理者がサイン名とYouTube動画を登録すると、ここから練習を始められます。</span></div>`;
+    : selectedGroup ? `<div class="practice-empty-notice" role="status"><strong>このグループには練習できる動画がありません</strong><span>別のグループを選ぶか、チーム管理者に動画の登録を依頼してください。</span></div>` : "";
+
+  const mainFlow = isSelectingGroup
+    ? renderGroupSelection()
+    : `<section class="practice-step practice-step--count">
+        ${renderSelectedGroupSummary(selectedGroup || { name: "すべてのサイン", id: "all" }, practiceSigns.length, playableSigns.length, hasGroups)}
+        <div class="practice-step-label"><span>STEP 2</span><strong>問題数を選ぶ</strong></div>
+        <div class="practice-step-heading"><h2>何問練習しますか？</h2><p>${escapeHtml(selectedGroup?.name || "すべてのサイン")}から出題します。</p></div>
+        <div class="choice-list">${choicesHtml}</div>
+      </section>`;
 
   app.innerHTML = `<div class="app-bg">
     ${appTopbar('<a class="button button-ghost" href="/" data-nav>トップへ</a>')}
     <main class="app-main">
-      <section class="app-panel is-compact">
+      <section class="app-panel is-compact practice-setup-panel">
         <h1>サイン練習</h1>
         <p class="panel-lead">動画を見て、何のサインか答えよう！</p>
-        <div class="setup-ball" aria-hidden="true">${logo}</div>
-        <div class="choice-list">${choicesHtml}</div>
+        ${mainFlow}
         <button class="history-entry-button" id="open-history" type="button">
           <span class="history-entry-icon">${icons.clock}</span>
           <span class="history-entry-copy"><strong>練習履歴を見る</strong><span>${escapeHtml(historySub)}</span></span>
@@ -635,8 +752,8 @@ function renderPracticeSetup() {
           <span class="history-entry-arrow">›</span>
         </button>
         <div class="practice-points" aria-label="練習のポイント">
-          <div class="practice-point">${icons.check}<span>動画を見て何のサインか考える</span></div>
-          <div class="practice-point">${icons.check}<span>答えを見て○×で自己採点</span></div>
+          <div class="practice-point">${icons.check}<span>今日使うグループを選ぶ</span></div>
+          <div class="practice-point">${icons.check}<span>説明を確認してから動画クイズへ</span></div>
           <div class="practice-point">${icons.check}<span>間違えた問題だけもう一度練習</span></div>
         </div>
         <button class="logout-link" id="logout" type="button">この端末の認証を解除</button>
@@ -644,16 +761,32 @@ function renderPracticeSetup() {
     </main>
   </div>`;
 
+  document.querySelectorAll("[data-choose-group]").forEach((button) => button.addEventListener("click", () => {
+    if (button.disabled) return;
+    selectPracticeGroup(button.dataset.chooseGroup === "all" ? "all" : Number(button.dataset.chooseGroup));
+  }));
+  document.querySelectorAll("[data-review-group]").forEach((button) => button.addEventListener("click", () => {
+    const group = state.groups.find((item) => String(item.id) === String(button.dataset.reviewGroup));
+    if (group) openGroupReview(group);
+  }));
+  document.querySelector("#change-practice-group")?.addEventListener("click", () => {
+    state.activeGroupId = hasGroups ? null : "all";
+    renderPracticeSetup();
+  });
+  document.querySelector("[data-review-selected]")?.addEventListener("click", () => {
+    const group = selectedPracticeGroup();
+    if (group && group.id !== "all") openGroupReview(group);
+  });
   document.querySelectorAll("[data-count]").forEach((button) => {
     button.addEventListener("click", () => {
       const count = button.dataset.count === "all" ? "all" : Number(button.dataset.count);
-      startQuiz(count);
+      startQuiz(count, currentPracticeSigns());
     });
   });
-  document.querySelector("#open-history").addEventListener("click", renderPracticeHistory);
+  document.querySelector("#open-history")?.addEventListener("click", renderPracticeHistory);
   initShareDialog();
   document.querySelector("#open-team-share")?.addEventListener("click", () => openShareDialog("team"));
-  document.querySelector("#logout").addEventListener("click", confirmLogout);
+  document.querySelector("#logout")?.addEventListener("click", confirmLogout);
 }
 
 function confirmLogout() {
@@ -672,6 +805,8 @@ function confirmLogout() {
 async function logout() {
   await fetch("/api/logout", { method: "POST" }).catch(() => null);
   state.signs = [];
+  state.groups = [];
+  state.activeGroupId = null;
   state.deck = [];
   state.results = [];
   renderAuth();
