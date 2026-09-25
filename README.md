@@ -1,4 +1,4 @@
-# SIGN TRAINER — build 79
+# SIGN TRAINER — build 87
 
 野球チーム固有のサインを動画で反復練習する Web / PWA です。D1 は local / dev / staging / production で分離し、チーム・サイン・動画設定に加えて、管理者アカウントの識別情報・チーム権限・招待状態を保存します。選手の回答・正答率・練習履歴は端末の `localStorage` のみに保存します。OAuthのaccess token / refresh tokenは保存しません。
 
@@ -95,7 +95,7 @@ LP              http://localhost:8787/
 
 ローカルホストでは Cloudflare Access チェックを自動的にスキップします。
 
-`npm run dev` は `scripts/dev.mjs` 経由で `CLOUDFLARE_CF_FETCH_ENABLED=false` をローカルWranglerプロセスに設定します。SIGN TRAINERは `Request.cf` を利用していないため、MiniflareがCloudflareから疑似CF情報を取得する際のタイムアウトを避けつつ、本番Workerの挙動には影響しません。
+`npm run dev` は `scripts/dev.ts` 経由で `CLOUDFLARE_CF_FETCH_ENABLED=false` をローカルWranglerプロセスに設定します。SIGN TRAINERは `Request.cf` を利用していないため、MiniflareがCloudflareから疑似CF情報を取得する際のタイムアウトを避けつつ、本番Workerの挙動には影響しません。
 
 ## migration
 
@@ -116,6 +116,7 @@ npm run db:migrate:prod
 - `0008_legal_consent.sql` — 利用規約・プライバシーポリシー同意履歴
 - `0009_plans_and_entitlements.sql` — Free運用と将来有料化に備えたプラン・Entitlement・Usage基盤
 - `0010_data_protection.sql` — OAuth識別子暗号文・audit保護状態。既存本文の暗号化は管理画面の段階移行で実行
+- `0011_sub_admin_limit.sql` — サブ管理者最大5名をD1側でも強制する最終ガード
 
 サンプルチーム:
 
@@ -193,7 +194,7 @@ npm run deploy:staging
 npm run deploy:prod
 ```
 
-各deployの前に `scripts/security-preflight.mjs` が実行され、Wranglerの完全固定・package-lockの存在・想定外の直接依存を検査します。
+各deployの前に `scripts/security-preflight.ts` が実行され、Wranglerの完全固定・package-lockの存在・想定外の直接依存を検査します。
 
 ## 認証・セッション
 
@@ -242,7 +243,7 @@ client IPはそのまま保存せず、`SESSION_SECRET` を鍵にHMACしたキ�
 
 ## QRコード
 
-QRは `public/vendor/qrcode-local.js` でブラウザ内生成します。チームURLを第三者QRサービスへ送信しません。由来とライセンスは `THIRD_PARTY_NOTICES.md`、ファイルハッシュは `public/vendor/SHA256SUMS` を参照してください。
+QRは `qrcode` + `@types/qrcode` をVite bundleへ同梱してブラウザ内生成します。チームURLを第三者QRサービスへ送信しません。ランタイムCDNへの依存もありません。ライセンスは `THIRD_PARTY_NOTICES.md` を参照してください。
 
 ## CSP / 外部通信
 
@@ -263,17 +264,18 @@ QRは `public/vendor/qrcode-local.js` でブラウザ内生成します。チー
 ## 主なファイル
 
 ```text
-public/index.html          LP
-public/landing.js          LP操作
-public/team.html           選手画面
-public/team.js             練習・履歴・結果演出
-public/admin.html          管理画面
-public/admin.js            チーム/システム管理
-public/share-utils.js      動的共有URL + ローカルQR
-public/vendor/             vendored QR encoder
-src/index.js               Worker / API / security controls
+pages/*.html               HTMLテンプレート（編集元）
+client/*.ts                ブラウザUI TypeScript（編集元）
+client/vendor/             vendored QR encoder
+public/styles.css          固定CSS
+public/assets/             固定画像
+public/build/              Vite生成bundle（編集しない）
+public/__pages/            Worker用HTML snapshot（Vite生成）
+src/index.ts               Worker / API / security controls
 migrations/                D1 migration
-scripts/security-preflight.mjs
+vite.config.ts             UI bundle + HTML生成
+vitest.config.ts           unit test設定
+scripts/security-preflight.ts
 ```
 
 
@@ -414,7 +416,7 @@ src/
 - **D (Dependency Inversion)**: ServiceはD1を直接触らず、Repository interfaceを受け取る。ユニットテストではfake repositoryを注入可能。
 - **L (Liskov Substitution)**: 継承を使わず関数・object interfaceで構成し、fake実装への置換をテストで確認。
 
-`node scripts/architecture-check.mjs` を追加し、ServiceでのD1直接アクセス、Controller/RouteでのSQL、Routeから互換 `backend.js` への依存をCIで禁止しています。
+`node scripts/architecture-check.ts` を追加し、ServiceでのD1直接アクセス、Controller/RouteでのSQL、Routeから互換 `backend.ts` への依存をCIで禁止しています。
 
 ユニットテストはService / Security / OAuth / Repository境界を中心に整備し、D1なしのfake repositoryでも業務ロジックを検証します。
 
@@ -545,7 +547,7 @@ npm run db:migrate:prod
 
 ### ローカル `Request.cf` timeout対策
 
-`npm run dev` は `scripts/dev.mjs` 経由になり、SIGN TRAINERが使用していないMiniflareの `Request.cf` リモート取得をローカルだけ自動で無効化します。Windows/macOS/Linuxで同じコマンドを使えます。
+`npm run dev` は `scripts/dev.ts` 経由になり、SIGN TRAINERが使用していないMiniflareの `Request.cf` リモート取得をローカルだけ自動で無効化します。Windows/macOS/Linuxで同じコマンドを使えます。
 
 
 
@@ -691,6 +693,91 @@ Windows向け起動コマンドの回帰テストも追加しています。
 - メイン管理者交代時、旧メイン管理者がサブ管理者として残る場合も5名上限を確認します。
 
 
-## build 79: 静的アセットversionの自動化
+## build 80: TypeScript + Zod
 
-`?v=<build番号>` のような手動のcache-busterを廃止しました。HTML / JavaScript / CSS / Web App Manifestのソースには `__ASSET_VERSION__` という固定トークンだけを書き、Cloudflare Workersの `CF_VERSION_METADATA.id` をレスポンス時に自動挿入します。これによりデプロイごとにWorker version IDが変わるため、favicon、CSS、JS、PWA icon、LP画像などのURLも自動で新しいversionになります。今後は各HTML/JSの `v=` 数字を書き換える必要はありません。ローカルでversion metadataが取得できない場合は `dev` を使い、ローカル/ステージングの静的ファイルはno-cacheで配信します。
+Cloudflare Worker / API 実装を `src/**/*.ts` へ移行し、Wranglerのエントリポイントも `src/index.ts` に変更しました。HTTPリクエストのJSON bodyはControllersで直接信用せず、`src/validation/schemas.ts` のZod schemaを `parseJsonBody()` に通してからServiceへ渡します。対象は選手認証、チーム管理認証、チーム/グループ/サイン/動画更新、管理者招待・権限移譲、アカウント作成/削除、システム管理API、データ保護メンテナンスです。
+
+```bash
+npm run typecheck
+npm run check
+```
+
+`npm run check` は TypeScript typecheck → ブラウザ/ツールJS構文確認 → route parity → architecture boundary → unit tests の順で実行します。Zodのvalidation errorはHTTP境界で `400 invalid_request` に統一し、64KiB超のJSONはZod処理前に `413 payload_too_large` で拒否します。
+
+ブラウザへ直接配信する `public/*.js` は、追加のclient bundlerを導入してPWA配信経路を変えないため今回そのままです。Worker/API・Repository・Service・Security・OAuth・Validation・unit testsはTypeScriptへ移行済みです。ブラウザ側もTypeScript source + build outputへ切り替える場合は別途client build工程を追加できます。
+
+この変更によるD1 schema変更はありません。既存migration 0011まで適用済みなら追加migrationは不要です。
+
+
+## build 81: UIコードもTypeScriptへ移行
+
+ブラウザ向けのSIGN TRAINER自前UIコードもTypeScriptをsource of truthにしました。`client/account.ts`、`client/admin-entry.ts`、`client/admin.ts`、`client/landing.ts`、`client/legal.ts`、`client/practice-utils.ts`、`client/share-utils.ts`、`client/team.ts` を `tsconfig.client.json` でコンパイルし、実際にブラウザへ配信する `public/*.js` を生成します。`public/*.js` は直接編集せず、UI変更は `client/*.ts` に対して行います。
+
+```bash
+npm run build:client   # client/*.ts -> public/*.js
+npm run typecheck      # Worker + UI のTypeScript検査
+npm run check          # build後に全チェック
+npm run dev:ui         # UI TypeScriptだけをwatchコンパイル
+```
+
+`npm run dev` の前には `predev` がUIを自動ビルドします。deploy前チェックでもUIを必ず再ビルドします。QR生成は `qrcode` + `@types/qrcode` を利用し、手書き/vendored JavaScriptはclient配下に置きません。
+
+
+## build 82: 開発・運用スクリプトもTypeScriptへ統一
+
+`scripts/*.mjs` を廃止し、開発サーバー起動、構造検査、route parity、security/operations preflight、client source parity、生成JS構文検査、Secret生成をすべて `scripts/*.ts` へ移行しました。Node上では `--experimental-strip-types` で直接実行し、`tsconfig.scripts.json` で `strict` typecheckします。Node APIの型定義として `@types/node` をdevDependencyに追加しています。これにより自前の編集対象ソースは `src/`、`client/`、`scripts/` のすべてがTypeScriptです。ブラウザへ配信されるJavaScriptはVite生成物だけで、client配下の手書きJavaScriptはありません。
+
+
+## build 83: Vite + Vitest
+
+ブラウザUIのビルドを `tsc` の直接出力から **Vite** へ移行し、単体テストを Node.js built-in test runner から **Vitest** へ移行しました。Vitest 5の要件に合わせ、Node.js engineは `>=22.12 <25` です。
+
+### UI build
+
+```bash
+npm run build:client
+```
+
+Viteのentryは `client/landing.ts` / `team.ts` / `admin-entry.ts` / `account.ts` / `legal.ts` です。共通moduleはViteが自動でchunk化し、`public/build/assets/*-[hash].js` として出力します。`admin-entry.ts` からの管理画面本体もViteのdynamic importでchunk化されるため、旧 `/admin.js?v=...` の手動importはありません。
+
+HTMLの編集元は `pages/*.html` です。各テンプレートの `<!-- VITE_ENTRY:... -->` をVite pluginがcontent-hashed script URLへ置換し、Worker用の `public/__pages/*.txt` と `public/*.html` を生成します。生成物は直接編集しません。
+
+favicon / Web App Manifest / `public/styles.css` などVite bundle外の固定アセットについては、従来のCloudflare Worker version metadataによる `__ASSET_VERSION__` を継続利用します。JS bundle自体はViteのcontent hashがcache-busterになるため、Worker側でJS本文を書き換えません。
+
+### tests
+
+```bash
+npm test
+npm run test:watch
+npm run test:coverage
+```
+
+テストrunnerはVitestです。coverageは`@vitest/coverage-v8`を使います。
+
+### development
+
+```bash
+npm run dev
+```
+
+最初にVite production buildを実行した後、Wranglerと `vite build --watch` を同時起動します。UIのTypeScript変更はViteが再bundleし、生成HTML/Worker page snapshotも更新します。
+
+
+## build 84: QR生成もTypeScript対応npmライブラリへ移行
+
+旧 `client/vendor/qrcode-local.js` と型shimを削除し、`@synapxlab/qrcode` 1.0.0へ一度移行しました。QRはブラウザ内で生成し、外部QR APIやCDNへチームURLを送信しない構成です。`scripts/client-source-check.ts` はclient配下に `.js/.mjs/.cjs` が残った場合に失敗するよう強化しています。
+
+
+## build 85: qrcode + @types/qrcode へ統一
+
+QR生成ライブラリを `@synapxlab/qrcode` から `qrcode` 1.5.4へ変更し、TypeScript型は `@types/qrcode` 1.5.6をdevDependencyとして利用します。`client/qr-code.ts` は `QRCode.toString(..., { type: "svg" })` を非同期で呼び出し、SVG data URLを生成します。Viteがruntimeの `qrcode` をproduction bundleへ取り込むため、外部CDNやQR生成APIへURLを送信しません。
+
+
+## build 86: Vitest依存整合 + 複数チーム管理者回帰テスト
+
+`vitest` と `@vitest/coverage-v8` を **5.0.1** に統一し、npmのpeer dependency競合を解消しました。あわせて、同一の `app_users.id` が複数チームの `team_admin_memberships` を持てることを、実際の全D1 migrationをSQLite in-memoryへ適用するVitest回帰テストとして追加しています。テストは同一ユーザーが Team A の owner、Team B / Team C の admin として同時に登録でき、3件すべて取得できること、および同一チーム内の重複所属だけが複合主キー `(team_id, user_id)` で拒否されることを確認します。
+
+
+## build 87: TypeScript 7 test narrowing fixes
+
+TypeScript 7で `node:assert/strict` の `assert.rejects` 検証コールバック引数が `unknown` として扱われる箇所を、Vitestの `expect(...).rejects.toMatchObject(...)` へ移行した。これにより `ServiceError` の `code` / `status` / `details` を型安全に検証する。Cloudflare Access JWTテストのJWKは、Web Crypto標準の `JsonWebKey` に `kid` / `alg` / `use` を明示的に交差型として追加した。

@@ -5,36 +5,24 @@ on:
   pull_request:
 
 jobs:
-  unit-tests:
+  checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Syntax, route parity and unit tests
-        run: npm run check
-
-  dependency-audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Check lockfile
-        id: lockfile
+          cache: npm
+      - name: Require committed lockfile
         shell: bash
         run: |
-          if [ -f package-lock.json ]; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "package-lock.json is not committed yet; dependency audit is skipped."
-          fi
+          test -f package-lock.json || {
+            echo "package-lock.json is required. Run: npm install --package-lock-only --ignore-scripts" >&2
+            exit 1
+          }
       - name: Install locked dependencies
-        if: steps.lockfile.outputs.present == 'true'
         run: npm ci --ignore-scripts
+      - name: TypeScript, route parity, architecture and unit tests
+        run: npm run check
       - name: Audit high severity vulnerabilities
-        if: steps.lockfile.outputs.present == 'true'
         run: npm audit --audit-level=high

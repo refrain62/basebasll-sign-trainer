@@ -1,15 +1,14 @@
 # Third-party notices
 
-## QRCode for JavaScript
+## qrcode
 
-`public/vendor/qrcode-local.js` contains a locally vendored/browser-bundled copy of the QR encoding implementation shipped under `qrcode-terminal`'s `vendor/QRCode` directory, originally by Kazuhiko Arase.
+QR generation uses `qrcode` 1.5.4 from npm, with TypeScript declarations supplied by `@types/qrcode` 1.5.6 during development. Vite bundles the runtime library into the production browser assets.
 
 - License: MIT
-- Original project: QRCode for JavaScript
+- Project: `qrcode` (soldair/node-qrcode)
+- Types: `@types/qrcode` (DefinitelyTyped), MIT
 - Purpose: generate QR codes locally in the browser so team URLs are not sent to a third-party QR generation service.
-- Integrity: see `public/vendor/SHA256SUMS`.
-
-The file is served from this application itself; there is no runtime CDN dependency for QR generation.
+- Runtime CDN dependency: none; Vite bundles the package into the production client asset.
 
 ## Hono
 
@@ -21,3 +20,18 @@ Backend HTTP routing uses Hono 4.13.8.
 - Runtime dependencies of Hono: none.
 - Version policy: pinned exactly in `package.json`.
 
+
+
+## Vite
+
+Browser TypeScript bundling uses Vite 8.3.1.
+
+- License: MIT
+- Purpose: TypeScript/browser bundling, code splitting and content-hashed production assets.
+
+## Vitest
+
+Unit testing uses Vitest 5.0.1 with `@vitest/coverage-v8` 5.0.1.
+
+- License: MIT
+- Purpose: TypeScript-aware unit test runner, watch mode and V8 coverage.

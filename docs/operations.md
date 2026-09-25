@@ -11,7 +11,7 @@
 4. LINE Developers Console に以下を登録する。
    - プライバシーポリシーURL: `https://<本番ドメイン>/privacy`
    - サービス利用規約URL: `https://<本番ドメイン>/terms`
-5. `0009_plans_and_entitlements.sql` まで全環境へ適用する。
+5. `0011_sub_admin_limit.sql` まで全環境へ適用する。
 6. `npm install` で生成した `package-lock.json` をGit管理し、`npm ci --ignore-scripts` で再現可能にする。
 7. `npm run check`、`npm run security:preflight`、`npm run ops:preflight` を実行する。
 8. 本番OAuth callback URL、Cloudflare Access、D1 binding、Secretを確認する。
@@ -79,6 +79,27 @@ build 75への更新順序:
 
 `PUBLIC_SUPPORT_URL` はSecretではありません。利用者に公開されるURLです。問い合わせ内容はフォーム提供事業者側で管理されるため、フォームの閲覧権限、回答保存先、削除ルール、通知先アカウントの2段階認証を運用側で管理してください。
 
-## 静的アセットのversion管理（build 79以降）
 
-HTML / JavaScript / CSS / Web App Manifestでは、cache-busterの数字を手作業で更新しない。ソース上は `__ASSET_VERSION__` を固定で使用し、Workerが `CF_VERSION_METADATA.id` をレスポンス時に差し込む。CloudflareへのデプロイでWorker versionが変われば、CSS・JS・favicon・PWA icon・画像URLも自動的に別versionになる。ローカルでversion metadataが得られない場合は `dev` にフォールバックし、非production環境の静的アセットはno-cacheで配信する。
+## 静的アセットversion管理
+
+Viteで生成するJavaScript bundleはcontent hash付きファイル名を使います。HTMLテンプレート、`public/styles.css`、Web App Manifest、favicon/PWA iconなどVite bundle外の固定アセットだけ `__ASSET_VERSION__` を使い、Workerの `CF_VERSION_METADATA.id` をレスポンス時に自動挿入します。デプロイごとの `?v=<数字>` 手修正は不要です。
+
+
+## build 80 — TypeScript / Zod運用
+
+Worker/APIソースは `src/**/*.ts` です。変更時は `npm run typecheck` と `npm run check` を必ず実行してください。APIへ新しいJSON bodyを追加する場合は `src/validation/schemas.ts` にZod schemaを追加し、Controllerで `parseJsonBody()` を使用します。Service層のビジネス制約・D1制約はZodとは別に維持してください。TypeScript/Zod化だけではD1 migrationは発生しません。
+
+## build 83 — Vite UI運用
+
+ブラウザUIのsource of truthは `client/*.ts`、HTMLのsource of truthは `pages/*.html` です。`npm run build:client` はViteでcontent-hashed bundleを `public/build/` に生成し、同時に `public/*.html` と `public/__pages/*.txt` を生成します。これら生成物は直接編集しません。
+
+`npm run dev` は初回Vite build後、Wranglerと `vite build --watch` を同時起動します。UIだけを監視する場合は `npm run dev:ui` を使います。QR生成は`qrcode` + `@types/qrcode` をVite bundleへ同梱します。client配下にvendored JavaScriptは置かず、外部QR API/CDNへチームURLを送信しません。
+
+
+## build 84 — QRライブラリ
+
+旧vendored `client/vendor/qrcode-local.js` と手書き型shimを削除し、QR生成をnpm依存へ移行しました。
+
+## build 85 — qrcode + @types/qrcode
+
+QR生成はruntimeに `qrcode` 1.5.4、TypeScript型定義に `@types/qrcode` 1.5.6を使用します。`client/qr-code.ts` は `QRCode.toString(..., { type: "svg" })` を非同期で呼び出し、SVG data URLとして `<img>` に渡します。Viteがruntime依存をbundleするため、ブラウザ実行時のCDN依存や外部QR APIへのURL送信はありません。

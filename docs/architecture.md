@@ -20,19 +20,19 @@ Cross-cutting concerns live beside this flow:
 
 - `middleware/`: Cloudflare Access and API mutation guards
 - `security/`: password hashing, session tokens, authorization, rate limits
-- `validation/`: normalization and YouTube URL validation
+- `validation/`: Zod request schemas, JSON boundary parsing, normalization and YouTube URL validation
 - `http/`: response headers, JSON parsing and page asset serving
 
 ## Rules enforced by CI
 
-`scripts/architecture-check.mjs` enforces these boundaries:
+`scripts/architecture-check.ts` enforces these boundaries:
 
 1. Service modules may not call D1 `prepare()` directly.
 2. Service modules may not build HTTP `Response` objects.
 3. Controllers may not contain SQL/D1 `prepare()` calls.
-4. Routes may not access D1 or import the `backend.js` compatibility facade.
+4. Routes may not access D1 or import the `backend.ts` compatibility facade.
 5. D1 access must remain in `src/repositories/`.
-6. `src/backend.js` stays a small compatibility export facade rather than becoming a new monolith.
+6. `src/backend.ts` stays a small compatibility export facade rather than becoming a new monolith.
 
 ## Why D1 remains direct
 
@@ -45,12 +45,12 @@ Services accept repository objects, so business rules can be tested without D1. 
 
 ## Account / OAuth boundary
 
-`src/oauth/` owns provider-specific OAuth/OIDC mechanics. `account-controller.js` owns redirect/cookie HTTP handling, while `account-service.js` owns account/team-provisioning rules. OAuth provider tokens are not persisted. Team ownership and administrator lifecycle rules live in `admin-membership-service.js`; D1 membership/invite transitions stay inside repositories.
+`src/oauth/` owns provider-specific OAuth/OIDC mechanics. `account-controller.ts` owns redirect/cookie HTTP handling, while `account-service.ts` owns account/team-provisioning rules. OAuth provider tokens are not persisted. Team ownership and administrator lifecycle rules live in `admin-membership-service.ts`; D1 membership/invite transitions stay inside repositories.
 
 
 ## Plan / entitlement boundary
 
-将来の課金基盤は商品機能から分離します。D1の `team_subscriptions` / `plan_entitlements` / `team_usage` へのアクセスは `subscription-repository.js` に限定し、機能可否は `entitlement-service.js` が返します。
+将来の課金基盤は商品機能から分離します。D1の `team_subscriptions` / `plan_entitlements` / `team_usage` へのアクセスは `subscription-repository.ts` に限定し、機能可否は `entitlement-service.ts` が返します。
 
 ```text
 Product feature (future image upload)
@@ -70,4 +70,20 @@ SubscriptionRepository.setProviderSubscription()
 
 ## build 75 — data protection boundary
 
-Sensitive persistence is handled at the repository boundary. Services continue to receive plaintext domain values; repositories encrypt before D1 writes and decrypt after reads. `DataProtectionService` is a maintenance use case for migrating legacy plaintext rows, while `security/data-protection.js` owns AES-GCM/HMAC primitives. Password peppering remains in `security/password.js` and is injected into services by `service-factory.js`.
+Sensitive persistence is handled at the repository boundary. Services continue to receive plaintext domain values; repositories encrypt before D1 writes and decrypt after reads. `DataProtectionService` is a maintenance use case for migrating legacy plaintext rows, while `security/data-protection.ts` owns AES-GCM/HMAC primitives. Password peppering remains in `security/password.ts` and is injected into services by `service-factory.ts`.
+
+
+## build 80 — TypeScript / Zod boundary
+
+Worker側の実装は `src/**/*.ts` に統一しています。HonoのBindingsは `src/types.ts` に集約し、`src/index.ts` / routes / middlewareからCloudflare bindingsを型付きで参照します。既存JavaScriptからの段階移行のため現在の`tsconfig.json`は`strict: false`ですが、`noEmit` typecheckをCI/`npm run check`で必須にしています。
+
+HTTP JSON bodyはControllerの入口でZod schemaに通します。Controllerより下のService/Repositoryは「schema validation済みの値」を受け取る前提にし、入力型の判定を各Serviceへ重複させません。一方、DB整合性・権限制御・ビジネス上限（例: サブ管理者5名）はZodだけに依存せず、Service/Repository/D1制約も維持します。
+
+
+## build 81 — browser UI TypeScript boundary (historical)
+
+Build 81 introduced `client/*.ts` as the browser UI source of truth. Build 83 supersedes its direct-`tsc` output model with Vite bundling; current production output is under `public/build/`.
+
+## build 83 — Vite frontend boundary
+
+Browser UI source lives under `client/` and is bundled by Vite. HTML source lives under `pages/`. Production browser bundles are content-hashed under `public/build/`; the Vite page-render plugin injects those hashed entry URLs into generated `public/*.html` and `public/__pages/*.txt`. Hono/Worker continues to own routing, auth, API handling and HTML delivery. Vite is a frontend build boundary, not the application server.

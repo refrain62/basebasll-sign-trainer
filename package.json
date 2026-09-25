@@ -1,14 +1,14 @@
 {
   "name": "sign-trainer",
-  "version": "1.3.9",
+  "version": "1.5.4",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/dev.mjs",
+    "dev": "node --experimental-strip-types scripts/dev.ts",
     "deploy:dev": "wrangler deploy --env dev",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:prod": "wrangler deploy",
-    "check": "node scripts/check-js.mjs && node scripts/route-parity-check.mjs && node scripts/architecture-check.mjs && npm run test:unit",
+    "check": "npm run typecheck && npm run build:client && npm run tooling:check && npm run test:unit",
     "db:migrate:local": "wrangler d1 migrations apply DB --local --env dev",
     "db:migrate:dev": "wrangler d1 migrations apply DB --remote --env dev",
     "db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
@@ -18,27 +18,41 @@
     "db:list:staging": "wrangler d1 migrations list DB --remote --env staging",
     "db:list:prod": "wrangler d1 migrations list DB --remote",
     "security:check": "npm audit --audit-level=high",
-    "predeploy:dev": "node scripts/security-preflight.mjs",
-    "predeploy:staging": "node scripts/security-preflight.mjs",
-    "predeploy:prod": "node scripts/security-preflight.mjs && node scripts/operations-preflight.mjs",
-    "security:preflight": "node scripts/security-preflight.mjs",
-    "test": "node --test --test-reporter=spec tests/unit/*.test.js",
-    "test:unit": "node --test --test-reporter=spec tests/unit/*.test.js",
-    "test:watch": "node --test --watch tests/unit/*.test.js",
-    "test:coverage": "node --test --experimental-test-coverage --test-reporter=spec tests/unit/*.test.js",
-    "test:architecture": "node scripts/architecture-check.mjs",
-    "ops:preflight": "node scripts/operations-preflight.mjs",
-    "security:generate-secrets": "node scripts/generate-security-secrets.mjs"
+    "predeploy:dev": "npm run build:client && node --experimental-strip-types scripts/security-preflight.ts",
+    "predeploy:staging": "npm run build:client && node --experimental-strip-types scripts/security-preflight.ts",
+    "predeploy:prod": "npm run build:client && node --experimental-strip-types scripts/security-preflight.ts && node --experimental-strip-types scripts/operations-preflight.ts",
+    "security:preflight": "node --experimental-strip-types scripts/security-preflight.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:architecture": "node --experimental-strip-types scripts/architecture-check.ts",
+    "ops:preflight": "node --experimental-strip-types scripts/operations-preflight.ts",
+    "security:generate-secrets": "node --experimental-strip-types scripts/generate-security-secrets.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.client.json && tsc -p tsconfig.scripts.json && tsc -p tsconfig.test.json",
+    "build": "npm run build:client",
+    "build:client": "vite build",
+    "predev": "npm run build:client",
+    "dev:ui": "vite build --watch",
+    "tooling:check": "node --experimental-strip-types scripts/client-source-check.ts && node --experimental-strip-types scripts/check-js.ts && node --experimental-strip-types scripts/route-parity-check.ts && node --experimental-strip-types scripts/architecture-check.ts"
   },
   "devDependencies": {
-    "wrangler": "4.136.3"
+    "wrangler": "4.136.3",
+    "typescript": "7.0.2",
+    "@types/node": "24.10.15",
+    "vite": "8.3.1",
+    "vitest": "5.0.1",
+    "@vitest/coverage-v8": "5.0.1",
+    "@types/qrcode": "1.5.6"
   },
   "engines": {
-    "node": ">=22 <25",
+    "node": ">=22.12 <25",
     "npm": ">=10 <12"
   },
   "packageManager": "npm@11.6.2",
   "dependencies": {
-    "hono": "4.13.8"
+    "hono": "4.13.8",
+    "zod": "4.6.5",
+    "qrcode": "1.5.4"
   }
 }

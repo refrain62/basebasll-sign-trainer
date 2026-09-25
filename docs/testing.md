@@ -1,6 +1,6 @@
 # Testing strategy
 
-SIGN TRAINER uses the Node.js 22 built-in test runner (`node:test`) for unit tests. No test-only package is required.
+SIGN TRAINER uses **Vitest** for unit tests and V8 coverage. Browser UI and Worker/API code are both TypeScript, and Vitest runs the same `tests/unit/**/*.test.ts` suite from one configuration.
 
 ## Commands
 
@@ -12,56 +12,52 @@ npm run test:architecture
 npm run check
 ```
 
-`npm run check` runs JavaScript syntax checks across the project, Hono route-parity checks, SOLID architecture-boundary checks, and all unit tests. GitHub Actions runs the same command.
+- `npm test` / `npm run test:unit`: `vitest run`
+- `npm run test:watch`: Vitest watch mode
+- `npm run test:coverage`: Vitest + `@vitest/coverage-v8`
+- `npm run check`: TypeScript typecheck → Vite production build → tooling/architecture checks → Vitest
 
-## What is covered now
+## Vite build checks
 
-- Input normalization and admin-password policy
-- Secret configuration regression checks
-- PBKDF2 password hashing and verification
-- Signed session token tamper detection
-- CSRF / same-origin / JSON content-type checks
-- Cloudflare Access header gate and allowlist behavior
-- Cookie security attributes and CSP headers
-- YouTube URL parsing and spoofed-host rejection
-- D1 result mapping for groups, signs, videos and comments
-- Group ownership validation
-- Member-side group filtering and adaptive question-count choices
-- The regression where `admin12345678` must be accepted as a valid `SYSTEM_ADMIN_SECRET`
-- Group service orchestration with fake repositories
-- Sign service group assignment and invalid-video rollback
-- System-team service ID collision handling, password policy and injected hashing
-- Architecture boundaries between routes/controllers/services/repositories
-- OAuth PKCE / OIDC claim validation
-- Account creation, OAuth identity upsert and ownership-safe account deletion
-- Admin invite hashing, pending-invite limits, ownership transfer and administrator resignation
+`npm run build:client` runs Vite with multiple browser entry points. Vite emits content-hashed bundles under `public/build/assets/` and `public/build/manifest.json`. A small Vite plugin renders the HTML templates under `pages/` into both `public/*.html` and the Worker snapshots under `public/__pages/*.txt`.
 
-## Test structure
+The source of truth is therefore:
 
 ```text
-tests/unit/
-├── account-service.test.js
-├── admin-membership-service.test.js
-├── admin-transition-repository.test.js
-├── backend-validation.test.js
-├── backend-security.test.js
-├── backend-data.test.js
-├── oauth-common.test.js
-├── practice-utils.test.js
-├── group-service.test.js
-├── sign-service.test.js
-├── team-service.test.js
-└── system-team-service.test.js
+client/*.ts       Browser TypeScript
+pages/*.html      HTML templates
+public/styles.css Static CSS
+public/*          Static PWA images/manifest/etc.
 ```
 
-Browser-independent practice selection logic lives in `public/practice-utils.js`, which lets unit tests verify member-screen behavior without a DOM or browser emulator.
+Do not edit `public/build/*` or `public/__pages/*` directly.
+
+## What is covered
+
+- Zod request-body validation and normalization
+- Secret configuration and password policy
+- PBKDF2 + pepper password hashing
+- signed session token tamper detection
+- CSRF / same-origin / JSON content-type checks
+- Cloudflare Access authorization checks
+- D1 result mapping and repository boundaries
+- sign/group/team/account/admin services
+- OAuth PKCE / OIDC claim validation
+- administrator invite / transfer / sub-admin limits
+- application-level data protection
+- Vite page rendering and asset-version behavior
+- browser-independent practice-selection utilities directly from `client/*.ts`
 
 ## Architecture boundary tests
 
-`scripts/architecture-check.mjs` fails CI if business logic starts drifting back into the wrong layer. In particular, Service modules cannot call D1 directly and Controllers/Routes cannot contain SQL.
+`scripts/architecture-check.ts` fails CI if business logic drifts into the wrong layer. Service modules cannot call D1 directly and Controllers/Routes cannot contain SQL.
 
 ## Boundaries
 
-These tests are still primarily unit-level. They do not replace D1 migration smoke tests, Wrangler/Miniflare integration tests, or real-browser E2E tests. A later stage can add integration tests for the complete Hono request pipeline and Playwright tests for the player/admin flows.
+The suite is primarily unit-level. It does not replace D1 migration smoke tests, Wrangler/Miniflare integration tests, or real-browser E2E tests. Playwright can be added later for player/admin flows.
 
-- `admin-transition-repository.test.js`: owner-transfer race guards and repository mutation boundary.
+## Multi-team administrator regression
+
+`tests/unit/multi-team-admin-regression.test.ts` applies every D1 migration to an in-memory SQLite database and verifies the production schema behavior directly: one `app_users.id` can hold memberships for multiple different teams, with different roles per team. The same test also verifies that only a duplicate `(team_id, user_id)` pair is rejected. This protects the intended multi-team administrator behavior from future schema regressions.
+
+Vitest and `@vitest/coverage-v8` must stay on the same version. Build 86 pins both to `5.0.1` to satisfy the coverage provider peer dependency exactly.
