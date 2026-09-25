@@ -1,6 +1,6 @@
-import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=77";
+import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=__ASSET_VERSION__";
 
-const APP_BUILD = "77";
+const APP_BUILD = "__ASSET_VERSION__";
 const TERMS_VERSION = "2026-09-25";
 const PRIVACY_VERSION = "2026-09-25";
 console.info(`[SIGN TRAINER] build ${APP_BUILD} landing`);

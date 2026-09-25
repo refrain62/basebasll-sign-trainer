@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { NO_CACHE_ASSETS } from "./config/constants.js";
 import { apiJson, withHeaders } from "./http/response.js";
 import { pageAssetForPath, serveHtmlPage } from "./http/pages.js";
+import { isVersionedTextAsset, serveVersionedTextAsset } from "./http/versioned-assets.js";
 import { apiGuardMiddleware } from "./middleware/api-guard.js";
 import { systemAccessMiddleware } from "./middleware/system-access.js";
 import { playerRoutes } from "./routes/player.js";
@@ -26,8 +27,10 @@ app.all("*", async (c) => {
   const url = new URL(c.req.url);
   const pageAsset = pageAssetForPath(url.pathname);
   if (pageAsset) return serveHtmlPage(c.req.raw, c.env, url, pageAsset);
+  if (isVersionedTextAsset(url.pathname)) return serveVersionedTextAsset(c.req.raw, c.env);
   const response = await c.env.ASSETS.fetch(c.req.raw);
-  return withHeaders(response, { noCache: NO_CACHE_ASSETS.has(url.pathname) });
+  const localLike = String(c.env.ENVIRONMENT || "dev") !== "production";
+  return withHeaders(response, { noCache: localLike || NO_CACHE_ASSETS.has(url.pathname) });
 });
 
 app.onError((error) => {

@@ -9,6 +9,11 @@ export function createAdminMembershipRepository(db, protector = null) {
       return Boolean(await db.prepare("SELECT team_id FROM team_admin_memberships WHERE team_id=? LIMIT 1").bind(teamId).first());
     },
 
+    async countByRole(teamId, role) {
+      const row = await db.prepare("SELECT COUNT(*) AS count FROM team_admin_memberships WHERE team_id=? AND role=?").bind(teamId, role).first();
+      return Number(row?.count || 0);
+    },
+
     async add({ teamId, userId, role }) {
       return db.prepare(`INSERT INTO team_admin_memberships(team_id,user_id,role) VALUES(?,?,?)
                          ON CONFLICT(team_id,user_id) DO UPDATE SET role=excluded.role,updated_at=CURRENT_TIMESTAMP`)

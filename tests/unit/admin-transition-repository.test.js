@@ -69,3 +69,14 @@ test("direct owner transfer uses the same race guard when the previous owner exi
   assert.match(removeOwner.sql, /^DELETE FROM team_admin_memberships/m);
   assert.match(removeOwner.sql, /role='admin'/);
 });
+
+
+test("admin invite acceptance includes a database-side five-sub-admin guard", async () => {
+  const db = fakeD1();
+  const repository = createAdminTransitionRepository(db);
+  await repository.acceptAdminInvite({ inviteId: "inv_1", teamId: "Team1234", userId: "u_newadmin", maxSubAdmins: 5 });
+  const [insertAdmin, acceptInvite] = db.batches[0];
+  assert.match(insertAdmin.sql, /COUNT\(\*\).*role='admin'/s);
+  assert.equal(insertAdmin.args.at(-1), 5);
+  assert.match(acceptInvite.sql, /EXISTS \(SELECT 1 FROM team_admin_memberships/);
+});

@@ -72,6 +72,14 @@ test("page routing resolves only expected application pages", () => {
   assert.equal(pageAssetForPath("/privacy"), "/__pages/privacy.txt");
   assert.equal(pageAssetForPath("/external-transmission"), "/__pages/external-transmission.txt");
   assert.equal(pageAssetForPath("/support"), "/__pages/support.txt");
+  assert.equal(pageAssetForPath("/index.html"), "/__pages/index.txt");
+  assert.equal(pageAssetForPath("/admin.html"), "/__pages/admin.txt");
+  assert.equal(pageAssetForPath("/account.html"), "/__pages/account.txt");
+  assert.equal(pageAssetForPath("/terms.html"), "/__pages/terms.txt");
+  assert.equal(pageAssetForPath("/privacy.html"), "/__pages/privacy.txt");
+  assert.equal(pageAssetForPath("/external-transmission.html"), "/__pages/external-transmission.txt");
+  assert.equal(pageAssetForPath("/support.html"), "/__pages/support.txt");
+  assert.equal(pageAssetForPath("/team.html"), "/__pages/team.txt");
   assert.equal(pageAssetForPath("/join-admin/abcdefghijklmnopqrstuvwxyz"), "/__pages/account.txt");
   assert.equal(pageAssetForPath("/t/abc123"), "/__pages/team.txt");
   assert.equal(pageAssetForPath("/t/abc123/admin"), "/__pages/admin.txt");

@@ -19,20 +19,26 @@ export function createAdminTransitionRepository(db) {
       ]);
       return changed(results?.[0]) > 0 && changed(results?.[1]) > 0;
     },
-    async acceptAdminInvite({ inviteId, teamId, userId }) {
+    async acceptAdminInvite({ inviteId, teamId, userId, maxSubAdmins = 5 }) {
       const results = await db.batch([
         db.prepare(`INSERT INTO team_admin_memberships(team_id,user_id,role)
           SELECT ?,?,'admin'
           WHERE EXISTS (SELECT 1 FROM team_admin_invites WHERE id=? AND team_id=? AND status='pending')
+            AND (
+              EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=?)
+              OR (SELECT COUNT(*) FROM team_admin_memberships WHERE team_id=? AND role='admin') < ?
+            )
           ON CONFLICT(team_id,user_id) DO UPDATE SET role=CASE WHEN team_admin_memberships.role='owner' THEN 'owner' ELSE 'admin' END,updated_at=CURRENT_TIMESTAMP`)
-          .bind(teamId, userId, inviteId, teamId),
-        db.prepare("UPDATE team_admin_invites SET status='accepted',accepted_by_user_id=?,accepted_at=CURRENT_TIMESTAMP WHERE id=? AND team_id=? AND status='pending'")
-          .bind(userId, inviteId, teamId)
+          .bind(teamId, userId, inviteId, teamId, teamId, userId, teamId, maxSubAdmins),
+        db.prepare(`UPDATE team_admin_invites SET status='accepted',accepted_by_user_id=?,accepted_at=CURRENT_TIMESTAMP
+          WHERE id=? AND team_id=? AND status='pending'
+            AND EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role IN ('admin','owner'))`)
+          .bind(userId, inviteId, teamId, teamId, userId)
       ]);
       return changed(results?.[1]) > 0;
     },
 
-    async acceptTransferInvite({ inviteId, teamId, currentOwnerUserId, nextOwnerUserId, currentOwnerExit }) {
+    async acceptTransferInvite({ inviteId, teamId, currentOwnerUserId, nextOwnerUserId, currentOwnerExit, maxSubAdmins = 5 }) {
       const pendingGuard = "EXISTS (SELECT 1 FROM team_admin_invites WHERE id=? AND team_id=? AND status='pending')";
       const statements = [];
       if (currentOwnerExit) {
@@ -41,8 +47,12 @@ export function createAdminTransitionRepository(db) {
           .bind(teamId, currentOwnerUserId, inviteId, teamId));
       } else {
         statements.push(db.prepare(`UPDATE team_admin_memberships SET role='admin',updated_at=CURRENT_TIMESTAMP
-          WHERE team_id=? AND user_id=? AND role='owner' AND ${pendingGuard}`)
-          .bind(teamId, currentOwnerUserId, inviteId, teamId));
+          WHERE team_id=? AND user_id=? AND role='owner' AND ${pendingGuard}
+            AND (
+              EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role='admin')
+              OR (SELECT COUNT(*) FROM team_admin_memberships WHERE team_id=? AND role='admin') < ?
+            )`)
+          .bind(teamId, currentOwnerUserId, inviteId, teamId, teamId, nextOwnerUserId, teamId, maxSubAdmins));
       }
       statements.push(db.prepare(`INSERT INTO team_admin_memberships(team_id,user_id,role)
         SELECT ?,?,'owner' WHERE ${pendingGuard}

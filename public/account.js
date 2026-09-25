@@ -1,4 +1,4 @@
-const APP_BUILD = "77";
+const APP_BUILD = "__ASSET_VERSION__";
 const TERMS_VERSION = "2026-09-25";
 const PRIVACY_VERSION = "2026-09-25";
 console.info(`[SIGN TRAINER] build ${APP_BUILD} account`);
@@ -95,8 +95,8 @@ function renderUnauthenticated(providers, invite) {
   const inviteInfo = invite && !invite.error ? `<div class="account-invite-summary">
       <span class="account-eyebrow">ADMIN INVITATION</span>
       <h1>${esc(invite.teamName)}</h1>
-      <p>${invite.kind === "transfer" ? "チームオーナーの交代依頼です。" : "チーム管理者として招待されています。"}</p>
-      <dl><div><dt>招待した人</dt><dd>${esc(invite.creatorName || "チーム管理者")}</dd></div><div><dt>権限</dt><dd>${invite.kind === "transfer" ? "新しいオーナー" : "管理者"}</dd></div></dl>
+      <p>${invite.kind === "transfer" ? "メイン管理者の交代依頼です。" : "チームのサブ管理者として招待されています。"}</p>
+      <dl><div><dt>招待した人</dt><dd>${esc(invite.creatorName || "チーム管理者")}</dd></div><div><dt>権限</dt><dd>${invite.kind === "transfer" ? "新しいメイン管理者" : "サブ管理者"}</dd></div></dl>
     </div>` : "";
   const intent = inviteToken ? "invite" : creating ? "register-team" : "login";
   app.innerHTML = `<div class="account-auth-layout">
@@ -117,7 +117,7 @@ function teamCard(team) {
   const owner = team.role === "owner";
   const plan = team.plan || { name: "Free", isFree: true };
   return `<article class="account-team-card">
-    <div><div class="account-team-badges"><span class="account-role ${owner ? "is-owner" : ""}">${owner ? "オーナー" : "管理者"}</span><span class="account-plan-badge ${plan.isFree ? "is-free" : ""}">${esc(plan.name || "Free")}</span></div><h3>${esc(team.teamName)}</h3><p>${esc(team.teamId)}</p></div>
+    <div><div class="account-team-badges"><span class="account-role ${owner ? "is-owner" : ""}">${owner ? "メイン管理者" : "サブ管理者"}</span><span class="account-plan-badge ${plan.isFree ? "is-free" : ""}">${esc(plan.name || "Free")}</span></div><h3>${esc(team.teamName)}</h3><p>${esc(team.teamId)}</p></div>
     <div class="account-team-actions"><a class="button button-primary" href="/t/${encodeURIComponent(team.teamId)}/admin">管理画面</a><a class="button button-secondary" href="/t/${encodeURIComponent(team.teamId)}">選手画面</a></div>
   </article>`;
 }
@@ -125,7 +125,7 @@ function teamCard(team) {
 function createTeamPanel() {
   return `<section class="account-panel account-create-panel" id="create-team-panel">
     <div class="account-section-heading"><div><span class="account-eyebrow">NEW TEAM</span><h2>新しいチームを登録</h2></div><button class="account-icon-button" id="close-create-team" type="button" aria-label="閉じる">×</button></div>
-    <p>管理者パスワードは作りません。このアカウントが最初のチームオーナーになります。</p>
+    <p>管理者パスワードは作りません。このアカウントが最初のメイン管理者になります。</p>
     <div id="create-team-error"></div>
     <form class="account-form" id="create-team-form">
       <label>チーム名<input class="text-input" name="name" maxlength="80" placeholder="例：熊本○○ジュニア" required></label>
@@ -139,7 +139,7 @@ function createTeamPanel() {
 function openDeleteDialog(dashboard) {
   const owned = dashboard.teams.filter((team) => team.role === "owner");
   dialogBody.innerHTML = `<div class="account-dialog-card"><button class="account-dialog-close" type="button" data-close-dialog aria-label="閉じる">×</button><span class="account-eyebrow account-eyebrow--danger">DANGER ZONE</span><h2>アカウントを退会</h2>
-    ${owned.length ? `<div class="notice notice-error">${owned.map((team) => esc(team.teamName)).join("、")} のオーナーです。先に各チームでオーナーを交代してください。</div>` : `<p>管理者として参加中のチームから外れ、SIGN TRAINER内の認証連携情報とチーム所属を削除し、アカウントを匿名化します。選手側の練習履歴には影響しません。LINE連携がある場合は退会処理の中でLINEの連動アプリ権限も解除します。Google側の連携許可はGoogleアカウントの設定からいつでも解除できます。</p><label class="account-confirm-label">確認のため「退会する」と入力<input class="text-input" id="delete-account-confirm" autocomplete="off"></label><button class="button button-danger button-full" id="confirm-delete-account" type="button" disabled>アカウントを退会する</button>`}
+    ${owned.length ? `<div class="notice notice-error">${owned.map((team) => esc(team.teamName)).join("、")} のメイン管理者です。先に各チームでメイン管理者を交代してください。</div>` : `<p>管理者として参加中のチームから外れ、SIGN TRAINER内の認証連携情報とチーム所属を削除し、アカウントを匿名化します。選手側の練習履歴には影響しません。LINE連携がある場合は退会処理の中でLINEの連動アプリ権限も解除します。Google側の連携許可はGoogleアカウントの設定からいつでも解除できます。</p><label class="account-confirm-label">確認のため「退会する」と入力<input class="text-input" id="delete-account-confirm" autocomplete="off"></label><button class="button button-danger button-full" id="confirm-delete-account" type="button" disabled>アカウントを退会する</button>`}
   </div>`;
   dialog.showModal();
   dialogBody.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => dialog.close()));
@@ -204,15 +204,15 @@ function renderDashboard(dashboard) {
       <div class="account-section-heading"><div><span class="account-eyebrow">YOUR TEAMS</span><h2>管理しているチーム</h2><p>${teams.length ? `${teams.length}チーム` : "まだチームがありません"}</p></div><button class="button button-primary" id="open-create-team" type="button">＋ 新しいチーム</button></div>
       ${teams.length ? `<div class="account-team-grid">${teams.map(teamCard).join("")}</div>` : `<div class="account-empty"><strong>最初のチームを登録しましょう</strong><p>チーム名と選手用合言葉だけで始められます。</p></div>`}
     </section>
-    <section class="account-panel account-safety-panel"><div><span class="account-eyebrow">ACCOUNT SAFETY</span><h2>管理者の交代・退会はチーム管理画面から</h2><p>オーナー交代はワンタイム招待リンクで安全に行えます。管理者は自分でチームから退会できます。</p></div></section>
-    <section class="account-panel account-danger-panel"><div><h2>アカウント退会</h2><p>オーナーになっているチームがある場合は、先にオーナーを交代する必要があります。</p></div><button class="button button-danger" id="delete-account" type="button">退会手続き</button></section>
+    <section class="account-panel account-safety-panel"><div><span class="account-eyebrow">ACCOUNT SAFETY</span><h2>メイン管理者の交代・サブ管理者の退会はチーム管理画面から</h2><p>メイン管理者の交代はワンタイム招待リンクで安全に行えます。サブ管理者は自分でチームから退会できます。</p></div></section>
+    <section class="account-panel account-danger-panel"><div><h2>アカウント退会</h2><p>メイン管理者になっているチームがある場合は、先にメイン管理者を交代する必要があります。</p></div><button class="button button-danger" id="delete-account" type="button">退会手続き</button></section>
   </div>`;
   wireDashboard(dashboard);
 }
 
 async function renderInviteForAuthenticated(dashboard, invite) {
   if (invite?.error) { app.innerHTML = `<section class="account-auth-card"><div class="notice notice-error">${esc(invite.error)}</div><a class="button button-primary button-full" href="/account">アカウントへ</a></section>`; return; }
-  app.innerHTML = `<div class="account-auth-layout"><section class="account-auth-card"><span class="account-eyebrow">ADMIN INVITATION</span><h1>${esc(invite.teamName)}</h1><p>${invite.kind === "transfer" ? "この招待を承認すると、あなたが新しいチームオーナーになります。" : "このチームの管理者として参加します。"}</p><div class="account-current-user">${esc(dashboard.user.displayName)} として承認します</div><button class="button button-primary button-full" id="accept-invite" type="button">招待を承認する</button><a class="button button-secondary button-full" href="/account">キャンセル</a></section></div>`;
+  app.innerHTML = `<div class="account-auth-layout"><section class="account-auth-card"><span class="account-eyebrow">ADMIN INVITATION</span><h1>${esc(invite.teamName)}</h1><p>${invite.kind === "transfer" ? "この招待を承認すると、あなたが新しいメイン管理者になります。" : "このチームのサブ管理者として参加します。"}</p><div class="account-current-user">${esc(dashboard.user.displayName)} として承認します</div><button class="button button-primary button-full" id="accept-invite" type="button">招待を承認する</button><a class="button button-secondary button-full" href="/account">キャンセル</a></section></div>`;
   document.querySelector("#accept-invite")?.addEventListener("click", async (event) => {
     event.currentTarget.disabled = true; event.currentTarget.textContent = "承認しています…";
     const { response, data } = await requestJson(`/api/account/invites/${encodeURIComponent(inviteToken)}/accept`, { method: "POST" });

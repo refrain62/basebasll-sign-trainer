@@ -1,4 +1,4 @@
-# SIGN TRAINER — build 76
+# SIGN TRAINER — build 79
 
 野球チーム固有のサインを動画で反復練習する Web / PWA です。D1 は local / dev / staging / production で分離し、チーム・サイン・動画設定に加えて、管理者アカウントの識別情報・チーム権限・招待状態を保存します。選手の回答・正答率・練習履歴は端末の `localStorage` のみに保存します。OAuthのaccess token / refresh tokenは保存しません。
 
@@ -111,7 +111,7 @@ npm run db:migrate:prod
 - `0003_security_hardening.sql` — セッション世代、rate limit、audit log、soft delete
 - `0004_video_comments.sql` — 動画用途コメント
 - `0005_sign_groups.sql` — サイングループ・グループ説明動画
-- `0006_accounts_and_team_admins.sql` — Google / LINE管理者アカウント、オーナー・管理者・ワンタイム招待
+- `0006_accounts_and_team_admins.sql` — Google / LINE管理者アカウント、メイン管理者・サブ管理者・ワンタイム招待
 - `0007_rate_limit_cleanup_index.sql` — 認証レート制限の期限切れデータ削除を支えるインデックス
 - `0008_legal_consent.sql` — 利用規約・プライバシーポリシー同意履歴
 - `0009_plans_and_entitlements.sql` — Free運用と将来有料化に備えたプラン・Entitlement・Usage基盤
@@ -441,8 +441,8 @@ LPの「チームを登録する」からGoogleまたはLINEで管理者登録�
 
 ### 権限モデル
 
-- **オーナー**: チームごとに1人。管理者追加・削除、オーナー交代、旧管理者パスワード無効化を実行できます。
-- **管理者**: サイン・グループ・動画・チーム情報を管理できます。自分でチーム管理者から退会できます。
+- **メイン管理者**: チームごとに1人。サブ管理者追加・削除、メイン管理者交代、旧管理者パスワード無効化を実行できます。
+- **サブ管理者**: 1チーム最大5人。サイン・グループ・動画・チーム情報を管理でき、自分でチーム管理者から退会できます。
 - オーナーは、そのまま退会できません。別の管理者へオーナーを交代してから退会します。
 - オーナー交代は、登録済み管理者への即時交代またはワンタイム交代リンクで行えます。
 - オーナー交代時は旧共有管理者パスワードを自動無効化し、古い承認待ち招待も無効化します。
@@ -680,3 +680,17 @@ Windows向け起動コマンドの回帰テストも追加しています。
 公開メールアドレスをHTMLへ出さない構成へ変更しました。`PUBLIC_SUPPORT_EMAIL` は廃止し、HTTPSの問い合わせフォームURLを指定する `PUBLIC_SUPPORT_URL` を使用します。`/support`、利用規約、プライバシーポリシー、外部送信ページはいずれも同じフォームURLへリンクします。アプリ側はフォームURLへ氏名・メールアドレス等の個人情報を追加しません。
 
 例: `PUBLIC_SUPPORT_URL=https://forms.gle/...`
+
+
+## build 78: メイン管理者1名 + サブ管理者最大5名
+
+- `owner` はUI上「メイン管理者」、`admin` は「サブ管理者」と表示します。内部role値は後方互換のため変更していません。
+- サブ管理者は1チーム最大5名です。承認待ちのサブ管理者招待も空き枠を予約するため、5枠を超えて招待リンクを発行できません。
+- 招待承認時にもServiceとD1更新条件で上限を再確認し、同時操作でも6人目が参加しないよう防御します。
+- `0011_sub_admin_limit.sql` はD1へ直接INSERTする経路にも5名上限の最終ガードを追加します。
+- メイン管理者交代時、旧メイン管理者がサブ管理者として残る場合も5名上限を確認します。
+
+
+## build 79: 静的アセットversionの自動化
+
+`?v=<build番号>` のような手動のcache-busterを廃止しました。HTML / JavaScript / CSS / Web App Manifestのソースには `__ASSET_VERSION__` という固定トークンだけを書き、Cloudflare Workersの `CF_VERSION_METADATA.id` をレスポンス時に自動挿入します。これによりデプロイごとにWorker version IDが変わるため、favicon、CSS、JS、PWA icon、LP画像などのURLも自動で新しいversionになります。今後は各HTML/JSの `v=` 数字を書き換える必要はありません。ローカルでversion metadataが取得できない場合は `dev` を使い、ローカル/ステージングの静的ファイルはno-cacheで配信します。

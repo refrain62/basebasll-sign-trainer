@@ -28,3 +28,5 @@ export const NO_CACHE_ASSETS = new Set([
 ]);
 
 export const FRESH_AUTH_MAX_AGE_SECONDS = 10 * 60;
+
+export const MAX_SUB_ADMINS = 5;

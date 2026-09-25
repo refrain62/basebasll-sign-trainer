@@ -35,7 +35,8 @@
 
 ## 退会
 
-- オーナーは別の管理者へオーナー権限を移さない限り退会できません。
+- メイン管理者は別の管理者へメイン管理者権限を移さない限り退会できません。
+- サブ管理者は1チーム最大5名です。承認待ちのサブ管理者招待も枠として予約されます。
 - 退会時にアカウントの直接識別情報を匿名化し、OAuth identityとチーム所属を削除します。
 - LINE identityを持つアカウントは、退会完了前にLINEで本人確認し、LINEの連動アプリ権限をDeauthorize APIで解除します。
 - Google側の許可は利用者自身がGoogleアカウントの接続管理から解除できます。本サービス側ではGoogleアクセストークン/リフレッシュトークンを恒久保存しません。
@@ -77,3 +78,7 @@ build 75への更新順序:
 公開メールアドレスは使用せず、`PUBLIC_SUPPORT_URL` にHTTPSの問い合わせフォームURLを設定します。現在はGoogle Formsを想定しています。SIGN TRAINERはフォームURLをそのまま外部リンクとして表示し、氏名・メールアドレス・teamId等をクエリ文字列へ自動付与しません。Google Formsで「事前入力したリンク」を使う場合も、個人情報をURLへ埋め込まないでください。
 
 `PUBLIC_SUPPORT_URL` はSecretではありません。利用者に公開されるURLです。問い合わせ内容はフォーム提供事業者側で管理されるため、フォームの閲覧権限、回答保存先、削除ルール、通知先アカウントの2段階認証を運用側で管理してください。
+
+## 静的アセットのversion管理（build 79以降）
+
+HTML / JavaScript / CSS / Web App Manifestでは、cache-busterの数字を手作業で更新しない。ソース上は `__ASSET_VERSION__` を固定で使用し、Workerが `CF_VERSION_METADATA.id` をレスポンス時に差し込む。CloudflareへのデプロイでWorker versionが変われば、CSS・JS・favicon・PWA icon・画像URLも自動的に別versionになる。ローカルでversion metadataが得られない場合は `dev` にフォールバックし、非production環境の静的アセットはno-cacheで配信する。

@@ -1,10 +1,10 @@
-import { qrImageUrl, teamUrl } from "./share-utils.js?v=77";
+import { qrImageUrl, teamUrl } from "./share-utils.js?v=__ASSET_VERSION__";
 
 const TERMS_VERSION = "2026-09-25";
 const PRIVACY_VERSION = "2026-09-25";
 
 const app = document.querySelector("#app");
-const ICON = "/assets/sign-trainer-icon.png";
+const ICON = "/assets/sign-trainer-icon.png?v=__ASSET_VERSION__";
 
 function esc(value) {
   return String(value ?? "")
@@ -484,16 +484,22 @@ function adminIdentitySection(teamId, team, auth, management) {
   const owner = management.currentRole === "owner";
   const members = management.members || [];
   const admins = members.filter((member) => member.role === "admin");
+  const maxSubAdmins = Number(management.maxSubAdmins || 5);
+  const pendingSubAdminInvites = Number(management.pendingSubAdminInvites || 0);
+  const subAdminSlotsRemaining = Number.isFinite(Number(management.subAdminSlotsRemaining)) ? Number(management.subAdminSlotsRemaining) : Math.max(0, maxSubAdmins - admins.length - pendingSubAdminInvites);
+  const canInviteSubAdmin = management.canInviteSubAdmin !== false && subAdminSlotsRemaining > 0;
   const memberRows = members.map((member) => `<div class="admin-identity-row">
     <div class="admin-identity-person"><span class="admin-identity-avatar">${esc((member.displayName || "管").slice(0,1))}</span><div><strong>${esc(member.displayName || "管理者")}</strong><small>${esc(member.email || "メールアドレス未取得")}</small></div></div>
-    <div class="admin-card-actions"><span class="${member.role === "owner" ? "admin-owner-badge" : "admin-admin-badge"}">${member.role === "owner" ? "オーナー" : "管理者"}</span>${owner && member.role === "admin" ? `<button class="button button-ghost" data-remove-admin="${esc(member.userId)}" type="button">管理者から外す</button>` : ""}</div>
+    <div class="admin-card-actions"><span class="${member.role === "owner" ? "admin-owner-badge" : "admin-admin-badge"}">${member.role === "owner" ? "メイン管理者" : "サブ管理者"}</span>${owner && member.role === "admin" ? `<button class="button button-ghost" data-remove-admin="${esc(member.userId)}" type="button">サブ管理者から外す</button>` : ""}</div>
   </div>`).join("");
-  const pending = (management.pendingInvites || []).map((invite) => `<div class="admin-identity-row"><div><strong>${invite.kind === "transfer" ? "オーナー交代" : "管理者招待"}</strong><small>有効期限 ${esc(formatDate(new Date(Number(invite.expires_at) * 1000).toISOString()))}</small></div><button class="button button-ghost" data-revoke-invite="${esc(invite.id)}" type="button">取り消す</button></div>`).join("");
+  const pending = (management.pendingInvites || []).map((invite) => `<div class="admin-identity-row"><div><strong>${invite.kind === "transfer" ? "メイン管理者交代" : "サブ管理者招待"}</strong><small>有効期限 ${esc(formatDate(new Date(Number(invite.expires_at) * 1000).toISOString()))}</small></div><button class="button button-ghost" data-revoke-invite="${esc(invite.id)}" type="button">取り消す</button></div>`).join("");
   return `<section class="admin-card admin-identity-card">
-    <div class="admin-identity-header"><div><p class="admin-kicker">ADMINISTRATORS</p><h2>管理者と権限</h2><p class="admin-section-caption">管理者ごとにGoogle / LINEで本人認証。共有パスワードに頼らず、交代や退会を安全に管理します。</p></div><a class="button button-secondary" href="/account">マイアカウント</a></div>
+    <div class="admin-identity-header"><div><p class="admin-kicker">ADMINISTRATORS</p><h2>管理者と権限</h2><p class="admin-section-caption">メイン管理者は1名、サブ管理者は最大${maxSubAdmins}名。管理者ごとにGoogle / LINEで本人認証します。</p></div><a class="button button-secondary" href="/account">マイアカウント</a></div>
+    <div class="admin-admin-capacity"><strong>サブ管理者 ${admins.length} / ${maxSubAdmins}</strong><span>${pendingSubAdminInvites ? `承認待ち ${pendingSubAdminInvites}名 · ` : ""}追加可能 ${subAdminSlotsRemaining}名</span></div>
     <div class="admin-identity-list">${memberRows}</div>
     ${pending ? `<div class="admin-section-subtitle"><strong>承認待ちの招待</strong></div><div class="admin-identity-list">${pending}</div>` : ""}
-    <div class="admin-identity-actions">${owner ? `<button class="button button-primary" id="open-admin-invite" type="button">＋ 管理者を招待</button><button class="button button-secondary" id="open-owner-transfer" type="button">オーナーを交代</button>${management.legacyPasswordEnabled ? `<button class="button button-ghost" id="disable-legacy-password" type="button">旧パスワードを無効化</button>` : `<span class="admin-status admin-status--active">共有パスワード無効</span>`}` : `<button class="button button-danger" id="leave-team-admin" type="button">このチームの管理者を退会</button>`}</div>
+    <div class="admin-identity-actions">${owner ? `<button class="button button-primary" id="open-admin-invite" type="button" ${canInviteSubAdmin ? "" : "disabled"}>＋ サブ管理者を招待</button><button class="button button-secondary" id="open-owner-transfer" type="button">メイン管理者を交代</button>${management.legacyPasswordEnabled ? `<button class="button button-ghost" id="disable-legacy-password" type="button">旧パスワードを無効化</button>` : `<span class="admin-status admin-status--active">共有パスワード無効</span>`}` : `<button class="button button-danger" id="leave-team-admin" type="button">このチームのサブ管理者を退会</button>`}</div>
+    ${owner && !canInviteSubAdmin ? `<p class="admin-help">サブ管理者は最大${maxSubAdmins}名です。承認待ちの招待を取り消すか、既存のサブ管理者を外すと新しく招待できます。</p>` : ""}
     ${owner && management.legacyPasswordEnabled ? `<p class="admin-help">アカウント移行が確認できたら旧管理者パスワードを無効化すると、共有パスワードを知る人からのアクセスを止められます。</p>` : ""}
   </section>`;
 }
@@ -513,15 +519,15 @@ function showInviteResult(teamId, invite, label) {
 
 function openAdminInviteModal(teamId) {
   openAdminModal({
-    title: "管理者を招待",
+    title: "サブ管理者を招待",
     kicker: "ADMIN INVITE",
-    body: `<div id="admin-modal-error"></div><p class="admin-modal-lead">招待する人だけにワンタイムリンクを送ります。相手はGoogle / LINEで本人認証して管理者になります。</p><form id="admin-invite-form" class="admin-form"><label>リンクの有効時間<select class="text-input" name="expiresHours"><option value="24">24時間</option><option value="48">48時間</option><option value="72">72時間</option></select></label><button class="button button-primary button-full" type="submit">招待リンクを発行</button></form>`,
+    body: `<div id="admin-modal-error"></div><p class="admin-modal-lead">招待する人だけにワンタイムリンクを送ります。相手はGoogle / LINEで本人認証してサブ管理者になります。</p><form id="admin-invite-form" class="admin-form"><label>リンクの有効時間<select class="text-input" name="expiresHours"><option value="24">24時間</option><option value="48">48時間</option><option value="72">72時間</option></select></label><button class="button button-primary button-full" type="submit">招待リンクを発行</button></form>`,
     onOpen(layer) {
       layer.querySelector("#admin-invite-form")?.addEventListener("submit", async (event) => {
         event.preventDefault(); const fd = new FormData(event.currentTarget); const submit = event.currentTarget.querySelector("button[type=submit]"); setButtonBusy(submit, true, "発行しています…");
         const { response, data } = await requestJson("/api/team-admin/admins/invites", { method: "POST", body: JSON.stringify({ teamId, kind: "admin", expiresHours: Number(fd.get("expiresHours")) }) });
         if (!response.ok) { setButtonBusy(submit, false); return modalError(data.message || "招待リンクを発行できませんでした。"); }
-        closeAdminModal(); showInviteResult(teamId, data.invite, "管理者追加");
+        closeAdminModal(); showInviteResult(teamId, data.invite, "サブ管理者追加");
       });
     }
   });
@@ -530,21 +536,21 @@ function openAdminInviteModal(teamId) {
 function openOwnerTransferModal(teamId, management) {
   const admins = (management.members || []).filter((member) => member.role === "admin");
   openAdminModal({
-    title: "オーナーを交代",
+    title: "メイン管理者を交代",
     kicker: "OWNER TRANSFER",
-    body: `<div id="admin-modal-error"></div><div class="notice notice-warning"><strong>重要な操作です</strong><br>交代が完了すると旧共有パスワードは自動的に無効化されます。</div><form id="owner-transfer-form" class="admin-form">${admins.length ? `<label>交代方法<select class="text-input" name="nextOwnerUserId"><option value="">新しい人へ交代リンクを発行</option>${admins.map((member) => `<option value="${esc(member.userId)}">登録済み管理者：${esc(member.displayName)}</option>`).join("")}</select></label>` : `<p class="admin-help">登録済みの管理者がいないため、新しいオーナーへ交代リンクを発行します。</p>`}<label class="admin-toggle admin-toggle--panel"><input type="checkbox" name="currentOwnerExit"><span>交代後、自分はこのチームの管理者から外れる</span></label><label>リンクの有効時間 <span class="admin-optional">新しい人へ発行する場合</span><select class="text-input" name="expiresHours"><option value="24">24時間</option><option value="48">48時間</option><option value="72">72時間</option></select></label><button class="button button-primary button-full" type="submit">交代手続きを進める</button></form>`,
+    body: `<div id="admin-modal-error"></div><div class="notice notice-warning"><strong>重要な操作です</strong><br>交代が完了すると旧共有パスワードは自動的に無効化されます。</div><form id="owner-transfer-form" class="admin-form">${admins.length ? `<label>交代方法<select class="text-input" name="nextOwnerUserId"><option value="">新しい人へ交代リンクを発行</option>${admins.map((member) => `<option value="${esc(member.userId)}">登録済みサブ管理者：${esc(member.displayName)}</option>`).join("")}</select></label>` : `<p class="admin-help">登録済みのサブ管理者がいないため、新しいメイン管理者へ交代リンクを発行します。</p>`}<label class="admin-toggle admin-toggle--panel"><input type="checkbox" name="currentOwnerExit"><span>交代後、自分はこのチームの管理者から外れる</span></label><label>リンクの有効時間 <span class="admin-optional">新しい人へ発行する場合</span><select class="text-input" name="expiresHours"><option value="24">24時間</option><option value="48">48時間</option><option value="72">72時間</option></select></label><button class="button button-primary button-full" type="submit">交代手続きを進める</button></form>`,
     onOpen(layer) {
       layer.querySelector("#owner-transfer-form")?.addEventListener("submit", async (event) => {
         event.preventDefault(); const fd = new FormData(event.currentTarget); const submit = event.currentTarget.querySelector("button[type=submit]"); const nextOwnerUserId = String(fd.get("nextOwnerUserId") || ""); const currentOwnerExit = fd.get("currentOwnerExit") === "on"; setButtonBusy(submit, true, "処理しています…");
         if (nextOwnerUserId) {
-          if (!confirm("選択した管理者へオーナー権限を移します。続けますか？")) { setButtonBusy(submit, false); return; }
+          if (!confirm("選択したサブ管理者へメイン管理者権限を移します。続けますか？")) { setButtonBusy(submit, false); return; }
           const { response, data } = await requestJson("/api/team-admin/admins/transfer", { method: "POST", body: JSON.stringify({ teamId, nextOwnerUserId, currentOwnerExit }) });
           if (!response.ok) { setButtonBusy(submit, false); if (handleFreshAuthResponse(response, data, `/t/${teamId}/admin`)) return; return modalError(data.message || "交代できませんでした。"); }
-          closeAdminModal(); return renderTeamDashboard(teamId, { message: "オーナーを交代しました。" });
+          closeAdminModal(); return renderTeamDashboard(teamId, { message: "メイン管理者を交代しました。" });
         }
         const { response, data } = await requestJson("/api/team-admin/admins/invites", { method: "POST", body: JSON.stringify({ teamId, kind: "transfer", currentOwnerExit, expiresHours: Number(fd.get("expiresHours")) }) });
         if (!response.ok) { setButtonBusy(submit, false); if (handleFreshAuthResponse(response, data, `/t/${teamId}/admin`)) return; return modalError(data.message || "交代リンクを発行できませんでした。"); }
-        closeAdminModal(); showInviteResult(teamId, data.invite, "オーナー交代");
+        closeAdminModal(); showInviteResult(teamId, data.invite, "メイン管理者交代");
       });
     }
   });
@@ -756,10 +762,10 @@ function wireTeamDashboard(teamId, team, groups, signs, playerUrl, auth = {}, ad
     location.href = "/account";
   });
   document.querySelectorAll("[data-remove-admin]").forEach((button) => button.addEventListener("click", async () => {
-    if (!confirm("この人をチーム管理者から外しますか？")) return;
+    if (!confirm("この人をサブ管理者から外しますか？")) return;
     const { response, data } = await requestJson(`/api/team-admin/admins/${encodeURIComponent(button.dataset.removeAdmin)}?teamId=${encodeURIComponent(teamId)}`, { method: "DELETE" });
-    if (!response.ok) { if (handleFreshAuthResponse(response, data, `/t/${teamId}/admin`)) return; return alert(data.message || "管理者から外せませんでした。"); }
-    renderTeamDashboard(teamId, { message: "管理者を更新しました。" });
+    if (!response.ok) { if (handleFreshAuthResponse(response, data, `/t/${teamId}/admin`)) return; return alert(data.message || "サブ管理者から外せませんでした。"); }
+    renderTeamDashboard(teamId, { message: "サブ管理者を更新しました。" });
   }));
   document.querySelectorAll("[data-revoke-invite]").forEach((button) => button.addEventListener("click", async () => {
     if (!confirm("この招待を取り消しますか？")) return;

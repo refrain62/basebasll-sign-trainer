@@ -1,4 +1,4 @@
-import { createQrSvgDataUrl } from "./vendor/qrcode-local.js";
+import { createQrSvgDataUrl } from "./vendor/qrcode-local.js?v=__ASSET_VERSION__";
 
 export const APP_ORIGIN = window.location.origin.replace(/\/$/, "");
 

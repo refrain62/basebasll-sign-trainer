@@ -117,7 +117,7 @@ export function createAccountService({
       if (!user) throw new ServiceError("account_not_found", "アカウントが見つかりません。", 404);
       const owned = await membershipRepository.ownedTeams(userId);
       if (owned.length) {
-        throw new ServiceError("owned_teams_remaining", "オーナーになっているチームがあります。先に管理者を交代してください。", 409, { teams: owned.map((team) => ({ id: team.id, name: team.name })) });
+        throw new ServiceError("owned_teams_remaining", "メイン管理者になっているチームがあります。先にメイン管理者を交代してください。", 409, { teams: owned.map((team) => ({ id: team.id, name: team.name })) });
       }
       return { identities: await userRepository.listIdentities(userId) };
     },
@@ -127,13 +127,13 @@ export function createAccountService({
       if (!user) throw new ServiceError("account_not_found", "アカウントが見つかりません。", 404);
       const owned = await membershipRepository.ownedTeams(userId);
       if (owned.length) {
-        throw new ServiceError("owned_teams_remaining", "オーナーになっているチームがあります。先に管理者を交代してください。", 409, { teams: owned.map((team) => ({ id: team.id, name: team.name })) });
+        throw new ServiceError("owned_teams_remaining", "メイン管理者になっているチームがあります。先にメイン管理者を交代してください。", 409, { teams: owned.map((team) => ({ id: team.id, name: team.name })) });
       }
       const deleted = await userRepository.softDelete(userId);
       if (!deleted) {
         const stillOwned = await membershipRepository.ownedTeams(userId);
         if (stillOwned.length) {
-          throw new ServiceError("owned_teams_remaining", "オーナーになっているチームがあります。先に管理者を交代してください。", 409, { teams: stillOwned.map((team) => ({ id: team.id, name: team.name })) });
+          throw new ServiceError("owned_teams_remaining", "メイン管理者になっているチームがあります。先にメイン管理者を交代してください。", 409, { teams: stillOwned.map((team) => ({ id: team.id, name: team.name })) });
         }
         throw new ServiceError("account_delete_conflict", "アカウントの状態が変更されました。画面を再読み込みしてもう一度お試しください。", 409);
       }

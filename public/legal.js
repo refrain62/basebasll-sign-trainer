@@ -1,4 +1,4 @@
-const APP_BUILD = "77";
+const APP_BUILD = "__ASSET_VERSION__";
 console.info(`[SIGN TRAINER] build ${APP_BUILD} legal`);
 
 function applySupportLink(node, supportUrl) {

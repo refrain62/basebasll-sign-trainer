@@ -14,11 +14,11 @@
     <link rel="canonical" href="https://basebasll-sign-trainer.refrain62.workers.dev/" />
     <meta name="robots" content="noindex,nofollow" />
     <title>サイン練習 | SIGN TRAINER</title>
-    <link rel="icon" href="/favicon-32.png?v=77" sizes="32x32" type="image/png" />
-    <link rel="icon" href="/favicon-48.png?v=77" sizes="48x48" type="image/png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=77" />
-    <link rel="manifest" href="/manifest.webmanifest?v=77" />
-    <link rel="stylesheet" href="/styles.css?v=77" />
+    <link rel="icon" href="/favicon-32.png?v=__ASSET_VERSION__" sizes="32x32" type="image/png" />
+    <link rel="icon" href="/favicon-48.png?v=__ASSET_VERSION__" sizes="48x48" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=__ASSET_VERSION__" />
+    <link rel="manifest" href="/manifest.webmanifest?v=__ASSET_VERSION__" />
+    <link rel="stylesheet" href="/styles.css?v=__ASSET_VERSION__" />
   </head>
   <body>
     <div id="app" aria-live="polite"></div>
@@ -65,7 +65,7 @@
           <div id="share-qr-code" class="share-qr-code">
             <img id="share-qr" class="share-qr" alt="" width="360" height="360" decoding="async" />
             <span class="share-qr-logo" aria-hidden="true">
-              <img src="/assets/sign-trainer-icon.png?v=77" alt="" />
+              <img src="/assets/sign-trainer-icon.png?v=__ASSET_VERSION__" alt="" />
             </span>
           </div>
           <p id="share-qr-status" class="share-qr-status">QRコードを準備しています…</p>
@@ -73,6 +73,6 @@
         <div class="share-security-note"><strong>大切：</strong><span id="share-note">合言葉はURLやQRコードには含まれません。</span></div>
       </div>
     </dialog>
-    <script src="/team.js?v=77" type="module"></script>
+    <script src="/team.js?v=__ASSET_VERSION__" type="module"></script>
   </body>
 </html>

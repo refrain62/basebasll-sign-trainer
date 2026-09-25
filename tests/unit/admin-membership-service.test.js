@@ -13,6 +13,7 @@ function fixture() {
   const membershipRepository = {
     async find(_teamId, userId) { return members.get(userId) || null; },
     async hasAny() { return members.size > 0; },
+    async countByRole(_teamId, role) { return [...members.values()].filter((m) => m.role === role).length; },
     async add({ userId, role }) { members.set(userId, { team_id: "T1", user_id: userId, role }); },
     async listForTeam() { return [...members.values()].map((m) => ({ userId: m.user_id, role: m.role, displayName: m.user_id })); },
     async remove(_teamId, userId) { calls.push(["remove", userId]); members.delete(userId); }
@@ -99,4 +100,37 @@ test("an owner must transfer ownership before leaving while an admin may leave",
   await assert.rejects(() => fx.service.leaveTeam("T1", "owner"), (error) => error.code === "owner_cannot_leave");
   assert.deepEqual(await fx.service.leaveTeam("T1", "admin"), { ok: true });
   assert.equal(fx.members.has("admin"), false);
+});
+
+
+test("a team allows at most five active or reserved sub administrators", async () => {
+  const fx = fixture();
+  for (let i = 2; i <= 5; i += 1) fx.members.set(`admin${i}`, { team_id: "T1", user_id: `admin${i}`, role: "admin" });
+  await assert.rejects(() => fx.service.createInvite("T1", "owner", { kind: "admin" }), (error) => error.code === "sub_admin_limit_reached");
+});
+
+test("pending sub-admin invitations reserve the remaining slots", async () => {
+  const fx = fixture();
+  fx.members.set("admin2", { team_id: "T1", user_id: "admin2", role: "admin" });
+  fx.members.set("admin3", { team_id: "T1", user_id: "admin3", role: "admin" });
+  fx.members.set("admin4", { team_id: "T1", user_id: "admin4", role: "admin" });
+  fx.setPending([{ id: "inv_pending", kind: "admin" }]);
+  await assert.rejects(() => fx.service.createInvite("T1", "owner", { kind: "admin" }), (error) => error.code === "sub_admin_limit_reached");
+});
+
+test("management exposes the five-person sub-admin capacity", async () => {
+  const fx = fixture();
+  fx.setPending([{ id: "inv_pending", kind: "admin" }]);
+  const result = await fx.service.management("T1", "owner");
+  assert.equal(result.maxSubAdmins, 5);
+  assert.equal(result.subAdminCount, 1);
+  assert.equal(result.pendingSubAdminInvites, 1);
+  assert.equal(result.subAdminSlotsRemaining, 3);
+  assert.equal(result.canInviteSubAdmin, true);
+});
+
+test("owner transfer that keeps the previous owner refuses a sixth sub administrator", async () => {
+  const fx = fixture();
+  for (let i = 2; i <= 5; i += 1) fx.members.set(`admin${i}`, { team_id: "T1", user_id: `admin${i}`, role: "admin" });
+  await assert.rejects(() => fx.service.createInvite("T1", "owner", { kind: "transfer", creatorExit: false }), (error) => error.code === "sub_admin_limit_transfer");
 });

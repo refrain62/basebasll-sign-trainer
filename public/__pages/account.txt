@@ -5,17 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#082844" />
     <title>管理者アカウント | SIGN TRAINER</title>
-    <link rel="icon" href="/favicon-32.png?v=77" sizes="32x32" type="image/png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=77" />
-    <link rel="manifest" href="/manifest.webmanifest?v=77" />
-    <link rel="stylesheet" href="/styles.css?v=77" />
-    <script src="/account.js?v=77" type="module"></script>
+    <link rel="icon" href="/favicon-32.png?v=__ASSET_VERSION__" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=__ASSET_VERSION__" />
+    <link rel="manifest" href="/manifest.webmanifest?v=__ASSET_VERSION__" />
+    <link rel="stylesheet" href="/styles.css?v=__ASSET_VERSION__" />
+    <script src="/account.js?v=__ASSET_VERSION__" type="module"></script>
   </head>
   <body class="account-page">
     <header class="site-header account-header">
       <div class="container header-inner">
         <a class="brand" href="/" aria-label="SIGN TRAINER トップページ">
-          <span class="brand-mark" aria-hidden="true"><img class="brand-icon-img" src="/assets/sign-trainer-icon.png" alt="" width="128" height="128"></span>
+          <span class="brand-mark" aria-hidden="true"><img class="brand-icon-img" src="/assets/sign-trainer-icon.png?v=__ASSET_VERSION__" alt="" width="128" height="128"></span>
           <span class="brand-copy"><span class="brand-name">SIGN TRAINER</span><span class="brand-sub">管理者アカウント</span></span>
         </a>
         <a class="button button-ghost button-small" href="/">トップへ</a>

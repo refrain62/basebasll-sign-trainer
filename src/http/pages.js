@@ -1,14 +1,16 @@
 import { withHeaders } from "./response.js";
+import { applyAssetVersion } from "./versioned-assets.js";
 
 export function pageAssetForPath(pathname) {
   const clean = pathname.replace(/\/$/, "") || "/";
-  if (clean === "/") return "/__pages/index.txt";
-  if (clean === "/admin" || clean === "/register") return "/__pages/admin.txt";
-  if (clean === "/account" || /^\/join-admin\/[^/]+$/.test(clean)) return "/__pages/account.txt";
-  if (clean === "/terms") return "/__pages/terms.txt";
-  if (clean === "/privacy") return "/__pages/privacy.txt";
-  if (clean === "/external-transmission") return "/__pages/external-transmission.txt";
-  if (clean === "/support") return "/__pages/support.txt";
+  if (clean === "/" || clean === "/index.html") return "/__pages/index.txt";
+  if (clean === "/admin" || clean === "/register" || clean === "/admin.html") return "/__pages/admin.txt";
+  if (clean === "/account" || clean === "/account.html" || /^\/join-admin\/[^/]+$/.test(clean)) return "/__pages/account.txt";
+  if (clean === "/terms" || clean === "/terms.html") return "/__pages/terms.txt";
+  if (clean === "/privacy" || clean === "/privacy.html") return "/__pages/privacy.txt";
+  if (clean === "/external-transmission" || clean === "/external-transmission.html") return "/__pages/external-transmission.txt";
+  if (clean === "/support" || clean === "/support.html") return "/__pages/support.txt";
+  if (clean === "/team.html") return "/__pages/team.txt";
   if (/^\/t\/[^/]+\/admin$/.test(clean)) return "/__pages/admin.txt";
   if (/^\/t\/[^/]+$/.test(clean)) return "/__pages/team.txt";
   return null;
@@ -33,8 +35,11 @@ export async function serveHtmlPage(request, env, url, assetPath) {
   headers.set("content-type", "text/html; charset=UTF-8");
   headers.delete("location");
   headers.delete("content-length");
-  return withHeaders(new Response(assetResponse.body, { status: 200, headers }), {
-    noIndex: url.pathname !== "/",
+  headers.delete("etag");
+  headers.delete("last-modified");
+  const html = applyAssetVersion(await assetResponse.text(), env);
+  return withHeaders(new Response(html, { status: 200, headers }), {
+    noIndex: url.pathname !== "/" && url.pathname !== "/index.html",
     noCache: true
   });
 }

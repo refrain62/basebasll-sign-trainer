@@ -185,7 +185,7 @@ svg { display: block; }
   inset:0;
   background:
     linear-gradient(90deg, rgba(2,20,35,.93) 0%, rgba(2,20,35,.85) 31%, rgba(2,20,35,.33) 56%, rgba(2,20,35,.08) 100%),
-    url('/assets/hero-wide.webp') center / cover no-repeat;
+    url('/assets/hero-wide.webp?v=__ASSET_VERSION__') center / cover no-repeat;
   transform: scale(1.01);
 }
 .hero-reference::after {
@@ -294,7 +294,7 @@ svg { display: block; }
 .phone-btn { margin-top:6px; padding:6px 5px; border-radius:7px; text-align:center; color:#fff; font-size:8px; font-weight:950; }
 .phone-btn.green { background:#099453; }
 .phone-btn.red { color:#e3292f; border:1px solid #e3292f; background:#fff; }
-.phone-video { height:108px; margin:-9px -8px 10px; background:linear-gradient(rgba(2,22,37,.05),rgba(2,22,37,.08)),url('/assets/hero-coach.webp') 58% 32%/cover; }
+.phone-video { height:108px; margin:-9px -8px 10px; background:linear-gradient(rgba(2,22,37,.05),rgba(2,22,37,.08)),url('/assets/hero-coach.webp?v=__ASSET_VERSION__') 58% 32%/cover; }
 .phone-question { margin:9px 0; text-align:center; font-size:10px; line-height:1.4; font-weight:900; }
 .phone-answer-box { margin:8px 0 13px; padding:13px 6px; text-align:center; border-radius:9px; background:#e7f8ef; }
 .phone-answer-box small { display:block; color:#0b8750; font-size:7px; font-weight:900; }
@@ -367,7 +367,7 @@ svg { display: block; }
 .audience-card strong { color:#092b49; font-size:14px; line-height:1.5; }
 
 /* Testimonials */
-.testimonials-section { position:relative; overflow:hidden; padding:15px 0 20px; color:#fff; background:linear-gradient(90deg,rgba(4,31,50,.4),rgba(4,31,50,.14)),url('/assets/field-blur.webp') center 46% / cover no-repeat; }
+.testimonials-section { position:relative; overflow:hidden; padding:15px 0 20px; color:#fff; background:linear-gradient(90deg,rgba(4,31,50,.4),rgba(4,31,50,.14)),url('/assets/field-blur.webp?v=__ASSET_VERSION__') center 46% / cover no-repeat; }
 .testimonials-section::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(1,23,37,.12),rgba(1,23,37,.26)); pointer-events:none; }
 .testimonials-section .container { position:relative; z-index:1; }
 .testimonials-title { position:relative; display:inline-block; margin:0 0 20px; color:#fff; font-size:23px; padding-bottom:7px; text-shadow:0 2px 10px rgba(0,0,0,.22); }
@@ -429,7 +429,7 @@ svg { display: block; }
 .faq-list details p { margin:0; padding:2px 17px 17px; color:#536779; font-size:13px; line-height:1.75; }
 
 /* Footer */
-.reference-footer { position:relative; overflow:hidden; padding-block:20px 17px; color:rgba(255,255,255,.78); background:linear-gradient(95deg,rgba(3,23,39,.99),rgba(8,40,68,.94)),url('/assets/field-blur.webp') center/cover; }
+.reference-footer { position:relative; overflow:hidden; padding-block:20px 17px; color:rgba(255,255,255,.78); background:linear-gradient(95deg,rgba(3,23,39,.99),rgba(8,40,68,.94)),url('/assets/field-blur.webp?v=__ASSET_VERSION__') center/cover; }
 .reference-footer .footer-inner { min-height:72px; display:grid; grid-template-columns:185px 1fr 210px; grid-template-areas:"brand nav tagline" "brand meta tagline"; align-items:center; gap:8px 28px; }
 .reference-footer .brand { grid-area:brand; align-self:start; }
 .reference-footer .brand-name, .reference-footer .brand-sub { color:#fff; }
@@ -463,7 +463,7 @@ svg { display: block; }
   .site-header .brand-name { font-size:15px; }
   .site-header .brand-sub { font-size:8px; }
   .hero-reference { min-height:640px; }
-  .hero-reference::before { background:linear-gradient(180deg,rgba(3,23,39,.1) 0%,rgba(3,23,39,.22) 44%,rgba(3,23,39,.93) 73%,rgba(3,23,39,.98) 100%),url('/assets/hero-wide.webp') 63% 8% / auto 67% no-repeat,#06263f; }
+  .hero-reference::before { background:linear-gradient(180deg,rgba(3,23,39,.1) 0%,rgba(3,23,39,.22) 44%,rgba(3,23,39,.93) 73%,rgba(3,23,39,.98) 100%),url('/assets/hero-wide.webp?v=__ASSET_VERSION__') 63% 8% / auto 67% no-repeat,#06263f; }
   .hero-inner { min-height:640px; align-items:flex-end; padding:300px 0 28px; }
   .hero-copy { width:100%; padding:0; }
   .hero h1 { font-size:45px; line-height:1.08; }
@@ -511,7 +511,7 @@ svg { display: block; }
   min-height: 100dvh;
   background:
     linear-gradient(rgba(244,248,250,.95), rgba(244,248,250,.98)),
-    url('/assets/field-blur.webp') center/cover fixed;
+    url('/assets/field-blur.webp?v=__ASSET_VERSION__') center/cover fixed;
 }
 .app-topbar {
   position: sticky;
@@ -582,7 +582,7 @@ svg { display: block; }
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(3,23,39,.02), rgba(3,23,39,.3)),
-    url('/assets/hero-coach.webp') 58% center / cover no-repeat;
+    url('/assets/hero-coach.webp?v=__ASSET_VERSION__') 58% center / cover no-repeat;
 }
 .auth-visual-shade {
   position: absolute;
@@ -790,7 +790,7 @@ svg { display: block; }
   box-shadow: 0 16px 42px rgba(0,0,0,.32);
 }
 .player-frame iframe, #youtube-player { width: 100%; height: 100%; border: 0; }
-.video-cover { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding: 24px; text-align: center; background: linear-gradient(rgba(2,15,25,.58), rgba(2,15,25,.72)), url('/assets/hero-coach.webp') center 38%/cover; }
+.video-cover { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding: 24px; text-align: center; background: linear-gradient(rgba(2,15,25,.58), rgba(2,15,25,.72)), url('/assets/hero-coach.webp?v=__ASSET_VERSION__') center 38%/cover; }
 .video-cover[hidden], .video-cover.is-hidden { display: none !important; }
 .video-cover-content { display: grid; justify-items: center; }
 .play-button {
@@ -1032,7 +1032,7 @@ svg { display: block; }
   .hero::before {
     background:
       linear-gradient(90deg, rgba(3,23,39,.97) 0%, rgba(3,23,39,.86) 46%, rgba(3,23,39,.24) 100%),
-      url('/assets/hero-coach.webp') 80% 45% / auto 100% no-repeat;
+      url('/assets/hero-coach.webp?v=__ASSET_VERSION__') 80% 45% / auto 100% no-repeat;
   }
   .hero-inner { min-height: 650px; }
   .hero-copy { width: 64%; }
@@ -1062,7 +1062,7 @@ svg { display: block; }
     background:
       linear-gradient(180deg, rgba(3,23,39,.18) 0%, rgba(3,23,39,.28) 26%, rgba(3,23,39,.82) 66%, rgba(3,23,39,.98) 100%),
       linear-gradient(90deg, rgba(3,23,39,.22), rgba(3,23,39,.05)),
-      url('/assets/hero-coach.webp') center 18% / cover no-repeat;
+      url('/assets/hero-coach.webp?v=__ASSET_VERSION__') center 18% / cover no-repeat;
   }
   .hero-inner { min-height: 600px; align-items: flex-end; padding-block: 46px 32px; }
   .hero-copy { width: 100%; }
@@ -2423,10 +2423,17 @@ svg { display: block; }
 }
 
 
-/* build 77: support form */
+/* build 78: support form */
 .legal-support-link { color: #08784d; font-weight: 900; text-decoration: underline; text-underline-offset: 3px; }
 .legal-support-cta { border-color: #cfe5d8; background: linear-gradient(180deg,#fff,#f7fbf8); }
 .legal-support-actions { margin-top: 16px; }
 .legal-support-actions .button { min-height: 50px; }
 .legal-support-note { margin: 12px 0 0 !important; color: #73858e !important; font-size: 12px !important; }
 @media (max-width: 620px) { .legal-support-actions .button { width: 100%; } }
+
+/* build 78: administrator capacity */
+.admin-admin-capacity { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px; padding:11px 13px; border-radius:14px; background:#f2f8f5; color:#315846; font-size:12px; }
+.admin-admin-capacity strong { color:#0b7045; font-size:13px; }
+.admin-admin-capacity span { color:#6b8176; }
+.admin-identity-actions .button:disabled { opacity:.5; cursor:not-allowed; }
+@media (max-width:620px){ .admin-admin-capacity { align-items:flex-start; flex-direction:column; gap:3px; } }

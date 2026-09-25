@@ -1,7 +1,7 @@
-import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=77";
-import { filterPracticeSigns, findPracticeGroup, getPracticeOptions } from "./practice-utils.js?v=77";
+import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils.js?v=__ASSET_VERSION__";
+import { filterPracticeSigns, findPracticeGroup, getPracticeOptions } from "./practice-utils.js?v=__ASSET_VERSION__";
 
-const APP_BUILD = "77";
+const APP_BUILD = "__ASSET_VERSION__";
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 
 const SAMPLE_TEAM_ID = "6BnWv2K3zo";
@@ -71,7 +71,7 @@ const icons = {
 
 const logo = `
   <span class="brand-mark" aria-hidden="true">
-    <img class="brand-icon-img" src="/assets/sign-trainer-icon.png" alt="" width="128" height="128" decoding="async">
+    <img class="brand-icon-img" src="/assets/sign-trainer-icon.png?v=__ASSET_VERSION__" alt="" width="128" height="128" decoding="async">
   </span>`;
 
 function brand({ footer = false } = {}) {

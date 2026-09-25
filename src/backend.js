@@ -4,6 +4,7 @@
 
 export { apiJson, json, safeJson, withHeaders } from "./http/response.js";
 export { pageAssetForPath, serveHtmlPage } from "./http/pages.js";
+export { ASSET_VERSION_TOKEN, applyAssetVersion, assetVersion, isVersionedTextAsset, serveVersionedTextAsset } from "./http/versioned-assets.js";
 export {
   cleanComment,
   cleanName,

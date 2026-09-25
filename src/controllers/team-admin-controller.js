@@ -257,7 +257,7 @@ export async function teamAdminCreateInvite(request, env, url) {
   if (response) return response;
   const teamId = requestTeamId(body, url);
   const owner = teamId ? await requireTeamOwner(request, env, teamId) : null;
-  if (!owner) return apiJson({ error: "owner_required", message: "この操作はチームオーナーのみ実行できます。" }, 403);
+  if (!owner) return apiJson({ error: "owner_required", message: "この操作はメイン管理者のみ実行できます。" }, 403);
   if (body?.kind === "transfer" && !isFreshAccountSession(owner)) return freshAuthRequired(owner, teamId);
   try {
     const invite = await createServices(env.DB, env).adminMembership.createInvite(teamId, owner.userId, body);

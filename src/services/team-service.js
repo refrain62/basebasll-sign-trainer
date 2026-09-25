@@ -15,7 +15,7 @@ export function createTeamService({ teamRepository, auditRepository, hashPasswor
         throw new ServiceError("secret_too_long", "合言葉・パスワードは200文字以内にしてください。", 400);
       }
       if (nextAdminPassword && !canChangeAdminPassword) {
-        throw new ServiceError("owner_required_for_admin_password", "旧管理者パスワードの変更はチームオーナーのみ実行できます。", 403);
+        throw new ServiceError("owner_required_for_admin_password", "旧管理者パスワードの変更はメイン管理者のみ実行できます。", 403);
       }
       if (nextAdminPassword && !isAdminCredential(nextAdminPassword)) {
         throw new ServiceError("weak_admin_password", "管理者パスワードは12文字以上で、英字と数字をそれぞれ1文字以上含めてください。", 400);
