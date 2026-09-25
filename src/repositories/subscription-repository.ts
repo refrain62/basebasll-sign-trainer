@@ -26,13 +26,25 @@ function normalizePlanRow(row) {
 }
 
 export function createSubscriptionRepository(db) {
+  async function ensureTeamDefaultsForTeams(teamIds) {
+    const ids = [...new Set((teamIds || []).map(String).filter(Boolean))];
+    if (!ids.length) return [];
+    const placeholders = ids.map(() => "?").join(",");
+    return db.batch([
+      db.prepare(`
+        INSERT OR IGNORE INTO team_subscriptions(team_id,plan_code,status,provider)
+        SELECT id,?,'active','none' FROM teams WHERE id IN (${placeholders})
+      `).bind(DEFAULT_PLAN_CODE, ...ids),
+      db.prepare(`
+        INSERT OR IGNORE INTO team_usage(team_id)
+        SELECT id FROM teams WHERE id IN (${placeholders})
+      `).bind(...ids)
+    ]);
+  }
+
   return {
-    async ensureTeamDefaults(teamId) {
-      return db.batch([
-        db.prepare("INSERT OR IGNORE INTO team_subscriptions(team_id,plan_code,status,provider) VALUES(?,?,'active','none')").bind(teamId, DEFAULT_PLAN_CODE),
-        db.prepare("INSERT OR IGNORE INTO team_usage(team_id) VALUES(?)").bind(teamId)
-      ]);
-    },
+    ensureTeamDefaults: (teamId) => ensureTeamDefaultsForTeams([teamId]),
+    ensureTeamDefaultsForTeams,
 
     async findTeamPlan(teamId) {
       const row = await db.prepare(`

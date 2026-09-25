@@ -1,4 +1,4 @@
-# SIGN TRAINER — build 87
+# SIGN TRAINER — build 89
 
 野球チーム固有のサインを動画で反復練習する Web / PWA です。D1 は local / dev / staging / production で分離し、チーム・サイン・動画設定に加えて、管理者アカウントの識別情報・チーム権限・招待状態を保存します。選手の回答・正答率・練習履歴は端末の `localStorage` のみに保存します。OAuthのaccess token / refresh tokenは保存しません。
 
@@ -781,3 +781,14 @@ QR生成ライブラリを `@synapxlab/qrcode` から `qrcode` 1.5.4へ変更し
 ## build 87: TypeScript 7 test narrowing fixes
 
 TypeScript 7で `node:assert/strict` の `assert.rejects` 検証コールバック引数が `unknown` として扱われる箇所を、Vitestの `expect(...).rejects.toMatchObject(...)` へ移行した。これにより `ServiceError` の `code` / `status` / `details` を型安全に検証する。Cloudflare Access JWTテストのJWKは、Web Crypto標準の `JsonWebKey` に `kid` / `alg` / `use` を明示的に交差型として追加した。
+
+
+## build 88: 画像軽量化
+
+本番配信画像を約3.81 MiBから約0.86 MiBへ削減しました。さらに、未参照だった2.5 MiBの `docs/reference-lp.png` はWebPへ変換し約169 KiBに縮小しました。1207×1207 / 約1.21 MiBだったブランド画像は表示用途に十分な256×256 WebPへ変更し、`why-baseball.png` はWebP化してlazy-load、OG画像はJPEG化しました。PWA用PNGは128色へ最適化し、参照されていなかった統合版インストール画像2枚を削除しています。さらに、クライアントTSから `public/assets` のブランド画像をVite importして二重出力していた構成をやめ、静的URL参照へ変更しました。`scripts/image-budget-check.ts` を `npm run tooling:check` に追加し、public配下の各画像160 KiB以下・合計1.2 MiB以下を回帰チェックします。
+
+## build 89: N+1防止 + CSP inline style除去
+
+プラン一覧の欠損補完をチームごとの逐次DBアクセスから一括provisioningへ変更し、チーム数が増えてもDB往復回数が増えない構成にしました。単一サイン取得は「対象サイン1件 + その動画」の2クエリ、単一グループ取得は1クエリに変更しています。`tests/unit/query-count-regression.test.ts` でクエリ数の回帰を監視します。
+
+また、厳格な `style-src 'self'` CSPでブロックされていた `element.style` / `style.setProperty()` を廃止しました。進捗率と正答率は `pct-0`〜`pct-100` のCSS class、クリップボードfallbackは `.clipboard-fallback` classで表現します。`tests/unit/csp-inline-style-regression.test.ts` はfirst-party UIへinline style操作が再導入された場合に失敗します。

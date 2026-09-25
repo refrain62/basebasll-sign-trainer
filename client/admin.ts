@@ -1,6 +1,5 @@
 // Source of truth: TypeScript. Vite generates content-hashed browser bundles under public/build/.
 import { qrImageUrl, teamUrl } from "./share-utils";
-import iconUrl from "../public/assets/sign-trainer-icon.png";
 
 const TERMS_VERSION = "2026-09-25";
 const PRIVACY_VERSION = "2026-09-25";
@@ -16,7 +15,7 @@ type AdminModalOptions = {
 };
 
 type JsonRecord = Record<string, any>;
-const ICON = iconUrl;
+const ICON = `/assets/sign-trainer-icon.webp?v=${encodeURIComponent(__APP_VERSION__)}`;
 
 function esc(value) {
   return String(value ?? "")
@@ -129,8 +128,7 @@ async function copyText(text, statusEl) {
       const textarea = document.createElement("textarea");
       textarea.value = text;
       textarea.setAttribute("readonly", "");
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
+      textarea.className = "clipboard-fallback";
       document.body.appendChild(textarea);
       textarea.select();
       const ok = document.execCommand("copy");

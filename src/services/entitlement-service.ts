@@ -47,16 +47,9 @@ export function createEntitlementService({ subscriptionRepository }) {
   async function planSummaries(teamIds) {
     const ids: string[] = [...new Set<string>((teamIds || []).map(String).filter(Boolean))];
     if (!ids.length) return {};
+    await subscriptionRepository.ensureTeamDefaultsForTeams(ids);
     const rows = await subscriptionRepository.listTeamPlans(ids);
-    const byTeam: Record<string, any> = Object.fromEntries(rows.map((row) => [row.teamId, publicPlan(row)]));
-    for (const teamId of ids) {
-      if (!byTeam[teamId]) {
-        await subscriptionRepository.ensureTeamDefaults(teamId);
-        const row = await subscriptionRepository.findTeamPlan(teamId);
-        if (row) byTeam[teamId] = publicPlan(row);
-      }
-    }
-    return byTeam;
+    return Object.fromEntries(rows.map((row) => [row.teamId, publicPlan(row)]));
   }
 
   async function canUseFeature(teamId, featureKey: string) {

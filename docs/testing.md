@@ -61,3 +61,11 @@ The suite is primarily unit-level. It does not replace D1 migration smoke tests,
 `tests/unit/multi-team-admin-regression.test.ts` applies every D1 migration to an in-memory SQLite database and verifies the production schema behavior directly: one `app_users.id` can hold memberships for multiple different teams, with different roles per team. The same test also verifies that only a duplicate `(team_id, user_id)` pair is rejected. This protects the intended multi-team administrator behavior from future schema regressions.
 
 Vitest and `@vitest/coverage-v8` must stay on the same version. Build 86 pins both to `5.0.1` to satisfy the coverage provider peer dependency exactly.
+
+## N+1 / query-count regressions
+
+`tests/unit/query-count-regression.test.ts` protects the main query-shape optimizations. Bulk plan provisioning must remain a fixed two-statement D1 batch regardless of whether 2 or 50 teams are requested; a single group lookup must remain one query; and a single sign-with-videos lookup must remain two queries regardless of the number of videos attached to that sign. `entitlement-service.test.ts` also verifies that `planSummaries()` performs one bulk provisioning call plus one bulk plan-list call instead of per-team fallback queries.
+
+## CSP inline-style regression
+
+`tests/unit/csp-inline-style-regression.test.ts` scans first-party browser TypeScript and HTML templates and fails if runtime `.style` mutations, `setAttribute("style", ...)`, or HTML `style=` attributes are reintroduced. Dynamic progress/score percentages use external CSS classes (`pct-0` through `pct-100`) and clipboard fallback positioning uses `.clipboard-fallback`, preserving the strict `style-src 'self'` policy.

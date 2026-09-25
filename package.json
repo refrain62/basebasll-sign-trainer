@@ -1,6 +1,6 @@
 {
   "name": "sign-trainer",
-  "version": "1.5.4",
+  "version": "1.5.6",
   "private": true,
   "type": "module",
   "scripts": {
@@ -34,7 +34,7 @@
     "build:client": "vite build",
     "predev": "npm run build:client",
     "dev:ui": "vite build --watch",
-    "tooling:check": "node --experimental-strip-types scripts/client-source-check.ts && node --experimental-strip-types scripts/check-js.ts && node --experimental-strip-types scripts/route-parity-check.ts && node --experimental-strip-types scripts/architecture-check.ts"
+    "tooling:check": "node --experimental-strip-types scripts/client-source-check.ts && node --experimental-strip-types scripts/check-js.ts && node --experimental-strip-types scripts/image-budget-check.ts && node --experimental-strip-types scripts/route-parity-check.ts && node --experimental-strip-types scripts/architecture-check.ts"
   },
   "devDependencies": {
     "wrangler": "4.136.3",

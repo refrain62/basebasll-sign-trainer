@@ -97,8 +97,22 @@ export async function getTeamGroups(db, teamId, { onlyEnabled = false } = {}, pr
 }
 
 export async function getGroup(db, teamId, groupId, protector = null) {
-  const groups = await getTeamGroups(db, teamId, { onlyEnabled: false }, protector);
-  return groups.find((group) => Number(group.id) === Number(groupId)) || null;
+  const raw = await db.prepare(`
+    SELECT id,name,description,explanation_youtube_url,explanation_youtube_video_id,sort_order,enabled
+    FROM sign_groups
+    WHERE id=? AND team_id=? AND deleted_at IS NULL
+  `).bind(groupId, teamId).first();
+  if (!raw) return null;
+  const row = await decryptGroupRow(raw, protector);
+  return {
+    id: Number(row.id),
+    name: row.name,
+    description: String(row.description || ""),
+    youtubeUrl: String(row.explanation_youtube_url || ""),
+    videoId: String(row.explanation_youtube_video_id || ""),
+    sortOrder: Number(row.sort_order || 0),
+    enabled: Boolean(row.enabled)
+  };
 }
 
 export async function validGroupId(db, teamId, value) {
@@ -110,8 +124,41 @@ export async function validGroupId(db, teamId, value) {
 }
 
 export async function getSignWithVideos(db, teamId, signId, protector = null) {
-  const signs = await getTeamSigns(db, teamId, { onlyEnabled: false }, protector);
-  return signs.find((sign) => Number(sign.dbId) === Number(signId)) || null;
+  const rawSign = await db.prepare(`
+    SELECT * FROM signs
+    WHERE id=? AND team_id=? AND deleted_at IS NULL
+  `).bind(signId, teamId).first();
+  if (!rawSign) return null;
+
+  const sign = await decryptSignRow(rawSign, protector);
+  const rawVideoRows = (await db.prepare(`
+    SELECT * FROM sign_videos
+    WHERE sign_id=? AND deleted_at IS NULL
+    ORDER BY sort_order,id
+  `).bind(signId).all()).results || [];
+  const videoItems = [];
+  for (const rawVideo of rawVideoRows) {
+    const row = await decryptVideoRow(rawVideo, protector);
+    videoItems.push({
+      id: row.id,
+      youtubeUrl: row.youtube_url,
+      videoId: row.youtube_video_id,
+      sortOrder: row.sort_order,
+      enabled: Boolean(row.enabled),
+      comment: String(row.comment || "")
+    });
+  }
+
+  return {
+    id: String(sign.id),
+    dbId: sign.id,
+    name: sign.name,
+    sortOrder: sign.sort_order,
+    enabled: Boolean(sign.enabled),
+    groupId: sign.group_id == null ? null : Number(sign.group_id),
+    videos: videoItems,
+    videoItems
+  };
 }
 
 export function createTeamRepository(db, protector = null) {

@@ -1,7 +1,6 @@
 // Source of truth: TypeScript. Vite generates content-hashed browser bundles under public/build/.
 import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils";
 import { filterPracticeSigns, findPracticeGroup, getPracticeOptions } from "./practice-utils";
-import iconUrl from "../public/assets/sign-trainer-icon.png";
 
 const APP_BUILD = __APP_VERSION__;
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
@@ -73,7 +72,7 @@ const icons = {
 
 const logo = `
   <span class="brand-mark" aria-hidden="true">
-    <img class="brand-icon-img" src="${iconUrl}" alt="" width="128" height="128" decoding="async">
+    <img class="brand-icon-img" src="/assets/sign-trainer-icon.webp?v=${encodeURIComponent(__APP_VERSION__)}" alt="" width="128" height="128" decoding="async">
   </span>`;
 
 function brand({ footer = false } = {}) {
@@ -290,8 +289,7 @@ async function copyText(value) {
     const textarea = document.createElement("textarea");
     textarea.value = value;
     textarea.setAttribute("readonly", "");
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
+    textarea.className = "clipboard-fallback";
     document.body.appendChild(textarea);
     textarea.select();
     const ok = document.execCommand("copy");
@@ -886,9 +884,18 @@ function quizHeader(position, total, action) {
   return `<header class="quiz-header"><div class="quiz-header-inner">${left}<div class="quiz-progress">問題 ${position} / ${total}</div><span></span></div></header>`;
 }
 
+function percentageClass(value) {
+  const percent = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+  return `pct-${percent}`;
+}
+
 function setProgress(percent) {
   const progress = document.querySelector("#quiz-progress-bar");
-  if (progress) progress.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+  if (!progress) return;
+  for (const name of [...progress.classList]) {
+    if (/^pct-\d+$/.test(name)) progress.classList.remove(name);
+  }
+  progress.classList.add(percentageClass(percent));
 }
 
 function buildYouTubeEmbedUrl(videoId) {
@@ -1106,7 +1113,7 @@ function renderResults() {
     <main class="app-main">
       <section class="app-panel result-panel result-panel--${celebration.level}">
         <div class="result-title"><span class="result-badge">${celebration.badge}</span><h1>${title}</h1><p>${message}</p></div>
-        <div class="result-score result-score--${celebration.level}" id="result-score"><div class="result-score-inner"><div class="result-score-big">${correct}<small> / ${totalQuestions || 0}問</small></div><span class="result-score-small">正答率 ${totalQuestions ? `${rate}%` : "—"}</span></div></div>
+        <div class="result-score result-score--${celebration.level} ${percentageClass(rate)}" id="result-score"><div class="result-score-inner"><div class="result-score-big">${correct}<small> / ${totalQuestions || 0}問</small></div><span class="result-score-small">正答率 ${totalQuestions ? `${rate}%` : "—"}</span></div></div>
         <div class="result-stats">
           <div class="result-stat"><strong>${correct}</strong><span>正解</span></div>
           <div class="result-stat"><strong>${wrong}</strong><span>不正解</span></div>
@@ -1122,8 +1129,6 @@ function renderResults() {
     </main>
   </div>`;
 
-  const score = document.querySelector("#result-score");
-  if (score) score.style.setProperty("--score", String(rate));
   runResultCelebration(celebration);
   if (mistakes.length) document.querySelector("#review-mistakes").addEventListener("click", () => renderMistakeReview(mistakes));
   document.querySelector("#retry-practice").addEventListener("click", () => {
@@ -1407,7 +1412,7 @@ function renderPracticeHistoryDetail(historyId) {
     <main class="app-main">
       <section class="app-panel result-panel history-detail-panel">
         <div class="result-title"><h1>${escapeHtml(historyModeLabel(entry))}の結果</h1><p>${escapeHtml(formatHistoryDate(entry.completedAt))}</p></div>
-        <div class="result-score" id="history-result-score"><div class="result-score-inner"><div class="result-score-big">${entry.correct}<small> / ${entry.total}問</small></div><span class="result-score-small">正答率 ${entry.rate}%</span></div></div>
+        <div class="result-score ${percentageClass(entry.rate || 0)}" id="history-result-score"><div class="result-score-inner"><div class="result-score-big">${entry.correct}<small> / ${entry.total}問</small></div><span class="result-score-small">正答率 ${entry.rate}%</span></div></div>
         <div class="result-stats">
           <div class="result-stat"><strong>${entry.correct}</strong><span>正解</span></div>
           <div class="result-stat"><strong>${entry.wrong}</strong><span>不正解</span></div>
@@ -1428,8 +1433,6 @@ function renderPracticeHistoryDetail(historyId) {
       </section>
     </main>
   </div>`;
-  const score = document.querySelector("#history-result-score");
-  if (score) score.style.setProperty("--score", String(entry.rate || 0));
   const back = () => renderPracticeHistory();
   document.querySelector("#history-detail-back").addEventListener("click", back);
   document.querySelector("#history-detail-back-bottom").addEventListener("click", back);

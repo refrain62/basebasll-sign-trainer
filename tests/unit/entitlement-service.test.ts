@@ -7,6 +7,7 @@ function fixture({ planCode = "free", entitlements = [], usage = null } = {}) {
   const calls = [];
   const subscriptionRepository = {
     async ensureTeamDefaults(teamId) { calls.push(["ensure", teamId]); },
+    async ensureTeamDefaultsForTeams(teamIds) { calls.push(["ensureMany", [...teamIds]]); },
     async findTeamPlan(teamId) {
       return {
         teamId,
@@ -25,6 +26,7 @@ function fixture({ planCode = "free", entitlements = [], usage = null } = {}) {
     async listEntitlements() { return entitlements; },
     async getUsage(teamId) { return usage || { teamId, storageBytes: 0, imageCount: 0, videoBytes: 0, videoCount: 0, updatedAt: null }; },
     async listTeamPlans(teamIds) {
+      calls.push(["listPlans", [...teamIds]]);
       return teamIds.map((teamId) => ({
         teamId, code: planCode, name: planCode === "free" ? "Free" : "Team Plus", description: "test",
         monthlyPriceYen: planCode === "free" ? 0 : null, availableForPurchase: false,
@@ -92,8 +94,27 @@ test("canceled subscriptions do not keep paid feature access", async () => {
     async findTeamPlan(teamId) { return { teamId, code: "team_plus", name: "Team Plus", description: "", monthlyPriceYen: null, availableForPurchase: false, active: true, subscriptionStatus: "canceled", provider: "stripe", currentPeriodEnd: null, cancelAtPeriodEnd: false }; },
     async listEntitlements() { return [{ featureKey: FEATURE_KEYS.DIRECT_IMAGE_UPLOAD, enabled: true, limitValue: null }]; },
     async getUsage(teamId) { return { teamId, storageBytes: 0, imageCount: 0, videoBytes: 0, videoCount: 0, updatedAt: null }; },
-    async listTeamPlans() { return []; }
+    async listTeamPlans() { return []; },
+    async ensureTeamDefaultsForTeams() {}
   };
   const service = createEntitlementService({ subscriptionRepository });
   assert.equal(await service.canUseFeature("T3", FEATURE_KEYS.DIRECT_IMAGE_UPLOAD), false);
+});
+
+
+test("planSummaries keeps repository call count constant as team count grows", async () => {
+  const small = fixture();
+  await small.service.planSummaries(["T1", "T2"]);
+  assert.deepEqual(small.calls, [
+    ["ensureMany", ["T1", "T2"]],
+    ["listPlans", ["T1", "T2"]]
+  ]);
+
+  const many = fixture();
+  const ids = Array.from({ length: 50 }, (_, index) => `T${index + 1}`);
+  await many.service.planSummaries(ids);
+  assert.deepEqual(many.calls, [
+    ["ensureMany", ids],
+    ["listPlans", ids]
+  ]);
 });

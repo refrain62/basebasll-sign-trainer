@@ -103,3 +103,8 @@ Worker/APIソースは `src/**/*.ts` です。変更時は `npm run typecheck` �
 ## build 85 — qrcode + @types/qrcode
 
 QR生成はruntimeに `qrcode` 1.5.4、TypeScript型定義に `@types/qrcode` 1.5.6を使用します。`client/qr-code.ts` は `QRCode.toString(..., { type: "svg" })` を非同期で呼び出し、SVG data URLとして `<img>` に渡します。Viteがruntime依存をbundleするため、ブラウザ実行時のCDN依存や外部QR APIへのURL送信はありません。
+
+
+## build 88 — image budget
+
+本番画像は `scripts/image-budget-check.ts` で容量上限を検査します。`public/build` のVite生成物は対象外で、静的画像は1ファイル160 KiB以下、合計1.2 MiB以下を維持します。大きな写真はWebP/JPEG、PWA iconは必要サイズのPNGを維持し、LP下部の `why-baseball.webp` はlazy-loadします。
