@@ -59,6 +59,42 @@ export function createSubscriptionRepository(db) {
       return normalizePlanRow(row);
     },
 
+    async findPlanDefinition(planCode) {
+      const row = await db.prepare(`SELECT code,name,description,monthly_price_yen,available_for_purchase,active FROM plans WHERE code=?`).bind(planCode).first();
+      if (!row) return null;
+      return {
+        code: row.code,
+        name: row.name,
+        description: row.description || "",
+        monthlyPriceYen: row.monthly_price_yen == null ? null : Number(row.monthly_price_yen),
+        availableForPurchase: Boolean(row.available_for_purchase),
+        active: Boolean(row.active)
+      };
+    },
+
+    async listPlanDefinitions() {
+      const result = await db.prepare(`SELECT code,name,description,monthly_price_yen,available_for_purchase,active FROM plans WHERE active=1 ORDER BY sort_order,code`).all();
+      return (result.results || []).map((row) => ({
+        code: row.code,
+        name: row.name,
+        description: row.description || "",
+        monthlyPriceYen: row.monthly_price_yen == null ? null : Number(row.monthly_price_yen),
+        availableForPurchase: Boolean(row.available_for_purchase),
+        active: Boolean(row.active)
+      }));
+    },
+
+    async setSystemPlan(teamId, planCode) {
+      return db.prepare(`
+        INSERT INTO team_subscriptions(team_id,plan_code,status,provider,provider_customer_id,provider_subscription_id,current_period_end,cancel_at_period_end,updated_at)
+        VALUES(?,?,'active','none',NULL,NULL,NULL,0,CURRENT_TIMESTAMP)
+        ON CONFLICT(team_id) DO UPDATE SET
+          plan_code=excluded.plan_code,status='active',provider='none',
+          provider_customer_id=NULL,provider_subscription_id=NULL,current_period_end=NULL,cancel_at_period_end=0,
+          updated_at=CURRENT_TIMESTAMP
+      `).bind(teamId, planCode).run();
+    },
+
     async listTeamPlans(teamIds) {
       const ids = [...new Set((teamIds || []).map(String).filter(Boolean))];
       if (!ids.length) return [];

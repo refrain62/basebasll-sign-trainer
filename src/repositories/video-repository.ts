@@ -18,24 +18,24 @@ export function createVideoRepository(db, protector = null) {
       const row = await db.prepare("SELECT COALESCE(MAX(sort_order),0) AS max_order FROM sign_videos WHERE sign_id=?").bind(signId).first();
       return Number(row?.max_order || 0) + 10;
     },
-    async create({ signId, youtubeUrl, videoId, sortOrder, comment }) {
+    async create({ signId, youtubeUrl, videoId, sortOrder, comment, thumbnailTimeSeconds = 0 }) {
       const values = protector ? {
         youtubeUrl: await protector.encrypt(youtubeUrl, "sign_videos.youtube_url"),
         videoId: await protector.encrypt(videoId, "sign_videos.youtube_video_id"),
         comment: await protector.encrypt(comment, "sign_videos.comment")
       } : { youtubeUrl, videoId, comment };
-      const result = await db.prepare("INSERT INTO sign_videos(sign_id,youtube_url,youtube_video_id,sort_order,enabled,comment) VALUES(?,?,?,?,1,?)")
-        .bind(signId, values.youtubeUrl, values.videoId, sortOrder, values.comment).run();
+      const result = await db.prepare("INSERT INTO sign_videos(sign_id,youtube_url,youtube_video_id,sort_order,enabled,comment,thumbnail_time_seconds) VALUES(?,?,?,?,1,?,?)")
+        .bind(signId, values.youtubeUrl, values.videoId, sortOrder, values.comment, Math.max(0, Math.trunc(Number(thumbnailTimeSeconds) || 0))).run();
       return Number(result.meta.last_row_id);
     },
-    async update({ id, youtubeUrl, videoId, sortOrder, enabled, comment }) {
+    async update({ id, youtubeUrl, videoId, sortOrder, enabled, comment, thumbnailTimeSeconds = 0 }) {
       const values = protector ? {
         youtubeUrl: await protector.encrypt(youtubeUrl, "sign_videos.youtube_url"),
         videoId: await protector.encrypt(videoId, "sign_videos.youtube_video_id"),
         comment: await protector.encrypt(comment, "sign_videos.comment")
       } : { youtubeUrl, videoId, comment };
-      return db.prepare("UPDATE sign_videos SET youtube_url=?,youtube_video_id=?,sort_order=?,enabled=?,comment=? WHERE id=? AND deleted_at IS NULL")
-        .bind(values.youtubeUrl, values.videoId, sortOrder, enabled, values.comment, id).run();
+      return db.prepare("UPDATE sign_videos SET youtube_url=?,youtube_video_id=?,sort_order=?,enabled=?,comment=?,thumbnail_time_seconds=? WHERE id=? AND deleted_at IS NULL")
+        .bind(values.youtubeUrl, values.videoId, sortOrder, enabled, values.comment, Math.max(0, Math.trunc(Number(thumbnailTimeSeconds) || 0)), id).run();
     },
     async softDelete(id) {
       return db.prepare("UPDATE sign_videos SET enabled=0,deleted_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL").bind(id).run();

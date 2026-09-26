@@ -63,6 +63,8 @@ export function createSystemTeamService({ teamRepository, auditRepository, hashP
       const passphraseHash = nextPassphrase ? await hashPassword(nextPassphrase) : team.passphrase_hash;
       const adminHash = nextAdminPassword ? await hashPassword(nextAdminPassword) : team.admin_password_hash;
       const statusChanged = status !== team.status;
+      const requestedPlanCode = input?.planCode ? String(input.planCode) : "";
+      const previousPlan = requestedPlanCode && entitlementService ? (await entitlementService.summary(teamId)).plan : null;
       await teamRepository.updateFromSystem({
         teamId,
         name,
@@ -72,20 +74,44 @@ export function createSystemTeamService({ teamRepository, auditRepository, hashP
         invalidatePlayer: Boolean(nextPassphrase) || statusChanged,
         invalidateAdmin: Boolean(nextAdminPassword) || statusChanged
       });
+      let planChange = null;
+      if (requestedPlanCode && entitlementService && requestedPlanCode !== previousPlan?.code) {
+        planChange = await entitlementService.assignSystemPlan(teamId, requestedPlanCode);
+      }
       await auditRepository.record("system", null, "team.update", "team", teamId, {
         status,
         passphraseChanged: Boolean(nextPassphrase),
-        adminPasswordChanged: Boolean(nextAdminPassword)
+        adminPasswordChanged: Boolean(nextAdminPassword),
+        planChanged: Boolean(planChange),
+        previousPlanCode: planChange?.previous?.code || previousPlan?.code || null,
+        planCode: planChange?.current?.code || previousPlan?.code || null
       });
-      return teamRepository.publicTeam(await teamRepository.findById(teamId));
+      if (planChange) {
+        await auditRepository.record("system", teamId, "plan.change", "team", teamId, {
+          previousPlanCode: planChange.previous?.code || null,
+          planCode: planChange.current?.code || requestedPlanCode,
+          source: "system_manual_provisioning"
+        });
+      }
+      const updated = teamRepository.publicTeam(await teamRepository.findById(teamId));
+      return entitlementService ? { ...updated, plan: (await entitlementService.summary(teamId)).plan } : updated;
     },
 
     async remove(teamId) {
       const team = await teamRepository.findById(teamId);
       if (!team) throw new ServiceError("team_not_found", "", 404);
       await teamRepository.softDelete(teamId);
-      await auditRepository.record("system", null, "team.soft_delete", "team", teamId, { name: team.name });
+      await auditRepository.record("system", null, "team.withdraw", "team", teamId, { name: team.name, source: "system" });
       return { ok: true };
+    },
+
+    async restore(teamId) {
+      const team = await teamRepository.findAnyById(teamId);
+      if (!team) throw new ServiceError("team_not_found", "", 404);
+      if (!team.deleted_at) throw new ServiceError("team_not_deleted", "このチームは退会済みではありません。", 409);
+      await teamRepository.restore(teamId);
+      await auditRepository.record("system", null, "team.restore", "team", teamId, { name: team.name });
+      return teamRepository.publicTeam(await teamRepository.findById(teamId));
     }
   };
 }

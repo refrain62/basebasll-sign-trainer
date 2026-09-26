@@ -4,14 +4,14 @@ import { applyAssetVersion } from "./versioned-assets.ts";
 export function pageAssetForPath(pathname) {
   const clean = pathname.replace(/\/$/, "") || "/";
   if (clean === "/" || clean === "/index.html") return "/__pages/index.txt";
-  if (clean === "/admin" || clean === "/register" || clean === "/admin.html") return "/__pages/admin.txt";
+  if (clean === "/register" || clean === "/admin.html" || /^\/admin(?:\/(?:teams|security|notices))?$/.test(clean)) return "/__pages/admin.txt";
   if (clean === "/account" || clean === "/account.html" || /^\/join-admin\/[^/]+$/.test(clean)) return "/__pages/account.txt";
   if (clean === "/terms" || clean === "/terms.html") return "/__pages/terms.txt";
   if (clean === "/privacy" || clean === "/privacy.html") return "/__pages/privacy.txt";
   if (clean === "/external-transmission" || clean === "/external-transmission.html") return "/__pages/external-transmission.txt";
   if (clean === "/support" || clean === "/support.html") return "/__pages/support.txt";
   if (clean === "/team.html") return "/__pages/team.txt";
-  if (/^\/t\/[^/]+\/admin(?:\/(?:groups|signs|share|admins|plan-auth|notices|settings))?$/.test(clean)) return "/__pages/admin.txt";
+  if (/^\/t\/[^/]+\/admin(?:\/(?:activity|groups|signs|share|admins|plan-auth|notices|settings))?$/.test(clean)) return "/__pages/admin.txt";
   if (/^\/t\/[^/]+$/.test(clean)) return "/__pages/team.txt";
   return null;
 }

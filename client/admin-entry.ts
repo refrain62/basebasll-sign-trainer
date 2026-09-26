@@ -7,10 +7,10 @@ console.info(`[SIGN TRAINER] build ${APP_BUILD} admin`);
 const { renderSystemAdmin, renderTeamAdmin } = await import("./admin");
 const path = location.pathname.replace(/\/$/, "") || "/";
 
-if (path === "/admin" || path === "/register") {
-  renderSystemAdmin({ initialView: path === "/register" ? "create" : "list" });
+if (/^\/admin(?:\/(?:teams|security|notices))?$/.test(path) || path === "/register") {
+  renderSystemAdmin({ initialView: path === "/register" ? "create" : "" });
 } else {
-  const match = path.match(/^\/t\/([A-Za-z0-9_-]+)\/admin(?:\/(?:groups|signs|share|admins|plan-auth|notices|settings))?$/);
+  const match = path.match(/^\/t\/([A-Za-z0-9_-]+)\/admin(?:\/(?:activity|groups|signs|share|admins|plan-auth|notices|settings))?$/);
   if (match) renderTeamAdmin(match[1]);
   else location.replace("/");
 }

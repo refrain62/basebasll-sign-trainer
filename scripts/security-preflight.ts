@@ -8,10 +8,12 @@ interface PackageJson {
 
 interface WranglerEnvironment {
   secrets?: { required?: string[] };
+  version_metadata?: { binding?: string };
 }
 
 interface WranglerConfig {
   secrets?: { required?: string[] };
+  version_metadata?: { binding?: string };
   env?: Record<string, WranglerEnvironment>;
 }
 
@@ -19,7 +21,7 @@ const root = process.cwd();
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as PackageJson;
 const failures: string[] = [];
 
-if (pkg.devDependencies?.wrangler !== "4.136.3") failures.push("wrangler must be pinned exactly to 4.136.3");
+if (pkg.devDependencies?.wrangler !== "4.141.0") failures.push("wrangler must be pinned exactly to 4.141.0");
 if (pkg.dependencies?.hono !== "4.13.8") failures.push("hono must be pinned exactly to 4.13.8");
 if (pkg.dependencies?.zod !== "4.6.5") failures.push("zod must be pinned exactly to 4.6.5");
 if (pkg.dependencies?.qrcode !== "1.5.4") failures.push("qrcode must be pinned exactly to 1.5.4");
@@ -41,6 +43,16 @@ for (const name of requiredSecuritySecrets) {
   if (!(wrangler.secrets?.required || []).includes(name)) failures.push(`wrangler production required secret missing: ${name}`);
   for (const envName of ["dev", "staging"]) {
     if (!(wrangler.env?.[envName]?.secrets?.required || []).includes(name)) failures.push(`wrangler ${envName} required secret missing: ${name}`);
+  }
+}
+
+const versionMetadataBinding = "CF_VERSION_METADATA";
+if (wrangler.version_metadata?.binding !== versionMetadataBinding) {
+  failures.push(`wrangler production version_metadata.binding must be ${versionMetadataBinding}`);
+}
+for (const envName of ["dev", "staging"]) {
+  if (wrangler.env?.[envName]?.version_metadata?.binding !== versionMetadataBinding) {
+    failures.push(`wrangler ${envName} version_metadata.binding must be ${versionMetadataBinding}`);
   }
 }
 

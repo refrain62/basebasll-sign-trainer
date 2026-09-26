@@ -33,6 +33,8 @@ const state = {
   groups: [],
   activeGroupId: null,
   teamName: "サイン練習チーム",
+  plan: null as any,
+  entitlements: {} as Record<string, any>,
   deck: [],
   currentIndex: 0,
   results: [],
@@ -51,6 +53,8 @@ const state = {
 
 const icons = {
   menu: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 10 8-6 8 6v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-9Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  logout: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.7v12.6L18.5 12 8 5.7Z" fill="currentColor"/></svg>',
   replay: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.7 9A8 8 0 1 1 5 16.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   chart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V11M12 19V5M19 19v-8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
@@ -79,8 +83,8 @@ function brand({ footer = false } = {}) {
   return `<a class="brand" href="/" data-nav aria-label="SIGN TRAINER トップページ">
     ${logo}
     <span class="brand-copy">
-      <span class="brand-name">SIGN TRAINER</span>
-      <span class="brand-sub">野球のサイン練習${footer ? "アプリ" : ""}</span>
+      <span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span>
+      <span class="brand-sub">野球のサインを、チームの力に。</span>
     </span>
   </a>`;
 }
@@ -413,11 +417,53 @@ function navigate(path, { replace = false } = {}) {
 window.addEventListener("popstate", route);
 
 document.addEventListener("click", (event) => {
-  const link = event.target.closest("a[data-nav]");
+  const menuButton = (event.target as Element | null)?.closest?.("#practice-menu-button");
+  if (menuButton) {
+    const menu = document.querySelector<HTMLElement>("#practice-header-menu");
+    if (menu) {
+      const opening = menu.hidden;
+      menu.hidden = !opening;
+      menuButton.setAttribute("aria-expanded", opening ? "true" : "false");
+      document.body.classList.toggle("practice-menu-open", opening);
+    }
+    return;
+  }
+  const menuClose = (event.target as Element | null)?.closest?.<HTMLElement>("[data-practice-menu-close]");
+  if (menuClose) {
+    const menu = document.querySelector<HTMLElement>("#practice-header-menu");
+    if (menu) menu.hidden = true;
+    document.querySelector("#practice-menu-button")?.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("practice-menu-open");
+    return;
+  }
+  const menuAction = (event.target as Element | null)?.closest?.<HTMLElement>("[data-practice-menu-action]");
+  if (menuAction) {
+    const menu = document.querySelector<HTMLElement>("#practice-header-menu");
+    if (menu) menu.hidden = true;
+    document.querySelector("#practice-menu-button")?.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("practice-menu-open");
+    const action = menuAction.dataset.practiceMenuAction;
+    if (action === "practice") navigate(activeTeamPath());
+    else if (action === "history") navigate(`${activeTeamPath()}?view=history`);
+    else if (action === "analytics") navigate(`${activeTeamPath()}?view=analytics`);
+    else if (action === "share") { initShareDialog(); void openShareDialog("team"); }
+    else if (action === "logout") confirmLogout();
+    return;
+  }
+  if (!(event.target as Element | null)?.closest?.(".app-topbar")) {
+    const menu = document.querySelector<HTMLElement>("#practice-header-menu");
+    if (menu && !menu.hidden) {
+      menu.hidden = true;
+      document.querySelector("#practice-menu-button")?.setAttribute("aria-expanded", "false");
+      document.body.classList.remove("practice-menu-open");
+    }
+  }
+  const link = (event.target as Element | null)?.closest?.("a[data-nav]") as HTMLAnchorElement | null;
   if (!link) return;
   const url = new URL(link.href);
   if (url.origin !== location.origin) return;
   event.preventDefault();
+  document.body.classList.remove("practice-menu-open");
   navigate(`${url.pathname}${url.search}${url.hash}`);
 });
 
@@ -460,7 +506,12 @@ async function route() {
     state.teamName = session.teamName || state.teamName;
     if (session.authenticated) {
       const loaded = await loadSigns();
-      if (loaded) renderPracticeSetup();
+      if (loaded) {
+        const view = new URLSearchParams(location.search).get("view");
+        if (view === "analytics") renderPracticeAnalyticsPage();
+        else if (view === "history") renderPracticeHistory();
+        else renderPracticeSetup();
+      }
     } else {
       renderAuth();
     }
@@ -471,13 +522,29 @@ async function route() {
 }
 
 function appTopbar(action = "") {
-  return `<header class="app-topbar"><div class="app-topbar-inner">${brand()}${action}</div></header>`;
+  const analyticsBadge = practiceAnalyticsEnabled() ? "" : `<span class="practice-menu-premium">Pro</span>`;
+  const requestedView = new URLSearchParams(location.search).get("view");
+  const menuView = requestedView === "history" ? "history" : requestedView === "analytics" ? "analytics" : "practice";
+  return `<header class="app-topbar app-topbar--modern"><div class="app-topbar-inner">${brand()}<div class="practice-header-actions">${action}<button class="mobile-menu-button practice-header-menu-button" id="practice-menu-button" type="button" aria-label="メニューを開く" aria-controls="practice-header-menu" aria-expanded="false">${icons.menu}</button></div></div></header><nav class="practice-header-menu" id="practice-header-menu" aria-label="練習ページメニュー" role="dialog" aria-modal="true" hidden>
+    <header class="practice-header-menu-head"><div><span>チーム練習</span><strong>${escapeHtml(state.teamName || "サイン練習チーム")}</strong></div><button class="practice-header-menu-close" type="button" data-practice-menu-close aria-label="メニューを閉じる">${icons.close}</button></header>
+    <div class="practice-header-menu-list">
+      <button class="practice-header-menu-link ${menuView === "practice" ? "is-active" : ""}" type="button" data-practice-menu-action="practice"><span class="practice-header-menu-icon">${icons.play}</span><span>練習ページ</span><span class="practice-header-menu-arrow">›</span></button>
+      <button class="practice-header-menu-link ${menuView === "history" ? "is-active" : ""}" type="button" data-practice-menu-action="history"><span class="practice-header-menu-icon">${icons.clock}</span><span>練習履歴</span><span class="practice-header-menu-arrow">›</span></button>
+      <button class="practice-header-menu-link ${menuView === "analytics" ? "is-active" : ""}" type="button" data-practice-menu-action="analytics"><span class="practice-header-menu-icon">${icons.chart}</span><span>成績分析</span>${analyticsBadge}<span class="practice-header-menu-arrow">›</span></button>
+      <button class="practice-header-menu-link" type="button" data-practice-menu-action="share"><span class="practice-header-menu-icon">${icons.share}</span><span>チームに共有</span><span class="practice-header-menu-arrow">›</span></button>
+    </div>
+    <div class="practice-header-menu-footer"><button class="practice-header-menu-link practice-header-menu-link--danger" type="button" data-practice-menu-action="logout"><span class="practice-header-menu-icon">${icons.logout}</span><span>この端末の認証を解除</span><span class="practice-header-menu-arrow">›</span></button></div>
+  </nav>`;
+}
+
+function practiceTeamIdentity() {
+  return `<div class="practice-home-team" aria-label="練習チーム"><span>練習チーム</span><strong>${escapeHtml(state.teamName || "サイン練習チーム")}</strong></div>`;
 }
 
 function renderAuth({ error = "", value = "", configError = false } = {}) {
   document.title = "合言葉を入力 | SIGN TRAINER";
   app.innerHTML = `<div class="app-bg auth-bg">
-    ${appTopbar('<a class="button button-ghost" href="/" data-nav>トップへ</a>')}
+    ${appTopbar()}
     <main class="auth-main">
       <div class="auth-shell">
         <aside class="auth-visual" aria-hidden="true">
@@ -490,9 +557,9 @@ function renderAuth({ error = "", value = "", configError = false } = {}) {
         </aside>
         <section class="app-panel auth-panel">
           <div class="panel-icon" aria-hidden="true">${icons.lock}</div>
+          <div class="practice-team-identity"><span>TEAM</span><strong>${escapeHtml(state.teamName)}</strong></div>
           <h1>チームのサイン練習</h1>
           <p class="panel-lead">合言葉を入力してください</p>
-          <p class="team-label">${escapeHtml(state.teamName)}</p>
           ${activeTeamId === SAMPLE_TEAM_ID ? '<p class="sample-passphrase-note">サンプルチームの合言葉は「<strong>ホームラン</strong>」を入力してください。</p>' : ''}
           <form id="auth-form" class="auth-form" novalidate>
             <label class="form-label" for="passphrase">合言葉</label>
@@ -583,12 +650,17 @@ async function loadSigns() {
     state.signs = Array.isArray(data.signs) ? data.signs : [];
     state.groups = Array.isArray(data.groups) ? data.groups : [];
     state.teamName = data.team?.name || state.teamName;
+    state.plan = data.plan?.plan || null;
+    state.entitlements = data.plan?.entitlements || {};
     if (!state.groups.length) {
       state.activeGroupId = "all";
     } else if (state.activeGroupId !== "all" && state.activeGroupId !== null && !state.groups.some((group) => Number(group.id) === Number(state.activeGroupId))) {
       state.activeGroupId = null;
     }
-    if (!state.signs.length) throw new Error("no signs");
+    if (!state.signs.length) {
+      renderPracticeEmptyState();
+      return false;
+    }
     return true;
   } catch {
     renderAppError(
@@ -620,6 +692,11 @@ function selectPracticeGroup(groupId) {
   renderPracticeSetup();
 }
 
+function youtubeThumbnailUrl(videoId) {
+  if (!videoId) return "";
+  return `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`;
+}
+
 function renderGroupSelection() {
   const groupCards = state.groups.map((group) => {
     const members = state.signs.filter((sign) => Number(sign.groupId) === Number(group.id));
@@ -637,6 +714,7 @@ function renderGroupSelection() {
         </div>
         ${group.videoId ? `<span class="practice-group-video-badge">▶ 説明動画あり</span>` : ""}
       </div>
+      ${group.videoId ? `<button class="practice-group-thumbnail" data-review-group="${Number(group.id)}" type="button" aria-label="${escapeHtml(group.name)}の説明動画を見る"><img src="${escapeHtml(youtubeThumbnailUrl(group.videoId))}" alt="${escapeHtml(group.name)}の説明動画サムネイル" loading="lazy" decoding="async"><span><b>▶</b> 説明動画を見る</span></button>` : ""}
       ${group.description ? `<p class="practice-group-option-description">${escapeHtml(group.description)}</p>` : `<p class="practice-group-option-description is-muted">このグループの説明はまだ登録されていません。</p>`}
       <div class="practice-group-option-actions">
         ${hasGuide ? `<button class="button button-secondary" data-review-group="${Number(group.id)}" type="button">説明を見る</button>` : ""}
@@ -701,6 +779,7 @@ function renderPracticeSetup() {
   const practiceSigns = selectedGroup ? currentPracticeSigns() : [];
   const playableSigns = practiceSigns.filter(isPracticeReadySign);
   const practiceOptions = selectedGroup ? getPracticeOptions(playableSigns.length) : [];
+  const hasMultipleVideoSigns = state.signs.some((sign) => Array.isArray(sign?.videos) && sign.videos.length > 1);
   const choicesHtml = practiceOptions.length
     ? practiceOptions.map((option) => `<button class="choice${option.recommended ? " recommended" : ""}" data-count="${option.count}" type="button"><span class="choice-copy"><span class="choice-main">${escapeHtml(option.main)}</span><span class="choice-sub">${escapeHtml(option.sub)}</span></span>${option.badge ? `<span class="choice-badge">${escapeHtml(option.badge)}</span>` : `<span class="choice-arrow">${icons.arrow}</span>`}</button>`).join("")
     : selectedGroup ? `<div class="practice-empty-notice" role="status"><strong>このグループには練習できる動画がありません</strong><span>別のグループを選ぶか、チーム管理者に動画の登録を依頼してください。</span></div>` : "";
@@ -715,9 +794,10 @@ function renderPracticeSetup() {
       </section>`;
 
   app.innerHTML = `<div class="app-bg">
-    ${appTopbar('<a class="button button-ghost" href="/" data-nav>トップへ</a>')}
-    <main class="app-main">
+    ${appTopbar()}
+    <main class="app-main practice-main">
       <section class="app-panel is-compact practice-setup-panel">
+        ${practiceTeamIdentity()}
         <h1>サイン練習</h1>
         <p class="panel-lead">動画を見て、何のサインか答えよう！</p>
         ${mainFlow}
@@ -735,6 +815,7 @@ function renderPracticeSetup() {
           <div class="practice-point">${icons.check}<span>今日使うグループを選ぶ</span></div>
           <div class="practice-point">${icons.check}<span>説明を確認してから動画クイズへ</span></div>
           <div class="practice-point">${icons.check}<span>間違えた問題だけもう一度練習</span></div>
+          ${hasMultipleVideoSigns ? `<div class="practice-point">${icons.check}<span>同じサインの複数動画は、偏りを抑えて順番に経験</span></div>` : ""}
         </div>
         <button class="logout-link" id="logout" type="button">この端末の認証を解除</button>
       </section>
@@ -763,7 +844,7 @@ function renderPracticeSetup() {
       startQuiz(count, currentPracticeSigns());
     });
   });
-  document.querySelector("#open-history")?.addEventListener("click", renderPracticeHistory);
+  document.querySelector("#open-history")?.addEventListener("click", () => navigate(`${activeTeamPath()}?view=history`));
   initShareDialog();
   document.querySelector("#open-team-share")?.addEventListener("click", () => { void openShareDialog("team"); });
   document.querySelector("#logout")?.addEventListener("click", confirmLogout);
@@ -786,6 +867,8 @@ async function logout() {
   await fetch("/api/logout", { method: "POST" }).catch(() => null);
   state.signs = [];
   state.groups = [];
+  state.plan = null;
+  state.entitlements = {};
   state.activeGroupId = null;
   state.deck = [];
   state.results = [];
@@ -817,7 +900,26 @@ function buildDeck(signs, count) {
   const safeCount = Math.min(Math.max(0, Number(count) || 0), availableSigns.length);
   return shuffle([...availableSigns])
     .slice(0, safeCount)
-    .map((sign) => ({ ...sign, videoId: randomItem(sign.videos) }));
+    .map((sign) => ({ ...sign, videoId: chooseBalancedVideo(sign) }));
+}
+
+function chooseBalancedVideo(sign) {
+  const videos = Array.isArray(sign?.videos) ? [...new Set(sign.videos.filter(Boolean))] : [];
+  if (videos.length <= 1) return videos[0] || "";
+  const usage = new Map(videos.map((videoId) => [videoId, { count: 0, lastSeenAt: 0 }]));
+  for (const entry of getPracticeHistory()) {
+    for (const result of (entry.results || [])) {
+      if (String(result.id) !== String(sign.id) || !usage.has(result.videoId)) continue;
+      const stats = usage.get(result.videoId);
+      stats.count += 1;
+      stats.lastSeenAt = Math.max(stats.lastSeenAt, Number(entry.completedAt || entry.startedAt || 0));
+    }
+  }
+  const ranked = videos.map((videoId) => ({ videoId, ...usage.get(videoId) }))
+    .sort((a, b) => a.count - b.count || a.lastSeenAt - b.lastSeenAt);
+  const best = ranked[0];
+  const candidates = ranked.filter((item) => item.count === best.count && item.lastSeenAt === best.lastSeenAt);
+  return randomItem(candidates).videoId;
 }
 
 function shuffle(items) {
@@ -1109,7 +1211,7 @@ function renderResults() {
   document.title = `${title} | SIGN TRAINER`;
 
   app.innerHTML = `<div class="app-bg">
-    ${appTopbar('<a class="button button-ghost" href="/" data-nav>トップへ</a>')}
+    ${appTopbar()}
     <main class="app-main">
       <section class="app-panel result-panel result-panel--${celebration.level}">
         <div class="result-title"><span class="result-badge">${celebration.badge}</span><h1>${title}</h1><p>${message}</p></div>
@@ -1314,6 +1416,7 @@ function saveCurrentPracticeResult({ correct, wrong, skipped, totalQuestions, ra
     results: state.results.map((result) => ({
       id: result.sign.id,
       name: result.sign.name,
+      groupId: result.sign.groupId ?? null,
       grade: result.grade,
       videoId: result.sign.videoId || "",
       videos: Array.isArray(result.sign.videos) ? result.sign.videos.slice(0, 8) : []
@@ -1364,37 +1467,214 @@ function getHistoryMistakeSigns(entry) {
   return signs.filter((sign) => sign.videos?.length || sign.videoId);
 }
 
+function practiceAnalyticsEnabled() {
+  return Boolean(state.entitlements?.practice_analytics?.enabled);
+}
+
+function analyticsRate(correct, attempts) {
+  return attempts ? Math.round((correct / attempts) * 100) : 0;
+}
+
+function videoPatternLabel(signId, videoId) {
+  const sign = state.signs.find((item) => String(item.id) === String(signId));
+  const index = sign?.videos?.findIndex((id) => id === videoId) ?? -1;
+  return index >= 0 ? `動画${index + 1}` : "動画パターン";
+}
+
+function collectPracticeAnalytics(history = getPracticeHistory()) {
+  const signById = new Map(state.signs.map((sign) => [String(sign.id), sign]));
+  const groupById = new Map(state.groups.map((group) => [String(group.id), group]));
+  const groups = new Map();
+  const signs = new Map();
+  const videos = new Map();
+  const chronologicalGrades = [];
+  let attempts = 0;
+  let correct = 0;
+
+  const bump = (map, key, seed, grade, completedAt) => {
+    if (!map.has(key)) map.set(key, { ...seed, attempts: 0, correct: 0, grades: [], lastAt: 0 });
+    const row = map.get(key);
+    row.attempts += 1;
+    if (grade === "correct") row.correct += 1;
+    row.grades.push(grade);
+    row.lastAt = Math.max(row.lastAt, Number(completedAt || 0));
+    return row;
+  };
+
+  for (const entry of history) {
+    for (const result of (entry.results || [])) {
+      if (result.grade !== "correct" && result.grade !== "wrong") continue;
+      attempts += 1;
+      if (result.grade === "correct") correct += 1;
+      chronologicalGrades.push(result.grade);
+      const signId = String(result.id);
+      const currentSign = signById.get(signId);
+      const groupIdValue = result.groupId ?? currentSign?.groupId ?? null;
+      const groupKey = groupIdValue == null ? "ungrouped" : String(groupIdValue);
+      const groupName = groupKey === "ungrouped" ? "未分類" : (groupById.get(groupKey)?.name || `グループ ${groupKey}`);
+      bump(groups, groupKey, { id: groupIdValue, name: groupName }, result.grade, entry.completedAt);
+      bump(signs, signId, { id: result.id, name: result.name || currentSign?.name || `サイン ${signId}`, groupId: groupIdValue, groupName }, result.grade, entry.completedAt);
+      if (result.videoId) {
+        const key = `${signId}:${result.videoId}`;
+        bump(videos, key, { signId: result.id, signName: result.name || currentSign?.name || `サイン ${signId}`, videoId: result.videoId, label: videoPatternLabel(result.id, result.videoId) }, result.grade, entry.completedAt);
+      }
+    }
+  }
+
+  const finish = (rows) => [...rows.values()].map((row) => {
+    const recent = row.grades.slice(0, 10);
+    const recentCorrect = recent.filter((grade) => grade === "correct").length;
+    return { ...row, rate: analyticsRate(row.correct, row.attempts), recentRate: analyticsRate(recentCorrect, recent.length), recentAttempts: recent.length };
+  });
+  const signRows = finish(signs).sort((a, b) => a.rate - b.rate || b.attempts - a.attempts || a.name.localeCompare(b.name, "ja"));
+  const groupRows = finish(groups).sort((a, b) => a.rate - b.rate || b.attempts - a.attempts);
+  const allVideoRows = finish(videos);
+  const videoPatternCounts = new Map();
+  allVideoRows.forEach((row) => videoPatternCounts.set(String(row.signId), Number(videoPatternCounts.get(String(row.signId)) || 0) + 1));
+  const videoRows = allVideoRows.filter((row) => {
+    const sign = signById.get(String(row.signId));
+    return (sign?.videos?.length || 0) > 1 || Number(videoPatternCounts.get(String(row.signId)) || 0) > 1;
+  }).sort((a, b) => a.rate - b.rate || b.attempts - a.attempts);
+  const weakSigns = signRows.filter((row) => row.attempts >= 3).slice(0, 5);
+  const recent = chronologicalGrades.slice(0, 10);
+  return {
+    attempts,
+    correct,
+    rate: analyticsRate(correct, attempts),
+    recentRate: analyticsRate(recent.filter((grade) => grade === "correct").length, recent.length),
+    recentAttempts: recent.length,
+    groupRows,
+    signRows,
+    videoRows,
+    weakSigns
+  };
+}
+
+function analyticsBar(row, { label = row.name, meta = "" } = {}) {
+  return `<div class="practice-analytics-row"><div class="practice-analytics-row-head"><div><strong>${escapeHtml(label)}</strong>${meta ? `<small>${escapeHtml(meta)}</small>` : ""}</div><span><b>${row.rate}%</b><small>${row.correct}/${row.attempts}</small></span></div><div class="practice-analytics-bar"><span class="practice-analytics-bar-fill ${percentageClass(row.rate)}"></span></div>${row.recentAttempts ? `<p>直近${row.recentAttempts}回 ${row.recentRate}%</p>` : ""}</div>`;
+}
+
+function renderPracticeAnalyticsSummary(history) {
+  if (!practiceAnalyticsEnabled()) {
+    return `<section class="practice-analytics practice-analytics--summary practice-analytics--locked"><div class="practice-analytics-lock">${icons.lock}</div><div><span class="practice-analytics-kicker">PRO FEATURE</span><h2>正答率・苦手分析</h2><p>Proでは練習履歴から、苦手なサインやグループを見つけられます。</p><button class="button button-secondary" id="history-open-analytics" type="button">機能を見る</button></div></section>`;
+  }
+  const stats = collectPracticeAnalytics(history);
+  if (!stats.attempts) {
+    return `<section class="practice-analytics practice-analytics--summary"><div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>成績サマリー</h2><p>練習すると、ここに正答率と苦手サインが表示されます。</p></div><button class="button button-secondary" id="history-open-analytics" type="button">詳しい分析を見る</button></div></section>`;
+  }
+  const weak = stats.weakSigns.slice(0, 3);
+  return `<section class="practice-analytics practice-analytics--summary"><div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>成績サマリー</h2><p>ざっと確認して、詳しい分析は専用ページで見られます。</p></div><button class="button button-secondary" id="history-open-analytics" type="button">詳しい分析を見る</button></div>
+    <div class="practice-analytics-summary practice-analytics-summary--compact"><div class="practice-analytics-summary-stat"><strong>${stats.rate}%</strong><span>累計正答率</span></div><div class="practice-analytics-summary-stat"><strong>${stats.recentRate}%</strong><span>直近${stats.recentAttempts}回答</span></div><div class="practice-analytics-summary-stat"><strong>${stats.attempts}</strong><span>総回答数</span></div></div>
+    <div class="practice-analytics-weak-summary"><div class="practice-analytics-section-head"><h3>苦手サイン</h3><span>3回答以上・上位3件</span></div>${weak.length ? weak.map((row) => analyticsBar(row, { meta: `${row.groupName} · ${row.attempts}回答` })).join("") : `<p class="practice-analytics-empty">もう少し練習すると苦手傾向を表示します。</p>`}</div>
+  </section>`;
+}
+
+function renderPracticeAnalyticsDetail(history) {
+  if (!practiceAnalyticsEnabled()) {
+    return `<section class="practice-analytics practice-analytics--locked"><div class="practice-analytics-lock">${icons.lock}</div><div><span class="practice-analytics-kicker">PRO FEATURE</span><h2>正答率・苦手分析</h2><p>Proではサイングループ・サイン・動画パターンごとの正答率をグラフで確認し、苦手なサインだけ練習できます。</p><strong>Plus / Proは現在、特定チーム限定で提供しています。一般のお申し込み・オンライン課金にはまだ対応していません。</strong></div></section>`;
+  }
+  const stats = collectPracticeAnalytics(history);
+  if (!stats.attempts) {
+    return `<section class="practice-analytics"><div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>正答率・苦手分析</h2></div></div><div class="history-empty history-empty--compact"><h3>分析できる回答がまだありません</h3><p>練習をすると、グループ・サイン・動画パターン別の正答率がここに表示されます。</p></div></section>`;
+  }
+  const weakIds = stats.weakSigns.map((row) => String(row.id)).join(",");
+  const groupHtml = stats.groupRows.length ? stats.groupRows.map((row) => analyticsBar(row)).join("") : `<p class="practice-analytics-empty">グループ別データはまだありません。</p>`;
+  const signHtml = stats.signRows.length ? stats.signRows.slice(0, 12).map((row) => analyticsBar(row, { meta: `${row.groupName} · ${row.attempts}回答` })).join("") : "";
+  const videoHtml = stats.videoRows.length ? stats.videoRows.slice(0, 12).map((row) => analyticsBar(row, { label: `${row.signName} / ${row.label}`, meta: `${row.attempts}回答` })).join("") : `<p class="practice-analytics-empty">複数動画の回答データがたまると、動画パターン別の苦手も表示します。</p>`;
+  const weakHtml = stats.weakSigns.length ? stats.weakSigns.map((row) => analyticsBar(row, { meta: `${row.groupName} · ${row.attempts}回答` })).join("") : `<p class="practice-analytics-empty">苦手判定は3回答以上のサインを対象にします。もう少し練習すると表示されます。</p>`;
+  return `<section class="practice-analytics"><div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>正答率・苦手分析</h2><p>累計と直近の成績を見比べて、いま取り組むべきサインを見つけます。</p></div>${stats.weakSigns.length ? `<button class="button button-primary" id="history-practice-weak" data-weak-sign-ids="${escapeHtml(weakIds)}" type="button">苦手なサインを練習</button>` : ""}</div>
+    <div class="practice-analytics-summary"><div class="practice-analytics-ring ${percentageClass(stats.rate)}"><svg viewBox="0 0 42 42" aria-hidden="true"><circle cx="21" cy="21" r="15.9" pathLength="100"></circle><circle class="practice-analytics-ring-value" cx="21" cy="21" r="15.9" pathLength="100" stroke-dasharray="${stats.rate} 100"></circle></svg><div><strong>${stats.rate}%</strong><span>累計正答率</span></div></div><div class="practice-analytics-summary-stat"><strong>${stats.correct}<small> / ${stats.attempts}</small></strong><span>正解 / 回答</span></div><div class="practice-analytics-summary-stat"><strong>${stats.recentRate}%</strong><span>直近${stats.recentAttempts}回答</span></div></div>
+    <div class="practice-analytics-grid"><section><div class="practice-analytics-section-head"><h3>サイングループ別</h3><span>正答率</span></div>${groupHtml}</section><section><div class="practice-analytics-section-head"><h3>苦手なサイン</h3><span>3回答以上</span></div>${weakHtml}</section></div>
+    <div class="practice-analytics-grid practice-analytics-grid--detail"><section><div class="practice-analytics-section-head"><h3>サイン別</h3><span>苦手順</span></div>${signHtml}</section><section><div class="practice-analytics-section-head"><h3>動画パターン別</h3><span>複数動画</span></div>${videoHtml}</section></div>
+    <p class="practice-analytics-note">複数動画があるサインは、同じ動画に偏りすぎないよう、これまでの出題回数と最終出題時刻を見て出題します。</p>
+  </section>`;
+}
+
+function renderPracticeAnalyticsPage() {
+  cleanupPlayer();
+  const history = getPracticeHistory();
+  document.title = "成績分析 | SIGN TRAINER";
+  app.innerHTML = `<div class="app-bg">
+    ${appTopbar('<button class="button button-ghost" id="analytics-back" type="button">履歴へ</button>')}
+    <main class="app-main practice-main">
+      <section class="app-panel history-panel analytics-detail-panel">
+        ${practiceTeamIdentity()}
+        <div class="history-heading"><div><h1>成績分析</h1><p class="panel-lead">サイングループ・サイン・動画パターンごとの正答率から、苦手を見つけて練習できます。</p></div></div>
+        ${renderPracticeAnalyticsDetail(history)}
+        <div class="result-actions"><button class="button button-secondary button-full" id="analytics-history" type="button">練習履歴を見る</button><button class="button button-primary button-full" id="analytics-practice" type="button">練習をはじめる</button></div>
+      </section>
+    </main>
+  </div>`;
+  document.querySelector("#analytics-back")?.addEventListener("click", () => navigate(`${activeTeamPath()}?view=history`));
+  document.querySelector("#analytics-history")?.addEventListener("click", () => navigate(`${activeTeamPath()}?view=history`));
+  document.querySelector("#analytics-practice")?.addEventListener("click", () => navigate(activeTeamPath()));
+  document.querySelector("#history-practice-weak")?.addEventListener("click", (event) => {
+    const ids = String((event.currentTarget as HTMLElement).dataset.weakSignIds || "").split(",").filter(Boolean);
+    const weakSigns = state.signs.filter((sign) => ids.includes(String(sign.id)));
+    if (weakSigns.length) startQuiz(weakSigns.length, weakSigns, { review: true });
+  });
+}
+
 function renderPracticeHistory() {
   cleanupPlayer();
   const history = getPracticeHistory();
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(history.length / pageSize));
   document.title = "練習履歴 | SIGN TRAINER";
   app.innerHTML = `<div class="app-bg">
     ${appTopbar('<button class="button button-ghost" id="history-back" type="button">戻る</button>')}
-    <main class="app-main">
+    <main class="app-main practice-main">
       <section class="app-panel history-panel">
-        <h1>練習履歴</h1>
-        <p class="panel-lead">この端末で行った練習結果を確認できます。</p>
-        ${history.length ? `<div class="history-list">
-          ${history.map((entry) => {
+        ${practiceTeamIdentity()}
+        <div class="history-heading"><div><h1>練習履歴</h1><p class="panel-lead">この端末で行った練習結果を確認できます。</p></div>${history.length ? `<strong class="history-total-count">全${history.length}件</strong>` : ""}</div>
+        ${renderPracticeAnalyticsSummary(history)}
+        ${history.length ? `<div class="history-list" data-history-list>
+          ${history.map((entry, index) => {
             const mistakes = getHistoryMistakeResults(entry);
             const names = [...new Set(mistakes.map((item) => item.name))];
-            return `<button class="history-card" data-history-id="${escapeHtml(entry.id)}" type="button">
+            return `<button class="history-card" data-history-id="${escapeHtml(entry.id)}" data-history-index="${index}" type="button">
               <span class="history-card-top"><span class="history-date">${escapeHtml(formatHistoryDate(entry.completedAt))}</span><span class="history-mode">${escapeHtml(historyModeLabel(entry))}</span></span>
               <span class="history-card-main"><strong>${entry.correct}<small> / ${entry.total}問</small></strong><span class="history-rate">正答率 ${entry.rate}%</span><span class="history-chevron">›</span></span>
               <span class="history-card-meta">${formatDuration(entry.durationSeconds || 0)}${entry.skipped ? ` · ${entry.skipped}問スキップ` : ""}</span>
               <span class="history-card-mistakes">${names.length ? `間違い：${escapeHtml(names.slice(0, 3).join("・"))}${names.length > 3 ? ` ほか${names.length - 3}件` : ""}` : "間違いなし"}</span>
             </button>`;
           }).join("")}
-        </div>` : `<div class="history-empty"><div class="history-empty-icon">${icons.clock}</div><h2>まだ練習履歴はありません</h2><p>練習を最後まで終えると、結果がここに自動で保存されます。</p></div>`}
+        </div><nav class="history-pagination" data-history-pagination aria-label="練習履歴のページ切り替え" ${history.length <= pageSize ? "hidden" : ""}><button class="button button-secondary" id="history-prev" type="button">‹ 前へ</button><span><b id="history-page-current">1</b> / ${totalPages}ページ</span><button class="button button-secondary" id="history-next" type="button">次へ ›</button></nav>` : `<div class="history-empty"><div class="history-empty-icon">${icons.clock}</div><h2>まだ練習履歴はありません</h2><p>練習を最後まで終えると、結果がここに自動で保存されます。</p></div>`}
         <div class="result-actions"><button class="button button-primary button-full" id="history-start" type="button">練習をはじめる</button></div>
       </section>
     </main>
   </div>`;
 
-  document.querySelector("#history-back").addEventListener("click", renderPracticeSetup);
-  document.querySelector("#history-start").addEventListener("click", renderPracticeSetup);
+  let page = 1;
+  const renderHistoryPage = (scroll = false) => {
+    const cards = [...document.querySelectorAll<HTMLElement>("[data-history-index]")];
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    cards.forEach((card) => {
+      const index = Number(card.dataset.historyIndex || 0);
+      card.hidden = index < start || index >= end;
+    });
+    const current = document.querySelector<HTMLElement>("#history-page-current");
+    if (current) current.textContent = String(page);
+    const prev = document.querySelector<HTMLButtonElement>("#history-prev");
+    const next = document.querySelector<HTMLButtonElement>("#history-next");
+    if (prev) prev.disabled = page <= 1;
+    if (next) next.disabled = page >= totalPages;
+    if (scroll) document.querySelector(".history-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  renderHistoryPage();
+  document.querySelector("#history-open-analytics")?.addEventListener("click", () => navigate(`${activeTeamPath()}?view=analytics`));
+  document.querySelector("#history-prev")?.addEventListener("click", () => { if (page <= 1) return; page -= 1; renderHistoryPage(true); });
+  document.querySelector("#history-next")?.addEventListener("click", () => { if (page >= totalPages) return; page += 1; renderHistoryPage(true); });
+  document.querySelector("#history-back")?.addEventListener("click", () => navigate(activeTeamPath()));
+  document.querySelector("#history-start")?.addEventListener("click", () => navigate(activeTeamPath()));
+  document.querySelector("#history-practice-weak")?.addEventListener("click", (event) => {
+    const ids = new Set(String((event.currentTarget as HTMLElement).dataset.weakSignIds || "").split(",").filter(Boolean));
+    const weakSigns = state.signs.filter((sign) => ids.has(String(sign.id)) && isPracticeReadySign(sign));
+    if (weakSigns.length) startQuiz("all", weakSigns);
+  });
   document.querySelectorAll("[data-history-id]").forEach((button) => {
-    button.addEventListener("click", () => renderPracticeHistoryDetail(button.dataset.historyId));
+    button.addEventListener("click", () => renderPracticeHistoryDetail((button as HTMLElement).dataset.historyId));
   });
 }
 
@@ -1409,8 +1689,9 @@ function renderPracticeHistoryDetail(historyId) {
   document.title = `${formatHistoryDate(entry.completedAt, { short: true })}の練習 | SIGN TRAINER`;
   app.innerHTML = `<div class="app-bg">
     ${appTopbar('<button class="button button-ghost" id="history-detail-back" type="button">履歴へ</button>')}
-    <main class="app-main">
+    <main class="app-main practice-main">
       <section class="app-panel result-panel history-detail-panel">
+        ${practiceTeamIdentity()}
         <div class="result-title"><h1>${escapeHtml(historyModeLabel(entry))}の結果</h1><p>${escapeHtml(formatHistoryDate(entry.completedAt))}</p></div>
         <div class="result-score ${percentageClass(entry.rate || 0)}" id="history-result-score"><div class="result-score-inner"><div class="result-score-big">${entry.correct}<small> / ${entry.total}問</small></div><span class="result-score-small">正答率 ${entry.rate}%</span></div></div>
         <div class="result-stats">
@@ -1422,7 +1703,7 @@ function renderPracticeHistoryDetail(historyId) {
           ${(entry.results || []).map((result, index) => {
             const status = result.grade === "correct" ? "○" : result.grade === "wrong" ? "×" : "—";
             const label = result.grade === "correct" ? "正解" : result.grade === "wrong" ? "不正解" : "スキップ";
-            return `<div class="history-answer-row is-${escapeHtml(result.grade)}"><span class="history-answer-no">${index + 1}</span><span class="history-answer-name">${escapeHtml(result.name)}</span><span class="history-answer-status"><b>${status}</b>${label}</span></div>`;
+            return `<div class="history-answer-row is-${escapeHtml(result.grade)}"><span class="history-answer-no">${index + 1}</span><span class="history-answer-name">${escapeHtml(result.name)}${result.videoId ? `<small>${escapeHtml(videoPatternLabel(result.id, result.videoId))}</small>` : ""}</span><span class="history-answer-status"><b>${status}</b>${label}</span></div>`;
           }).join("")}
         </div>
         <div class="result-actions">
@@ -1487,8 +1768,30 @@ function renderLoading(message, detail = "通信環境によって数秒かか�
   app.innerHTML = `<div class="app-bg">${appTopbar()}<div class="loading-screen"><div class="loading-card"><div class="spinner"></div><h2>${escapeHtml(message)}</h2><p>${escapeHtml(detail)}</p></div></div></div>`;
 }
 
+
+function renderPracticeEmptyState() {
+  document.title = `準備中 | ${state.teamName} | SIGN TRAINER`;
+  app.innerHTML = `<div class="app-bg">
+    ${appTopbar()}
+    <main class="app-main">
+      <section class="app-panel practice-empty-state-panel" role="status">
+        <div class="practice-empty-state-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <p class="practice-empty-state-kicker">${escapeHtml(state.teamName)}</p>
+        <h2>まだ練習データがありません</h2>
+        <p class="practice-empty-state-lead">管理者がサインを登録すると、ここから練習できるようになります。<br>準備ができるまで、もう少しお待ちください。</p>
+        <div class="practice-empty-state-note"><strong>チーム管理者のみなさんへ</strong><span>チーム管理の「サイン管理」からサインと練習動画を登録してください。</span></div>
+        <div class="result-actions practice-empty-state-actions"><button class="button button-primary button-full" id="practice-empty-refresh" type="button">登録状況を確認する</button><a class="button button-secondary button-full" href="/" data-nav>トップページへ</a></div>
+      </section>
+    </main>
+  </div>`;
+  document.querySelector("#practice-empty-refresh")?.addEventListener("click", async () => {
+    renderLoading("練習データを確認しています…", "管理者が登録した最新データを確認します。");
+    if (await loadSigns()) renderPracticeSetup();
+  });
+}
+
 function renderAppError(title, message, retry) {
-  app.innerHTML = `<div class="app-bg">${appTopbar('<a class="button button-ghost" href="/" data-nav>トップへ</a>')}<main class="app-main"><section class="app-panel error-panel"><div class="error-symbol">!</div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(message)}</p><div class="result-actions"><button class="button button-primary button-full" id="retry-app" type="button">もう一度試す</button></div></section></main></div>`;
+  app.innerHTML = `<div class="app-bg">${appTopbar()}<main class="app-main"><section class="app-panel error-panel"><div class="error-symbol">!</div><h2>${escapeHtml(title)}</h2><p>${escapeHtml(message)}</p><div class="result-actions"><button class="button button-primary button-full" id="retry-app" type="button">もう一度試す</button></div></section></main></div>`;
   document.querySelector("#retry-app").addEventListener("click", retry);
 }
 

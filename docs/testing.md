@@ -1,71 +1,53 @@
-# Testing strategy
+# Testing strategy — v1.5.32
 
-SIGN TRAINER uses **Vitest** for unit tests and V8 coverage. Browser UI and Worker/API code are both TypeScript, and Vitest runs the same `tests/unit/**/*.test.ts` suite from one configuration.
-
-## Commands
+SIGN TRAINERはVitest + TypeScript + Vite production build + tooling checksを`npm run check`でまとめて実行する。
 
 ```bash
-npm test
-npm run test:watch
-npm run test:coverage
-npm run test:architecture
+npm ci --ignore-scripts
 npm run check
+npm run test:coverage
 ```
 
-- `npm test` / `npm run test:unit`: `vitest run`
-- `npm run test:watch`: Vitest watch mode
-- `npm run test:coverage`: Vitest + `@vitest/coverage-v8`
-- `npm run check`: TypeScript typecheck → Vite production build → tooling/architecture checks → Vitest
+## 必須回帰観点
 
-## Vite build checks
+### Plan / Entitlement
+- Free: 複数グループ不可、複数動画不可、サブ管理者不可、分析不可、監査表示不可
+- Plus: 複数グループ・複数動画・動画開始位置・サブ管理者可、分析・監査は不可
+- Pro: Plus機能 + 分析・監査可
+- OAuthはFreeでも利用可
+- SYSTEM管理からFree / Plus / Proを変更できる
+- ダウングレードで既存データを削除しない
 
-`npm run build:client` runs Vite with multiple browser entry points. Vite emits content-hashed bundles under `public/build/assets/` and `public/build/manifest.json`. A small Vite plugin renders the HTML templates under `pages/` into both `public/*.html` and the Worker snapshots under `public/__pages/*.txt`.
+### サイングループ
+- Freeで最初の1グループは作成できる
+- Freeで2つ目はサーバー側でも拒否する
+- Plus / Proは複数作成可能
+- 登録モーダルの使用例選択で名称・説明へ反映する
 
-The source of truth is therefore:
+### 動画
+- Freeは1サイン1動画
+- Plus / Proは複数動画
+- YouTube標準サムネイル表示
+- Plus / Proのみプレビュー開始位置を保存可能
+- グループ説明動画には秒指定を持たせない
 
-```text
-client/*.ts       Browser TypeScript
-pages/*.html      HTML templates
-public/styles.css Static CSS
-public/*          Static PWA images/manifest/etc.
-```
+### Pro分析
+- Plusでは詳細分析ページをロック
+- Proではグループ／サイン／動画別集計を表示
+- 苦手判定は原則3回答以上
+- 履歴画面はサマリー、詳細は専用ページ
 
-Do not edit `public/build/*` or `public/__pages/*` directly.
+### 監査・退会
+- activity APIはProのみ
+- チーム退会はメイン管理者のみ
+- 退会は論理削除、SYSTEMから復活可能
+- 退会・復活・プラン変更を監査ログへ記録
 
-## What is covered
+## UI checks
+- PC管理画面の左サイドメニュー
+- スマホの全画面メニューが本文の下へ潜らない
+- 一覧ページャー・検索・フィルター
+- 375px幅でカード枠・余白が重ならない
 
-- Zod request-body validation and normalization
-- Secret configuration and password policy
-- PBKDF2 + pepper password hashing
-- signed session token tamper detection
-- CSRF / same-origin / JSON content-type checks
-- Cloudflare Access authorization checks
-- D1 result mapping and repository boundaries
-- sign/group/team/account/admin services
-- OAuth PKCE / OIDC claim validation
-- administrator invite / transfer / sub-admin limits
-- application-level data protection
-- Vite page rendering and asset-version behavior
-- browser-independent practice-selection utilities directly from `client/*.ts`
-
-## Architecture boundary tests
-
-`scripts/architecture-check.ts` fails CI if business logic drifts into the wrong layer. Service modules cannot call D1 directly and Controllers/Routes cannot contain SQL.
-
-## Boundaries
-
-The suite is primarily unit-level. It does not replace D1 migration smoke tests, Wrangler/Miniflare integration tests, or real-browser E2E tests. Playwright can be added later for player/admin flows.
-
-## Multi-team administrator regression
-
-`tests/unit/multi-team-admin-regression.test.ts` applies every D1 migration to an in-memory SQLite database and verifies the production schema behavior directly: one `app_users.id` can hold memberships for multiple different teams, with different roles per team. The same test also verifies that only a duplicate `(team_id, user_id)` pair is rejected. This protects the intended multi-team administrator behavior from future schema regressions.
-
-Vitest and `@vitest/coverage-v8` must stay on the same version. Build 86 pins both to `5.0.1` to satisfy the coverage provider peer dependency exactly.
-
-## N+1 / query-count regressions
-
-`tests/unit/query-count-regression.test.ts` protects the main query-shape optimizations. Bulk plan provisioning must remain a fixed two-statement D1 batch regardless of whether 2 or 50 teams are requested; a single group lookup must remain one query; and a single sign-with-videos lookup must remain two queries regardless of the number of videos attached to that sign. `entitlement-service.test.ts` also verifies that `planSummaries()` performs one bulk provisioning call plus one bulk plan-list call instead of per-team fallback queries.
-
-## CSP inline-style regression
-
-`tests/unit/csp-inline-style-regression.test.ts` scans first-party browser TypeScript and HTML templates and fails if runtime `.style` mutations, `setAttribute("style", ...)`, or HTML `style=` attributes are reintroduced. Dynamic progress/score percentages use external CSS classes (`pct-0` through `pct-100`) and clipboard fallback positioning uses `.clipboard-fallback`, preserving the strict `style-src 'self'` policy.
+## Migration
+空DBへ`0001`〜`0016`を順番に適用できることを確認する。既存DBを想定し、ALTER/UPSERTの再適用方針も確認する。

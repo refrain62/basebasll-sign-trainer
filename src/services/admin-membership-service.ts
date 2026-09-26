@@ -71,7 +71,7 @@ export function createAdminMembershipService({
       if (await membershipRepository.hasAny(teamId)) throw new ServiceError("team_already_claimed", "このチームにはすでにアカウント管理者が設定されています。", 409);
       const claimed = await transitionRepository.claimLegacyTeam({ teamId, userId });
       if (!claimed) throw new ServiceError("team_already_claimed", "このチームにはすでにアカウント管理者が設定されています。", 409);
-      await auditRepository.record("account-owner", teamId, "team.claim", "team", teamId, { userId, legacyPasswordDisabled: true });
+      await auditRepository.record("account-owner", teamId, "team.claim", "team", teamId, { userId, legacyPasswordDisabled: true }, userId);
       return membershipRepository.find(teamId, userId);
     },
 
@@ -102,7 +102,7 @@ export function createAdminMembershipService({
         creatorExit,
         expiresAt
       });
-      await auditRepository.record("account-owner", teamId, "admin.invite.create", "admin-invite", inviteId, { kind, creatorExit, expiresAt });
+      await auditRepository.record("account-owner", teamId, "admin.invite.create", "admin-invite", inviteId, { kind, creatorExit, expiresAt }, userId);
       return { inviteId, rawToken, kind, creatorExit, expiresAt };
     },
 
@@ -148,7 +148,7 @@ export function createAdminMembershipService({
         });
       }
       if (!accepted) throw new ServiceError("invite_used", "この招待リンクはすでに使用済みです。", 409);
-      await auditRepository.record("account", invite.team_id, invite.kind === "transfer" ? "owner.transfer.accept" : "admin.invite.accept", "user", userId, { inviteId: invite.id });
+      await auditRepository.record("account", invite.team_id, invite.kind === "transfer" ? "owner.transfer.accept" : "admin.invite.accept", "user", userId, { inviteId: invite.id }, userId);
       return { teamId: invite.team_id, kind: invite.kind };
     },
 
@@ -159,7 +159,7 @@ export function createAdminMembershipService({
       if (!target || target.role !== "admin") throw new ServiceError("target_admin_required", "交代先は現在の管理者から選んでください。", 400);
       const transferred = await transitionRepository.transferToExisting({ teamId, currentOwnerUserId, nextOwnerUserId, currentOwnerExit: Boolean(currentOwnerExit) });
       if (!transferred) throw new ServiceError("owner_changed", "メイン管理者情報が更新されています。画面を再読み込みしてもう一度お試しください。", 409);
-      await auditRepository.record("account-owner", teamId, "owner.transfer", "user", nextOwnerUserId, { previousOwner: currentOwnerUserId, previousOwnerExit: Boolean(currentOwnerExit) });
+      await auditRepository.record("account-owner", teamId, "owner.transfer", "user", nextOwnerUserId, { previousOwner: currentOwnerUserId, previousOwnerExit: Boolean(currentOwnerExit) }, currentOwnerUserId);
       return { ok: true };
     },
 
@@ -169,7 +169,7 @@ export function createAdminMembershipService({
       if (!target) throw new ServiceError("admin_not_found", "管理者が見つかりません。", 404);
       if (target.role === "owner") throw new ServiceError("cannot_remove_owner", "メイン管理者は削除できません。先にメイン管理者を交代してください。", 409);
       await membershipRepository.remove(teamId, targetUserId);
-      await auditRepository.record("account-owner", teamId, "admin.remove", "user", targetUserId);
+      await auditRepository.record("account-owner", teamId, "admin.remove", "user", targetUserId, null, ownerUserId);
       return { ok: true };
     },
 
@@ -178,21 +178,21 @@ export function createAdminMembershipService({
       if (!current) throw new ServiceError("membership_not_found", "このチームの管理者ではありません。", 404);
       if (current.role === "owner") throw new ServiceError("owner_cannot_leave", "メイン管理者はそのまま退会できません。先にメイン管理者を交代してください。", 409);
       await membershipRepository.remove(teamId, userId);
-      await auditRepository.record("account", teamId, "admin.leave", "user", userId);
+      await auditRepository.record("account", teamId, "admin.leave", "user", userId, null, userId);
       return { ok: true };
     },
 
     async disableLegacyPassword(teamId, userId) {
       await requireOwner(teamId, userId);
       await teamRepository.disableAdminPassword(teamId);
-      await auditRepository.record("account-owner", teamId, "legacy_admin_password.disable", "team", teamId);
+      await auditRepository.record("account-owner", teamId, "legacy_admin_password.disable", "team", teamId, null, userId);
       return { ok: true };
     },
 
     async revokeInvite(teamId, userId, inviteId) {
       await requireOwner(teamId, userId);
       await inviteRepository.revoke(inviteId, teamId);
-      await auditRepository.record("account-owner", teamId, "admin.invite.revoke", "admin-invite", inviteId);
+      await auditRepository.record("account-owner", teamId, "admin.invite.revoke", "admin-invite", inviteId, null, userId);
       return { ok: true };
     }
   };

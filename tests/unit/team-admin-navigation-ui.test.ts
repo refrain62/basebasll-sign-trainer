@@ -6,13 +6,14 @@ const styles = readFileSync("public/styles.css", "utf8");
 const teamAdminSource = adminSource.split("// ---------------- Team admin ----------------")[1] || "";
 
 describe("team admin navigation UI regression", () => {
-  test("mobile navigation uses a hamburger button and a full menu screen", () => {
-    expect(adminSource).toContain('id="team-admin-menu-open"');
+  test("administration uses a hamburger button and a menu panel", () => {
+    expect(adminSource).toContain('adminHeaderMenuButton("team-admin-menu-open", "team-admin-mobile-menu-screen")');
     expect(adminSource).toContain('id="team-admin-mobile-menu-screen"');
-    expect(adminSource).toContain('aria-controls="team-admin-mobile-menu-screen"');
+    expect(adminSource).toContain('id="team-admin-mobile-menu-screen"');
     expect(adminSource).toContain('data-team-admin-menu-close');
     expect(adminSource).not.toContain('id="team-admin-mobile-nav"');
     expect(styles).toContain('.team-admin-mobile-menu-screen:not([hidden])');
+    expect(styles).toContain('.admin-topbar .admin-header-menu-button');
   });
 
   test("team admin navigation is Japanese-only instead of duplicated English labels", () => {
@@ -26,7 +27,7 @@ describe("team admin navigation UI regression", () => {
   });
 
   test("all existing team-admin destinations remain available in the menu", () => {
-    for (const label of ["ダッシュボード", "サイングループ", "サイン管理", "共有", "管理者", "プラン・認証", "システムのお知らせ", "チーム設定"]) {
+    for (const label of ["ダッシュボード", "最近のアクティビティ", "サイングループ", "サイン管理", "共有", "管理者", "プラン・認証", "システムのお知らせ", "チーム設定"]) {
       expect(teamAdminSource).toContain(`label: "${label}"`);
     }
   });

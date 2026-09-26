@@ -9,6 +9,7 @@ import { cookieValue, createSessionToken, nowSeconds, readRoleSession, sessionSe
 import { normalizeTeamId, positiveNumber } from "../validation/common.ts";
 import { parseJsonBody } from "../validation/request.ts";
 import { playerAuthBodySchema } from "../validation/schemas.ts";
+import { createServices } from "../services/service-factory.ts";
 
 export async function playerSession(request, env, url) {
   const teamId = normalizeTeamId(url.searchParams.get("teamId"));
@@ -64,5 +65,6 @@ export async function playerSigns(request, env, url) {
   if (!session || session.teamId !== teamId || Number(session.ver || 0) !== Number(team.player_session_version || 1)) return apiJson({ error: "unauthorized", message: "合言葉を入力してください。" }, 401);
   const signs = await teams.getSigns(teamId, { onlyEnabled: true });
   const groups = await teams.getGroups(teamId, { onlyEnabled: true });
-  return apiJson({ team: { id: team.id, name: team.name }, groups, signs });
+  const plan = await createServices(env.DB, env).entitlements.summary(teamId);
+  return apiJson({ team: { id: team.id, name: team.name }, groups, signs, plan });
 }

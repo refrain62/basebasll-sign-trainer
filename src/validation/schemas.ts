@@ -33,6 +33,12 @@ export const teamAdminUpdateTeamBodySchema = z.object({
   adminPassword: z.string().optional()
 }).strip();
 
+export const teamAdminDeleteTeamBodySchema = z.object({
+  teamId: teamIdSchema.optional(),
+  teamName: z.string(),
+  confirm: z.string()
+}).strip();
+
 export const groupCreateBodySchema = z.object({
   teamId: teamIdSchema,
   name: z.string(),
@@ -68,7 +74,8 @@ export const signUpdateBodySchema = z.object({
 export const videoCreateBodySchema = z.object({
   teamId: teamIdSchema,
   youtubeUrl: z.string(),
-  comment: z.string().optional().default("")
+  comment: z.string().optional().default(""),
+  thumbnailTimeSeconds: numericInputSchema.optional()
 }).strip();
 
 export const videoUpdateBodySchema = z.object({
@@ -76,7 +83,8 @@ export const videoUpdateBodySchema = z.object({
   youtubeUrl: z.string().optional(),
   comment: z.string().optional(),
   sortOrder: numericInputSchema.optional(),
-  enabled: z.boolean().optional()
+  enabled: z.boolean().optional(),
+  thumbnailTimeSeconds: numericInputSchema.optional()
 }).strip();
 
 export const adminInviteBodySchema = z.object({
@@ -121,7 +129,17 @@ export const systemUpdateTeamBodySchema = z.object({
   name: z.string().optional(),
   passphrase: z.string().optional(),
   adminPassword: z.string().optional(),
-  status: z.enum(["active", "suspended"]).optional()
+  status: z.enum(["active", "suspended"]).optional(),
+  planCode: z.enum(["free", "team_plus", "team_pro"]).optional()
+}).strip();
+
+export const systemNoticeBodySchema = z.object({
+  title: z.string().transform(nfcTrim).refine((value) => value.length > 0 && value.length <= 120),
+  body: z.string().transform((value) => value.trim().normalize("NFC")).refine((value) => value.length <= 2000),
+  kind: z.enum(["info", "update", "maintenance", "important"]).default("info"),
+  status: z.enum(["draft", "published"]).default("draft"),
+  publishAt: z.string().max(40).optional().default(""),
+  expiresAt: z.string().max(40).optional().default("")
 }).strip();
 
 export const dataProtectionBodySchema = z.object({

@@ -57,6 +57,19 @@ export function createEntitlementService({ subscriptionRepository }) {
     return Boolean(state.entitlements?.[featureKey]?.enabled);
   }
 
+  async function planDefinitions() {
+    return subscriptionRepository.listPlanDefinitions();
+  }
+
+  async function assignSystemPlan(teamId, planCode: string) {
+    const plan = await subscriptionRepository.findPlanDefinition(planCode);
+    if (!plan || !plan.active) throw new ServiceError("plan_not_found", "指定したプランを利用できません。", 400);
+    await subscriptionRepository.ensureTeamDefaults(teamId);
+    const previous = await subscriptionRepository.findTeamPlan(teamId);
+    await subscriptionRepository.setSystemPlan(teamId, planCode);
+    return { previous: publicPlan(previous), current: (await summary(teamId)).plan };
+  }
+
   async function assertFeature(teamId, featureKey: string, message = "この機能は現在のプランでは利用できません。") {
     if (!(await canUseFeature(teamId, featureKey))) {
       throw new ServiceError("feature_not_available", message, 403, { feature: featureKey });
@@ -64,5 +77,5 @@ export function createEntitlementService({ subscriptionRepository }) {
     return true;
   }
 
-  return { summary, planSummaries, canUseFeature, assertFeature };
+  return { summary, planSummaries, planDefinitions, assignSystemPlan, canUseFeature, assertFeature };
 }

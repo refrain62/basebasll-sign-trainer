@@ -3,7 +3,7 @@ import { ServiceError } from "./errors.ts";
 
 export function createSignService({ signRepository, groupRepository, videoRepository, auditRepository }) {
   return {
-    async create(teamId, input) {
+    async create(teamId, input, auditActor = null) {
       const name = cleanName(input?.name, 80);
       if (!name) throw new ServiceError("invalid_name", "サイン名を入力してください。", 400);
       const groupId = await groupRepository.validId(teamId, input?.groupId);
@@ -15,13 +15,13 @@ export function createSignService({ signRepository, groupRepository, videoReposi
           await signRepository.hardDelete(teamId, signId);
           throw new ServiceError("invalid_youtube", "YouTube URLを確認してください。", 400);
         }
-        await videoRepository.create({ signId, youtubeUrl: parsed.url, videoId: parsed.videoId, sortOrder: 10, comment: cleanComment(input?.videoComment) });
+        await videoRepository.create({ signId, youtubeUrl: parsed.url, videoId: parsed.videoId, sortOrder: 10, comment: cleanComment(input?.videoComment), thumbnailTimeSeconds: 0 });
       }
-      await auditRepository.record("team-admin", teamId, "sign.create", "sign", signId, { name });
+      await auditRepository.record(auditActor?.role || "team-admin", teamId, "sign.create", "sign", signId, { name }, auditActor?.userId || null);
       return signRepository.getWithVideos(teamId, signId);
     },
 
-    async update(teamId, signId, input) {
+    async update(teamId, signId, input, auditActor = null) {
       const sign = await signRepository.findById(teamId, signId);
       if (!sign) throw new ServiceError("not_found", "", 404);
       const name = input?.name === undefined ? sign.name : cleanName(input.name, 80);
@@ -30,15 +30,15 @@ export function createSignService({ signRepository, groupRepository, videoReposi
       const enabled = input?.enabled === undefined ? sign.enabled : (input.enabled ? 1 : 0);
       const groupId = input?.groupId === undefined ? sign.group_id : await groupRepository.validId(teamId, input.groupId);
       await signRepository.update({ teamId, signId, name, sortOrder, enabled, groupId });
-      await auditRepository.record("team-admin", teamId, "sign.update", "sign", signId, { name, enabled: Boolean(enabled), sortOrder });
+      await auditRepository.record(auditActor?.role || "team-admin", teamId, "sign.update", "sign", signId, { name, enabled: Boolean(enabled), sortOrder }, auditActor?.userId || null);
       return signRepository.getWithVideos(teamId, signId);
     },
 
-    async remove(teamId, signId) {
+    async remove(teamId, signId, auditActor = null) {
       const sign = await signRepository.findById(teamId, signId);
       if (!sign) throw new ServiceError("not_found", "", 404);
       await signRepository.softDelete(teamId, signId);
-      await auditRepository.record("team-admin", teamId, "sign.soft_delete", "sign", signId);
+      await auditRepository.record(auditActor?.role || "team-admin", teamId, "sign.soft_delete", "sign", signId, null, auditActor?.userId || null);
       return { ok: true };
     }
   };

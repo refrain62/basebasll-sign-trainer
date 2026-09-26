@@ -39,6 +39,12 @@ export async function getTeam(db, teamId, protector = null) {
   return decryptTeamContent(row, protector);
 }
 
+export async function getTeamIncludingDeleted(db, teamId, protector = null) {
+  const row = await db.prepare("SELECT id,name,passphrase_hash,admin_password_hash,admin_password_enabled,status,player_session_version,admin_session_version,created_at,updated_at,deleted_at FROM teams WHERE id=?")
+    .bind(teamId).first();
+  return decryptTeamContent(row, protector);
+}
+
 export async function getTeamSigns(db, teamId, { onlyEnabled = false } = {}, protector = null) {
   const signSql = onlyEnabled
     ? "SELECT * FROM signs WHERE team_id=? AND enabled=1 AND deleted_at IS NULL ORDER BY sort_order,id"
@@ -62,7 +68,8 @@ export async function getTeamSigns(db, teamId, { onlyEnabled = false } = {}, pro
       videoId: row.youtube_video_id,
       sortOrder: row.sort_order,
       enabled: Boolean(row.enabled),
-      comment: String(row.comment || "")
+      comment: String(row.comment || ""),
+      thumbnailTimeSeconds: Math.max(0, Math.trunc(Number(row.thumbnail_time_seconds) || 0))
     });
   }
   return signRows.map((row) => ({
@@ -145,7 +152,8 @@ export async function getSignWithVideos(db, teamId, signId, protector = null) {
       videoId: row.youtube_video_id,
       sortOrder: row.sort_order,
       enabled: Boolean(row.enabled),
-      comment: String(row.comment || "")
+      comment: String(row.comment || ""),
+      thumbnailTimeSeconds: Math.max(0, Math.trunc(Number(row.thumbnail_time_seconds) || 0))
     });
   }
 
@@ -164,6 +172,7 @@ export async function getSignWithVideos(db, teamId, signId, protector = null) {
 export function createTeamRepository(db, protector = null) {
   return {
     findById: (teamId) => getTeam(db, teamId, protector),
+    findAnyById: (teamId) => getTeamIncludingDeleted(db, teamId, protector),
     publicTeam,
     getSigns: (teamId, options) => getTeamSigns(db, teamId, options, protector),
     getGroups: (teamId, options) => getTeamGroups(db, teamId, options, protector),
@@ -180,17 +189,22 @@ export function createTeamRepository(db, protector = null) {
     },
     async listWithCounts() {
       const result = await db.prepare(`
-        SELECT t.id,t.name,t.status,t.created_at,t.updated_at,COUNT(DISTINCT s.id) AS sign_count,COUNT(DISTINCT v.id) AS video_count
+        SELECT t.id,t.name,t.status,t.deleted_at,t.created_at,t.updated_at,COUNT(DISTINCT s.id) AS sign_count,COUNT(DISTINCT v.id) AS video_count
         FROM teams t
         LEFT JOIN signs s ON s.team_id=t.id AND s.deleted_at IS NULL
         LEFT JOIN sign_videos v ON v.sign_id=s.id AND v.deleted_at IS NULL
-        WHERE t.deleted_at IS NULL
         GROUP BY t.id
-        ORDER BY t.created_at DESC
+        ORDER BY CASE WHEN t.deleted_at IS NULL THEN 0 ELSE 1 END, t.created_at DESC
       `).all();
       const output = [];
       for (const row of result.results || []) {
-        output.push({ ...row, name: protector ? await protector.decrypt(row.name, "teams.name") : row.name, sign_count: Number(row.sign_count || 0), video_count: Number(row.video_count || 0) });
+        output.push({
+          ...row,
+          status: row.deleted_at ? "deleted" : row.status,
+          name: protector ? await protector.decrypt(row.name, "teams.name") : row.name,
+          sign_count: Number(row.sign_count || 0),
+          video_count: Number(row.video_count || 0)
+        });
       }
       return output;
     },
@@ -212,7 +226,11 @@ export function createTeamRepository(db, protector = null) {
         .bind(protectedName, status, passphraseHash, adminHash, invalidatePlayer ? 1 : 0, invalidateAdmin ? 1 : 0, teamId).run();
     },
     async softDelete(teamId) {
-      return db.prepare("UPDATE teams SET status='suspended',deleted_at=CURRENT_TIMESTAMP,player_session_version=player_session_version+1,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+      return db.prepare("UPDATE teams SET status='suspended',deleted_at=COALESCE(deleted_at,CURRENT_TIMESTAMP),player_session_version=player_session_version+1,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL")
+        .bind(teamId).run();
+    },
+    async restore(teamId) {
+      return db.prepare("UPDATE teams SET status='active',deleted_at=NULL,player_session_version=player_session_version+1,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NOT NULL")
         .bind(teamId).run();
     }
   };

@@ -12,7 +12,7 @@ function fixture({ planCode = "free", entitlements = [], usage = null } = {}) {
       return {
         teamId,
         code: planCode,
-        name: planCode === "free" ? "Free" : "Team Plus",
+        name: planCode === "free" ? "Free" : planCode === "team_pro" ? "Pro" : "Plus",
         description: "test",
         monthlyPriceYen: planCode === "free" ? 0 : null,
         availableForPurchase: false,
@@ -28,7 +28,7 @@ function fixture({ planCode = "free", entitlements = [], usage = null } = {}) {
     async listTeamPlans(teamIds) {
       calls.push(["listPlans", [...teamIds]]);
       return teamIds.map((teamId) => ({
-        teamId, code: planCode, name: planCode === "free" ? "Free" : "Team Plus", description: "test",
+        teamId, code: planCode, name: planCode === "free" ? "Free" : planCode === "team_pro" ? "Pro" : "Plus", description: "test",
         monthlyPriceYen: planCode === "free" ? 0 : null, availableForPurchase: false,
         active: true,
         subscriptionStatus: "active", provider: planCode === "free" ? "none" : "stripe",
@@ -56,7 +56,7 @@ test("Free plan exposes core plan metadata while direct uploads remain disabled"
   assert.equal(await service.canUseFeature("T1", FEATURE_KEYS.DIRECT_IMAGE_UPLOAD), false);
 });
 
-test("future paid entitlements can be enabled without coupling product code to Stripe", async () => {
+test("Plus entitlements can be enabled without coupling product code to billing", async () => {
   const { service } = fixture({
     planCode: "team_plus",
     entitlements: [
@@ -91,7 +91,7 @@ test("planSummaries returns a team keyed map for account and system dashboards",
 test("canceled subscriptions do not keep paid feature access", async () => {
   const subscriptionRepository = {
     async ensureTeamDefaults() {},
-    async findTeamPlan(teamId) { return { teamId, code: "team_plus", name: "Team Plus", description: "", monthlyPriceYen: null, availableForPurchase: false, active: true, subscriptionStatus: "canceled", provider: "stripe", currentPeriodEnd: null, cancelAtPeriodEnd: false }; },
+    async findTeamPlan(teamId) { return { teamId, code: "team_plus", name: "Plus", description: "", monthlyPriceYen: null, availableForPurchase: false, active: true, subscriptionStatus: "canceled", provider: "stripe", currentPeriodEnd: null, cancelAtPeriodEnd: false }; },
     async listEntitlements() { return [{ featureKey: FEATURE_KEYS.DIRECT_IMAGE_UPLOAD, enabled: true, limitValue: null }]; },
     async getUsage(teamId) { return { teamId, storageBytes: 0, imageCount: 0, videoBytes: 0, videoCount: 0, updatedAt: null }; },
     async listTeamPlans() { return []; },

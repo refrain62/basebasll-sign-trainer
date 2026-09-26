@@ -3,7 +3,7 @@ import { ServiceError } from "./errors.ts";
 
 export function createTeamService({ teamRepository, auditRepository, hashPassword }) {
   return {
-    async updateFromTeamAdmin(teamId, input, { canChangeAdminPassword = false } = {}) {
+    async updateFromTeamAdmin(teamId, input, { canChangeAdminPassword = false, auditActor = null } = {}) {
       const team = await teamRepository.findById(teamId);
       if (!team) throw new ServiceError("team_not_found", "", 404);
       const name = input?.name === undefined ? team.name : cleanName(input.name, 80);
@@ -31,11 +31,24 @@ export function createTeamService({ teamRepository, auditRepository, hashPasswor
         passphraseChanged: Boolean(nextPassphrase),
         adminPasswordChanged: Boolean(nextAdminPassword)
       });
-      await auditRepository.record("team-admin", teamId, "team.update", "team", teamId, {
+      await auditRepository.record(auditActor?.role || "team-admin", teamId, "team.update", "team", teamId, {
         passphraseChanged: Boolean(nextPassphrase),
         adminPasswordChanged: Boolean(nextAdminPassword)
-      });
+      }, auditActor?.userId || null);
       return teamRepository.publicTeam(await teamRepository.findById(teamId));
+    },
+
+    async withdrawFromTeamAdmin(teamId, input, { auditActor = null } = {}) {
+      const team = await teamRepository.findById(teamId);
+      if (!team) throw new ServiceError("team_not_found", "チームが見つかりません。", 404);
+      const enteredName = cleanName(input?.teamName, 80);
+      const confirmText = String(input?.confirm || "").trim().normalize("NFC");
+      if (!enteredName || enteredName !== team.name || confirmText !== "退会する") {
+        throw new ServiceError("withdraw_confirmation_mismatch", "チーム名と確認文字を正しく入力してください。", 400);
+      }
+      await auditRepository.record(auditActor?.role || "team-admin", teamId, "team.withdraw", "team", teamId, { name: team.name }, auditActor?.userId || null);
+      await teamRepository.softDelete(teamId);
+      return { ok: true };
     }
   };
 }

@@ -30,13 +30,13 @@
     <img class="brand-icon-img" src="/assets/sign-trainer-icon.webp?v=__ASSET_VERSION__" alt="" width="128" height="128" decoding="async">
   </span>
     <span class="brand-copy">
-      <span class="brand-name">SIGN TRAINER</span>
-      <span class="brand-sub">野球のサイン練習</span>
+      <span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span>
+      <span class="brand-sub">野球のサインを、チームの力に。</span>
     </span>
   </a>
           <nav class="header-nav" aria-label="メインナビゲーション">
             <a href="#features">特徴</a>
-            <a href="#pricing">料金</a>
+            <a href="#pricing">プラン</a>
             <a href="#new-features">新機能</a>
             <a href="#howto">使い方</a>
             <a href="#for-team">こんな方に</a>
@@ -50,7 +50,7 @@
         </div>
         <nav class="mobile-nav" id="mobile-nav" aria-label="スマートフォンメニュー">
           <a href="#features">特徴</a>
-          <a href="#pricing">料金</a>
+          <a href="#pricing">プラン</a>
           <a href="#new-features">新機能</a>
           <a href="#capabilities">できること</a>
           <a href="#howto">使い方</a>
@@ -74,7 +74,7 @@
                 <button class="button button-primary hero-cta" type="button" data-open-register>チームを登録する <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
                 <a class="button button-secondary hero-cta" href="/t/6BnWv2K3zo?openExternalBrowser=1" data-nav>サンプルを試す</a>
               </div>
-              <p class="hero-note">Google / LINEで管理者登録。管理者パスワードの共有は不要です。</p><p class="hero-free-note"><strong>基本機能は現在 ¥0</strong>　サイン登録・グループ・YouTube動画・クイズ・共有までFreeで使えます。</p>
+              <p class="hero-note">Google / LINEで管理者登録。管理者パスワードの共有は不要です。</p><p class="hero-free-note"><strong>基本機能は現在 ¥0</strong>　サイン登録・1サイン1動画・クイズ・共有までFreeで使えます。</p>
               <p class="hero-team-note">登録後すぐにチーム専用ページを発行。管理者の追加・交代もアカウント単位で安全に行えます。</p>
             </div>
             <div class="hero-script hero-script-top" aria-hidden="true">伝わる。<br>動ける。<br><small>もっと野球が楽しくなる。</small></div>
@@ -92,18 +92,35 @@
         </section>
 
 
-        <section id="pricing" class="lp-section free-plan-section" aria-labelledby="free-plan-title">
+        <section id="pricing" class="lp-section free-plan-section" aria-labelledby="plan-title">
           <div class="container">
+            <div class="section-heading compact-heading"><span class="section-kicker">PLAN</span><h2 id="plan-title" class="underline-heading">プランについて</h2><p>基本のサイン練習はFreeで。チーム運用を強化するPlus、分析・監査まで使えるProは現在、対象チーム限定で提供しています。</p></div>
             <div class="free-plan-card">
               <div class="free-plan-copy">
                 <span class="section-kicker">FREE PLAN</span>
                 <h2 id="free-plan-title">まずは、チームのサイン練習を無料で。</h2>
-                <p>現在提供している基本機能はFreeプランで利用できます。チーム登録後に課金画面へ誘導されることはありません。</p>
-                <div class="free-plan-includes" aria-label="Freeプランに含まれる機能"><span>サイン登録</span><span>サイングループ</span><span>YouTube動画</span><span>クイズ練習</span><span>QR・LINE共有</span><span>PWA</span></div>
+                <p>サイン登録・1サイン1動画・クイズ練習などの基本機能はFreeプランで利用できます。OAuth認証も無料です。</p>
+                <div class="free-plan-includes" aria-label="Freeプランに含まれる機能"><span>サイン登録</span><span>サイングループ1つ</span><span>1サイン1動画</span><span>クイズ練習</span><span>QR・LINE共有</span><span>Google / LINE認証</span></div>
               </div>
               <div class="free-plan-price"><span>現在のプラン</span><strong>¥0</strong><small>チーム / 月</small><button class="button button-primary" type="button" data-open-register>無料でチームを登録</button></div>
             </div>
-            <div class="future-plan-note"><strong>将来の有料機能について</strong><p>画像・動画をSIGN TRAINERへ直接アップロードしてクラウド保存する機能など、保存容量や配信コストが発生する追加機能は有料プランとして提供する予定です。現在のFreeプランに決済機能はありません。</p></div>
+            <div class="future-plan-note"><strong>Plus / Proは現在、限定提供です</strong><p>Plusはチーム運用を強化する機能、ProはPlusの全機能に分析・監査を加えた上位プランです。現在は特定チームへSYSTEM管理者が手動で付与しており、一般のお申し込み・オンライン課金にはまだ対応していません。</p></div>
+            <div class="lp-plan-comparison" aria-label="プランの機能比較">
+              <article class="lp-plan-card">
+                <span class="lp-plan-card-kicker">FREE</span><h3>Freeプラン</h3><p>サイン練習を始めるための基本機能を無料で利用できます。</p>
+                <ul class="lp-plan-feature-list"><li>サイン登録・クイズ練習</li><li>サイングループ1つ</li><li>1サインにつき動画1本</li><li>練習履歴 最大50件</li><li>QR・LINE共有 / PWA</li><li>Google / LINE OAuth認証</li><li>メイン管理者1名</li></ul>
+              </article>
+              <article class="lp-plan-card lp-plan-card--limited">
+                <span class="lp-plan-card-kicker">PLUS · LIMITED</span><h3>Plus</h3><p>複数パターンと複数人管理で、チーム運用を強化するプランです。</p>
+                <ul class="lp-plan-feature-list"><li>Freeの全機能</li><li>複数サイングループ</li><li>1サインへの複数動画</li><li>動画プレビュー開始位置の指定</li><li>サブ管理者 最大5名</li></ul>
+                <p class="lp-plan-limited-note">現在は特定チーム限定で提供しています。</p>
+              </article>
+              <article class="lp-plan-card lp-plan-card--limited lp-plan-card--pro">
+                <span class="lp-plan-card-kicker">PRO · LIMITED</span><h3>Pro</h3><p>Plusの運用機能に、選手の苦手分析と管理監査を加えた上位プランです。</p>
+                <ul class="lp-plan-feature-list"><li>Plusの全機能</li><li>正答率・苦手分析</li><li>グループ・サイン・動画別分析</li><li>最近のアクティビティ</li><li>監査ログ</li></ul>
+                <p class="lp-plan-limited-note">現在は特定チーム限定で提供しています。</p>
+              </article>
+            </div>
           </div>
         </section>
 
@@ -128,7 +145,7 @@
               <h2 class="underline-heading">使い方はかんたん3ステップ</h2>
             </div>
             <div class="steps-grid reference-steps">
-              <article class="step-card"><div class="step-label"><span class="step-number">1</span><div><h3>今日のサインを選ぶ</h3><p>グループを決めて問題数を選択</p></div></div><div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">練習設定</div><div class="phone-body"><div class="phone-title">今日はどのサイン？</div><div class="phone-choice is-green">Aサイン</div><div class="phone-choice">Bサイン</div><div class="phone-choice">すべてのサイン</div><div class="phone-btn green">このグループで練習</div></div></div></div></article>
+              <article class="step-card"><div class="step-label"><span class="step-number">1</span><div><h3>今日のサインを選ぶ</h3><p>グループを決めて問題数を選択</p></div></div><div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">練習設定</div><div class="phone-body"><div class="phone-title">今日はどのサイン？</div><div class="phone-choice is-green">バッティングサイン</div><div class="phone-choice">守備サイン（2塁ランナーあり）</div><div class="phone-choice">すべてのサイン</div><div class="phone-btn green">このグループで練習</div></div></div></div></article>
               <article class="step-card"><div class="step-label"><span class="step-number">2</span><div><h3>動画を見て答える</h3><p>サイン動画を見て
 何のサインか考えよう</p></div></div><div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">問題 1 / 10</div><div class="phone-body"><div class="phone-video"></div><div class="phone-question">このサインは<br>何でしょう？</div><div class="phone-btn green">答えを見る</div></div></div></div></article>
               <article class="step-card"><div class="step-label"><span class="step-number">3</span><div><h3>正解を確認</h3><p>答えを見て
@@ -149,7 +166,7 @@
             <div class="latest-feature-grid">
               <article class="latest-feature-card latest-feature-card--primary">
                 <div class="latest-feature-no">01</div>
-                <div><span class="latest-feature-kicker">SIGN GROUP</span><h3>サインをグループ分け</h3><p>「Aサイン」「Bサイン」「攻撃サイン」など、チーム独自の名前でグループを作れます。選手は、その日に使うグループだけを選んで練習できます。</p></div>
+                <div><span class="latest-feature-kicker">SIGN GROUP</span><h3>サインをグループ分け</h3><p>「バッティングサイン」「守備サイン（ランナーなし）」「守備サイン（2塁ランナーあり）」「ピッチングサイン」「走塁サイン」など、用途や状況が分かる名前でグループを作れます。選手は、その日に使うグループだけを選んで練習できます。</p></div>
               </article>
               <article class="latest-feature-card">
                 <div class="latest-feature-no">02</div>
@@ -165,7 +182,7 @@
               </article>
               <article class="latest-feature-card">
                 <div class="latest-feature-no">05</div>
-                <div><span class="latest-feature-kicker">VIDEO MEMO</span><h3>複数動画にコメントを残せる</h3><p>同じサインに複数動画を登録し、「正面から撮影」「試合前の確認用」など、動画ごとの用途や補足を残せます。</p></div>
+                <div><span class="latest-feature-kicker">VIDEO VARIATION · LIMITED</span><h3>同じサインを複数パターンで</h3><p>Plus / Proでは、同じサインに複数動画を登録し、動画ごとの用途コメントや確認開始位置を設定できます。Freeは1サイン1動画です。</p></div>
               </article>
               <article class="latest-feature-card">
                 <div class="latest-feature-no">06</div>
@@ -180,7 +197,7 @@
                 <p>説明を見る操作と練習開始を分けています。グループを選んだ後は、選択中のグループ名を確認してから問題数へ進みます。</p>
               </div>
               <div class="latest-flow-steps">
-                <div class="latest-flow-step"><span>STEP 1</span><strong>今日のサインを選ぶ</strong><small>Aサイン / Bサイン / すべて</small></div>
+                <div class="latest-flow-step"><span>STEP 1</span><strong>今日のサインを選ぶ</strong><small>バッティング / 守備（2塁ランナーあり） / すべて</small></div>
                 <div class="latest-flow-arrow" aria-hidden="true">→</div>
                 <div class="latest-flow-step"><span>STEP 2</span><strong>問題数を選ぶ</strong><small>5問 / 10問 / 全問</small></div>
                 <div class="latest-flow-arrow" aria-hidden="true">→</div>
@@ -415,15 +432,16 @@
               <details><summary>動画はどのように登録されていますか？</summary><p>YouTubeの限定公開動画を利用します。練習ページの合言葉認証前には、サイン名やYouTube動画IDをブラウザへ返しません。</p></details>
               <details><summary>スマホ以外でも使えますか？</summary><p>はい。スマートフォンを中心に設計していますが、タブレットやPCのブラウザでも利用できます。</p></details>
               <details><summary>チームではどのように利用しますか？</summary><p>チーム登録後に、そのチーム専用の練習ページとURLを発行します。監督・コーチがLINEなどでURLやQRコードをメンバーへ共有し、メンバーはチームの合言葉を入力して練習します。</p></details>
-              <details><summary>サインや動画はあとから変更できますか？</summary><p>はい。チーム管理者専用画面から、サイングループ・説明・説明動画・サイン名・YouTube URL・並び順・有効／無効を変更できます。同じサインに複数の動画を登録し、動画ごとに用途コメントを残すこともできます。</p></details>
-              <details><summary>サイングループはどのように使いますか？</summary><p>チーム管理者が「Aサイン」「Bサイン」などのグループを作成し、説明文や説明動画を登録します。メンバーは練習前にその日のグループを選び、説明を確認してから、そのグループだけを練習できます。日付との紐付けは行わず、チーム内でその日に使うグループを決める運用です。</p></details>
+              <details><summary>サインや動画はあとから変更できますか？</summary><p>はい。チーム管理者専用画面から、サイングループ・説明・説明動画・サイン名・YouTube URL・並び順・有効／無効を変更できます。Freeでは1サイン1動画まで、Plus / Proでは同じサインに複数動画を登録できます。</p></details>
+              <details><summary>動画のサムネイルはどう表示されますか？</summary><p>YouTube動画はYouTubeが用意する標準サムネイルを自動表示します。Plus / Proでは、管理画面の動画確認を指定秒から開始できるため、確認したい動作へすぐ移動できます。</p></details>
+              <details><summary>サイングループはどのように使いますか？</summary><p>Freeプランでは1つのサイングループを利用できます。Plus / Proでは「バッティングサイン」「守備サイン（ランナーなし）」「守備サイン（2塁ランナーあり）」「ピッチングサイン」「走塁サイン」のように用途・状況別の複数グループを作成でき、説明文や説明動画を分けて管理できます。一般のお申し込み・オンライン課金にはまだ対応していません。</p></details>
               <details><summary>練習結果はあとから見られますか？</summary><p>はい。この端末に練習履歴を最大50件保存し、正答率・練習時間・各問題の○×・間違えたサインを見返せます。履歴から間違えた問題だけ再練習することもできます。</p></details>
               <details><summary>回答や練習履歴はどこに保存されますか？</summary><p>○×の回答、正答率、練習時間、間違えたサインなどの練習結果は、今使っている端末のブラウザ内に保存します。SIGN TRAINERのサーバーには練習結果を保存せず、別端末にも自動では同期しません。ブラウザデータを削除すると履歴が消える場合があります。</p></details>
               <details><summary>間違えたサインだけ復習できますか？</summary><p>できます。結果画面や履歴詳細から、間違えたサインの動画をもう一度確認し、その問題だけで再練習できます。</p></details>
               <details><summary>チーム登録はどうやって行いますか？</summary><p>トップページの「チームを登録する」からGoogleまたはLINEで管理者登録し、チーム名と選手用合言葉を設定します。管理者パスワードを共有する必要はありません。</p></details>
-              <details><summary>管理者が交代するときは？</summary><p>メイン管理者がワンタイムの交代リンクを発行し、新しいメイン管理者がGoogleまたはLINEで本人認証して承認します。サブ管理者は最大5名まで追加できます。</p></details>
+              <details><summary>管理者が交代するときは？</summary><p>メイン管理者がワンタイムの交代リンクを発行し、新しいメイン管理者がGoogleまたはLINEで本人認証して承認します。メイン管理者の交代とOAuth認証はFreeでも利用できます。サブ管理者（最大5名）はPlus / Proで利用できます。</p></details>
               <details><summary>管理者は退会できますか？</summary><p>サブ管理者は自分でチームから退会できます。メイン管理者は先に別の管理者へメイン管理者権限を引き継いでから退会します。</p></details>
-              <details><summary>料金はかかりますか？</summary><p>現在提供しているサイン登録、サイングループ、YouTube動画、クイズ、共有、PWAなどの基本機能はFreeプラン（¥0）で利用できます。将来、画像・動画の直接アップロードなどクラウド保存コストが発生する追加機能について、有料プランを提供する予定です。現時点では決済機能はありません。</p></details>
+              <details><summary>料金はかかりますか？</summary><p>基本的なサイン登録、1つのサイングループ、1サイン1動画、クイズ、共有、Google / LINE認証はFreeプラン（¥0）で利用できます。Plusでは複数サイングループ・複数動画・動画確認位置・サブ管理者を利用できます。Proではさらに練習成績・苦手分析と最近のアクティビティ／監査ログを利用できます。Plus / Proは現在、特定チーム限定で提供しており、一般のお申し込み・オンライン課金にはまだ対応していません。</p></details>
             </div>
           </div>
         </section>
@@ -437,12 +455,12 @@
     <img class="brand-icon-img" src="/assets/sign-trainer-icon.webp?v=__ASSET_VERSION__" alt="" width="128" height="128" decoding="async">
   </span>
     <span class="brand-copy">
-      <span class="brand-name">SIGN TRAINER</span>
-      <span class="brand-sub">野球のサイン練習アプリ</span>
+      <span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span>
+      <span class="brand-sub">野球のサインを、チームの力に。</span>
     </span>
   </a>
           <nav class="footer-nav" aria-label="フッターナビゲーション">
-            <a href="/" data-nav>トップ</a><a href="#features">特徴</a><a href="#pricing">料金</a><a href="#new-features">新機能</a><a href="#capabilities">できること</a><a href="#howto">使い方</a><a href="#for-team">こんな方に</a><a href="#share">共有方法</a><a href="#install">インストール</a><a href="#operation">運用情報</a><a href="#faq">よくある質問</a><a href="/terms">利用規約</a><a href="/privacy">プライバシー</a><a href="/external-transmission">外部送信</a><a href="/support">お問い合わせ</a>
+            <a href="/" data-nav>トップ</a><a href="#features">特徴</a><a href="#pricing">プラン</a><a href="#new-features">新機能</a><a href="#capabilities">できること</a><a href="#howto">使い方</a><a href="#for-team">こんな方に</a><a href="#share">共有方法</a><a href="#install">インストール</a><a href="#operation">運用情報</a><a href="#faq">よくある質問</a><a href="/terms">利用規約</a><a href="/privacy">プライバシー</a><a href="/external-transmission">外部送信</a><a href="/support">お問い合わせ</a>
           </nav>
           <div class="footer-tagline">野球を、もっとシンプルに。<br>もっと楽しく。</div>
           <div class="footer-meta">© 2026 SIGN TRAINER. All rights reserved.</div>

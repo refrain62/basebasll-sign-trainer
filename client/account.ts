@@ -15,6 +15,39 @@ const params = new URLSearchParams(location.search);
 
 const esc = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
 
+function accountPager(total, pageSize = 6) {
+  if (total <= pageSize) return "";
+  const totalPages = Math.ceil(total / pageSize);
+  return `<nav class="admin-pagination account-pagination" data-account-pager aria-label="管理チームのページ切り替え"><p class="admin-pagination-range"><strong data-account-pager-range>1〜${Math.min(pageSize, total)}</strong><span> / 全${total}件</span></p><div class="admin-pagination-buttons"><button class="button button-secondary admin-pagination-button" type="button" data-account-pager-prev disabled>‹ 前へ</button><span class="admin-pagination-status" data-account-pager-status>1 / ${totalPages}ページ</span><button class="button button-secondary admin-pagination-button" type="button" data-account-pager-next>次へ ›</button></div></nav>`;
+}
+
+function wireAccountTeamPager() {
+  const grid = document.querySelector<HTMLElement>("[data-account-team-grid]");
+  const pager = document.querySelector<HTMLElement>("[data-account-pager]");
+  if (!grid || !pager) return;
+  const items = [...grid.querySelectorAll<HTMLElement>("[data-account-team-item]")];
+  const pageSize = Math.max(1, Number(grid.dataset.pageSize || 6));
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const prev = pager.querySelector<HTMLButtonElement>("[data-account-pager-prev]");
+  const next = pager.querySelector<HTMLButtonElement>("[data-account-pager-next]");
+  const status = pager.querySelector<HTMLElement>("[data-account-pager-status]");
+  const range = pager.querySelector<HTMLElement>("[data-account-pager-range]");
+  let page = 1;
+  const renderPage = (scroll = false) => {
+    const start = (page - 1) * pageSize;
+    const end = Math.min(start + pageSize, items.length);
+    items.forEach((item, index) => { item.hidden = index < start || index >= end; });
+    if (status) status.textContent = `${page} / ${totalPages}ページ`;
+    if (range) range.textContent = `${start + 1}〜${end}`;
+    if (prev) prev.disabled = page <= 1;
+    if (next) next.disabled = page >= totalPages;
+    if (scroll) grid.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  prev?.addEventListener("click", () => { if (page > 1) { page -= 1; renderPage(true); } });
+  next?.addEventListener("click", () => { if (page < totalPages) { page += 1; renderPage(true); } });
+  renderPage();
+}
+
 async function requestJson(url: string, options: RequestInit = {}) {
   const response = await fetch(url, {
     cache: "no-store",
@@ -23,6 +56,24 @@ async function requestJson(url: string, options: RequestInit = {}) {
   });
   const data = await response.json().catch(() => ({}));
   return { response, data };
+}
+
+
+function formatAccountDate(value) {
+  if (!value) return "-";
+  const text = String(value);
+  const date = new Date(text.includes("T") ? text : `${text.replace(" ", "T")}Z`);
+  if (Number.isNaN(date.getTime())) return text;
+  return new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+function loginHistoryList(items = []) {
+  if (!items.length) return `<div class="account-login-empty">まだログイン履歴はありません。次回のGoogle / LINEログインから記録されます。</div>`;
+  return `<div class="account-login-history">${items.slice(0, 10).map((item) => {
+    const provider = item?.detail?.provider === "line" ? "LINE" : item?.detail?.provider === "google" ? "Google" : "アカウント";
+    const intent = item?.detail?.intent === "reauth" ? "本人確認" : "ログイン";
+    return `<div class="account-login-row"><span class="account-login-provider account-login-provider--${esc(String(item?.detail?.provider || "account"))}">${esc(provider)}</span><div><strong>${esc(intent)}</strong><span>${esc(formatAccountDate(item.createdAt))}</span></div></div>`;
+  }).join("")}</div>`;
 }
 
 function providerLabel(provider) {
@@ -118,7 +169,7 @@ function renderUnauthenticated(providers, invite) {
 function teamCard(team) {
   const owner = team.role === "owner";
   const plan = team.plan || { name: "Free", isFree: true };
-  return `<article class="account-team-card">
+  return `<article class="account-team-card" data-account-team-item>
     <div><div class="account-team-badges"><span class="account-role ${owner ? "is-owner" : ""}">${owner ? "メイン管理者" : "サブ管理者"}</span><span class="account-plan-badge ${plan.isFree ? "is-free" : ""}">${esc(plan.name || "Free")}</span></div><h3>${esc(team.teamName)}</h3><p>${esc(team.teamId)}</p></div>
     <div class="account-team-actions"><a class="button button-primary" href="/t/${encodeURIComponent(team.teamId)}/admin">管理画面</a><a class="button button-secondary" href="/t/${encodeURIComponent(team.teamId)}">選手画面</a></div>
   </article>`;
@@ -165,6 +216,7 @@ function openDeleteDialog(dashboard) {
 }
 
 function wireDashboard(dashboard) {
+  wireAccountTeamPager();
   document.querySelector("#account-logout")?.addEventListener("click", async () => { await fetch("/api/account/logout", { method: "POST" }); location.href = "/account"; });
   document.querySelector("#open-create-team")?.addEventListener("click", () => { document.querySelector("#create-team-slot").innerHTML = createTeamPanel(); wireCreateTeam(); document.querySelector("#create-team-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }); });
   document.querySelector("#delete-account")?.addEventListener("click", () => openDeleteDialog(dashboard));
@@ -197,6 +249,7 @@ function renderDashboard(dashboard) {
   const user = dashboard.user;
   const identities = dashboard.identities || [];
   const teams = dashboard.teams || [];
+  const loginHistory = dashboard.loginHistory || [];
   app.innerHTML = `<div class="account-dashboard">
     <section class="account-profile-card">
       <div class="account-profile-main"><span class="account-avatar account-avatar--fallback">${esc((user.displayName || "管").slice(0,1))}</span><div><span class="account-eyebrow">ADMIN ACCOUNT</span><h1>${esc(user.displayName)}</h1><p>${esc(user.email || "メールアドレス未取得")}</p><div class="account-provider-badges">${identities.map((item) => `<span>${item.provider === "google" ? "Google" : "LINE"}</span>`).join("")}</div></div></div>
@@ -205,8 +258,9 @@ function renderDashboard(dashboard) {
     <div id="create-team-slot"></div>
     <section class="account-panel">
       <div class="account-section-heading"><div><span class="account-eyebrow">YOUR TEAMS</span><h2>管理しているチーム</h2><p>${teams.length ? `${teams.length}チーム` : "まだチームがありません"}</p></div><button class="button button-primary" id="open-create-team" type="button">＋ 新しいチーム</button></div>
-      ${teams.length ? `<div class="account-team-grid">${teams.map(teamCard).join("")}</div>` : `<div class="account-empty"><strong>最初のチームを登録しましょう</strong><p>チーム名と選手用合言葉だけで始められます。</p></div>`}
+      ${teams.length ? `<div class="account-team-grid" data-account-team-grid data-page-size="6">${teams.map(teamCard).join("")}</div>${accountPager(teams.length, 6)}` : `<div class="account-empty"><strong>最初のチームを登録しましょう</strong><p>チーム名と選手用合言葉だけで始められます。</p></div>`}
     </section>
+    <section class="account-panel"><div class="account-section-heading"><div><span class="account-eyebrow">LOGIN HISTORY</span><h2>ログイン履歴</h2><p>Google / LINEで本人確認した履歴を新しい順に表示します。</p></div></div>${loginHistoryList(loginHistory)}</section>
     <section class="account-panel account-safety-panel"><div><span class="account-eyebrow">ACCOUNT SAFETY</span><h2>メイン管理者の交代・サブ管理者の退会はチーム管理画面から</h2><p>メイン管理者の交代はワンタイム招待リンクで安全に行えます。サブ管理者は自分でチームから退会できます。</p></div></section>
     <section class="account-panel account-danger-panel"><div><h2>アカウント退会</h2><p>メイン管理者になっているチームがある場合は、先にメイン管理者を交代する必要があります。</p></div><button class="button button-danger" id="delete-account" type="button">退会手続き</button></section>
   </div>`;

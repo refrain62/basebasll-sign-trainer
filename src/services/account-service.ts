@@ -48,7 +48,7 @@ export function createAccountService({
           subject: profile.subject,
           emailVerified: Boolean(profile.emailVerified)
         });
-        await auditRepository.record("account", null, "account.create", "user", userId, { provider: profile.provider });
+        await auditRepository.record("account", null, "account.create", "user", userId, { provider: profile.provider }, userId);
         if (legalConsent?.termsVersion && legalConsent?.privacyVersion) await userRepository.recordLegalConsent(userId, legalConsent.termsVersion, legalConsent.privacyVersion);
         return userRepository.publicUser(await userRepository.findById(userId));
       } catch (error) {
@@ -78,7 +78,8 @@ export function createAccountService({
       return {
         user: userRepository.publicUser(row),
         identities: await userRepository.listIdentities(userId),
-        teams: teams.map((team) => ({ ...team, plan: plans[team.teamId] || null }))
+        teams: teams.map((team) => ({ ...team, plan: plans[team.teamId] || null })),
+        loginHistory: auditRepository.listUserLogins ? await auditRepository.listUserLogins(userId, 20) : []
       };
     },
 
@@ -108,7 +109,7 @@ export function createAccountService({
       const passphraseHash = await hashPassword(passphrase);
       const adminHash = await hashPassword(randomToken(48));
       await provisioningRepository.createOwnedTeam({ teamId, name, passphraseHash, adminHash, userId });
-      await auditRepository.record("account-owner", teamId, "team.self_register", "team", teamId, { userId, name });
+      await auditRepository.record("account-owner", teamId, "team.self_register", "team", teamId, { userId, name }, userId);
       return { team: teamRepository.publicTeam(await teamRepository.findById(teamId)), urls: teamUrls(teamId) };
     },
 
@@ -137,7 +138,7 @@ export function createAccountService({
         }
         throw new ServiceError("account_delete_conflict", "アカウントの状態が変更されました。画面を再読み込みしてもう一度お試しください。", 409);
       }
-      await auditRepository.record("account", null, "account.delete", "user", userId);
+      await auditRepository.record("account", null, "account.delete", "user", userId, null, userId);
       return { ok: true };
     }
   };

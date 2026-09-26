@@ -9,7 +9,8 @@ import { cookieValue, createSessionToken, nowSeconds, sessionSecretConfigError, 
 import { createServices } from "../services/service-factory.ts";
 import { normalizeSecret, positiveNumber } from "../validation/common.ts";
 import { parseJsonBody } from "../validation/request.ts";
-import { dataProtectionBodySchema, systemAuthBodySchema, systemCreateTeamBodySchema, systemUpdateTeamBodySchema } from "../validation/schemas.ts";
+import { dataProtectionBodySchema, systemAuthBodySchema, systemCreateTeamBodySchema, systemUpdateTeamBodySchema, systemNoticeBodySchema } from "../validation/schemas.ts";
+import { createSystemNoticeRepository } from "../repositories/system-notice-repository.ts";
 
 
 export async function systemSession(request, env) {
@@ -46,7 +47,9 @@ export async function systemLogout(_request, url) {
 
 export async function systemListTeams(request, env) {
   if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
-  return apiJson({ teams: await createServices(env.DB, env).systemTeams.list() });
+  const services = createServices(env.DB, env);
+  const [teams, plans] = await Promise.all([services.systemTeams.list(), services.entitlements.planDefinitions()]);
+  return apiJson({ teams, plans });
 }
 
 export async function systemCreateTeam(request, env) {
@@ -83,6 +86,16 @@ export async function systemDeleteTeam(request, env, teamId) {
   }
 }
 
+export async function systemRestoreTeam(request, env, teamId) {
+  if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
+  try {
+    const team = await createServices(env.DB, env).systemTeams.restore(teamId);
+    return apiJson({ ok: true, team });
+  } catch (error) {
+    return serviceErrorResponse(error);
+  }
+}
+
 export async function systemDataProtectionStatus(request, env) {
   if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
   try {
@@ -111,4 +124,39 @@ export async function systemProtectData(request, env) {
   } catch (error) {
     return serviceErrorResponse(error);
   }
+}
+
+
+export async function systemListNotices(request, env) {
+  if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
+  return apiJson({ notices: await createSystemNoticeRepository(env.DB).list() });
+}
+
+export async function systemCreateNotice(request, env) {
+  if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
+  const parsed = await parseJsonBody(request, systemNoticeBodySchema);
+  if (parsed.response) return parsed.response;
+  const notice = await createSystemNoticeRepository(env.DB).create(parsed.data);
+  await createAuditRepository(env.DB).record("system", null, "notice.create", "system_notice", notice?.id, { status: parsed.data.status, kind: parsed.data.kind });
+  return apiJson({ ok: true, notice }, 201);
+}
+
+export async function systemUpdateNotice(request, env, noticeId) {
+  if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
+  const parsed = await parseJsonBody(request, systemNoticeBodySchema);
+  if (parsed.response) return parsed.response;
+  const repo = createSystemNoticeRepository(env.DB);
+  if (!(await repo.get(noticeId))) return apiJson({ error: "not_found" }, 404);
+  const notice = await repo.update(noticeId, parsed.data);
+  await createAuditRepository(env.DB).record("system", null, "notice.update", "system_notice", noticeId, { status: parsed.data.status, kind: parsed.data.kind });
+  return apiJson({ ok: true, notice });
+}
+
+export async function systemDeleteNotice(request, env, noticeId) {
+  if (!(await requireSystem(request, env))) return apiJson({ error: "unauthorized" }, 401);
+  const repo = createSystemNoticeRepository(env.DB);
+  if (!(await repo.get(noticeId))) return apiJson({ error: "not_found" }, 404);
+  await repo.remove(noticeId);
+  await createAuditRepository(env.DB).record("system", null, "notice.delete", "system_notice", noticeId);
+  return apiJson({ ok: true });
 }

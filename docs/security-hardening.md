@@ -2,7 +2,7 @@
 
 ## Addressed
 
-- Exact pin: `wrangler@4.136.3`
+- Exact pin: `wrangler@4.141.0`
 - `.npmrc`: exact versions, lockfile required, lifecycle scripts disabled
 - Deploy preflight blocks deployment without `package-lock.json`
 - `.dev.vars*` excluded from source distribution

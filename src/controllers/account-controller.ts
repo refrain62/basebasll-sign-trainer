@@ -12,6 +12,7 @@ import { createServices } from "../services/service-factory.ts";
 import { normalizeTeamId, positiveNumber } from "../validation/common.ts";
 import { parseJsonBody } from "../validation/request.ts";
 import { accountCreateTeamBodySchema, accountDeleteBodySchema } from "../validation/schemas.ts";
+import { FEATURE_KEYS } from "../config/features.ts";
 
 const OAUTH_TTL_SECONDS = 10 * 60;
 
@@ -188,6 +189,15 @@ export async function accountOAuthCallback(request, env, url, provider) {
       ? { termsVersion: oauthSession.termsVersion, privacyVersion: oauthSession.privacyVersion }
       : null;
     const publicUser = await services.account.upsertOAuthUser(profile, legalConsent);
+    await services.repositories.auditRepository.record(
+      "account",
+      oauthSession.teamId || null,
+      "auth.account.success",
+      "user",
+      publicUser.id,
+      { provider, intent: oauthSession.intent || "login" },
+      publicUser.id
+    );
     if (oauthSession.intent === "reauth" && publicUser.id !== oauthSession.expectedUserId) {
       return redirectResponse(errorRedirect(url, "reauth_identity_mismatch"), [clearOauth]);
     }
@@ -280,8 +290,12 @@ export async function accountInviteAccept(request, env, rawToken) {
   const session = await requireUser(request, env);
   if (!session) return apiJson({ error: "unauthorized" }, 401);
   try {
-    const service = createServices(env.DB, env).adminMembership;
+    const services = createServices(env.DB, env);
+    const service = services.adminMembership;
     const preview = await service.previewInvite(rawToken);
+    if (preview.kind === "admin") {
+      await services.entitlements.assertFeature(preview.teamId, FEATURE_KEYS.SUB_ADMIN_MANAGEMENT, "サブ管理者の追加は現在、Plus / Pro機能です。");
+    }
     if (preview.kind === "transfer" && !isFreshAccountSession(session)) {
       return freshAuthRequired(session, `/join-admin/${encodeURIComponent(rawToken)}`);
     }

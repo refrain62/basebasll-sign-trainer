@@ -3,6 +3,7 @@ import type { AppEnv } from "../types.ts";
 import { apiJson } from "../http/response.ts";
 import {
   teamAdminAuth,
+  teamAdminActivity,
   teamAdminCreateGroup,
   teamAdminCreateSign,
   teamAdminCreateVideo,
@@ -13,6 +14,7 @@ import {
   teamAdminLeave,
   teamAdminDisableLegacyPassword,
   teamAdminDeleteGroup,
+  teamAdminDeleteTeam,
   teamAdminDeleteSign,
   teamAdminDeleteVideo,
   teamAdminGetTeam,
@@ -46,7 +48,9 @@ teamAdminRoutes.get("/session", (c) => teamAdminSession(c.req.raw, c.env, reques
 teamAdminRoutes.post("/auth", (c) => teamAdminAuth(c.req.raw, c.env, requestUrl(c)));
 teamAdminRoutes.post("/logout", (c) => teamAdminLogout(c.req.raw, requestUrl(c)));
 teamAdminRoutes.get("/team", (c) => teamAdminGetTeam(c.req.raw, c.env, requestUrl(c)));
+teamAdminRoutes.get("/activity", (c) => teamAdminActivity(c.req.raw, c.env, requestUrl(c)));
 teamAdminRoutes.put("/team", (c) => teamAdminUpdateTeam(c.req.raw, c.env, requestUrl(c)));
+teamAdminRoutes.delete("/team", (c) => teamAdminDeleteTeam(c.req.raw, c.env, requestUrl(c)));
 
 teamAdminRoutes.post("/admins/invites", (c) => teamAdminCreateInvite(c.req.raw, c.env, requestUrl(c)));
 teamAdminRoutes.delete("/admins/invites/:inviteId", (c) => {

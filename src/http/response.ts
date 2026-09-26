@@ -32,7 +32,7 @@ export function withHeaders(response, { noIndex = false, noCache = false } = {})
   headers.set("permissions-policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
   headers.set("cross-origin-opener-policy", "same-origin-allow-popups");
   headers.set("x-frame-options", "DENY");
-  headers.set("content-security-policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-src https://www.youtube-nocookie.com; connect-src 'self'; media-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
+  headers.set("content-security-policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://i.ytimg.com; frame-src https://www.youtube-nocookie.com; connect-src 'self'; media-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
   if (noIndex) headers.set("x-robots-tag", "noindex, nofollow, noarchive");
   if (noCache) headers.set("cache-control", "no-cache, no-store, must-revalidate");
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });

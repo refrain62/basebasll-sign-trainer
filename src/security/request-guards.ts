@@ -5,7 +5,7 @@ import { verifyCloudflareAccessJwt } from "./cloudflare-access.ts";
 export { isLocalHostname };
 
 export function isSystemAdminPath(pathname) {
-  return pathname === "/admin" || pathname === "/register" || pathname.startsWith("/api/system/");
+  return pathname === "/admin" || pathname === "/admin.html" || pathname.startsWith("/admin/") || pathname === "/register" || pathname.startsWith("/api/system/");
 }
 
 export async function validateCloudflareAccess(request, env, { fetcher = fetch, nowSeconds }: { fetcher?: typeof fetch; nowSeconds?: number } = {}) {
