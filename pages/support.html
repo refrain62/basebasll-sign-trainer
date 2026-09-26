@@ -10,39 +10,32 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=__ASSET_VERSION__" />
     <link rel="manifest" href="/manifest.webmanifest?v=__ASSET_VERSION__" />
     <link rel="stylesheet" href="/styles.css?v=__ASSET_VERSION__" />
+    <link rel="stylesheet" href="/lp-refresh.css?v=__ASSET_VERSION__" />
   </head>
   <body>
-    <div class="site-shell lp-fidelity">
-      <header class="site-header">
-        <div class="container header-inner">
-          <a class="brand" href="/" aria-label="SIGN TRAINER トップページ">
-            <span class="brand-mark" aria-hidden="true"><img class="brand-icon-img" src="/assets/sign-trainer-icon.webp?v=__ASSET_VERSION__" alt="" width="128" height="128" decoding="async" /></span>
-            <span class="brand-copy"><span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span><span class="brand-sub">野球のサインを、チームの力に。</span></span>
-          </a>
-          <nav class="header-nav" aria-label="メインナビゲーション">
-            <a href="/#capabilities">特徴</a>
-            <a href="/#capabilities">できること</a>
-            <a href="/install">使い方</a>
-            <a href="/plans">料金プラン</a>
-            <a href="/install">導入事例</a>
-            <a href="/support">FAQ</a>
-            <a class="header-login" href="/account">ログイン</a>
-            <a class="button button-primary button-small header-cta" href="/account?create=1">無料ではじめる <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-          </nav>
-          <button class="mobile-menu-button" id="mobile-menu-button" type="button" aria-label="メニューを開く" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-        </div>
-        <nav class="mobile-nav" id="mobile-nav" aria-label="スマートフォンメニュー">
-          <a href="/#capabilities">特徴</a>
-          <a href="/#capabilities">できること</a>
-          <a href="/install">使い方</a>
-          <a href="/plans">料金プラン</a>
-          <a href="/install">導入事例</a>
-          <a href="/support">FAQ</a>
-          <a href="/account">ログイン</a>
-          <a class="button button-primary" href="/account?create=1">無料ではじめる</a>
-          <a class="button button-secondary" href="/t/6BnWv2K3zo?openExternalBrowser=1">デモを見る</a>
-        </nav>
-      </header>
+    <div class="site-shell lp-v2 lp-refresh lp-fidelity secondary-page">
+      <header class="site-header lp-site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" data-nav aria-label="SIGN TRAINER トップページ">
+        <span class="brand-mark" aria-hidden="true"><img class="brand-icon-img" src="/assets/sign-trainer-icon.webp?v=__ASSET_VERSION__" alt="" width="128" height="128" decoding="async"></span>
+        <span class="brand-copy"><span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span><span class="brand-sub">野球のサインを、チームの力に。</span></span>
+      </a>
+      <nav class="header-nav" aria-label="メインナビゲーション">
+        <a href="/#capabilities">できること</a>
+        <a href="/plans">料金プラン</a>
+        <a href="/install">導入事例</a>
+        <a href="/support">よくある質問</a>
+        <a class="header-login" href="/account">ログイン</a>
+        <a class="button button-primary button-small header-cta" href="/account?create=1">無料ではじめる →</a>
+      </nav>
+      <button class="mobile-menu-button" id="mobile-menu-button" type="button" aria-label="メニューを開く" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </div>
+    <nav class="mobile-nav" id="mobile-nav" aria-label="スマートフォンメニュー">
+      <a href="/#capabilities">できること</a><a href="/plans">料金プラン</a><a href="/install">導入事例</a><a href="/support">よくある質問</a><a href="/account">ログイン</a>
+      <a class="button button-primary" href="/account?create=1">無料ではじめる</a>
+      <a class="button button-secondary" href="/t/6BnWv2K3zo?openExternalBrowser=1" data-nav>デモを見る</a>
+    </nav>
+  </header>
 
       <main class="fidelity-main">
         <section class="fidelity-page-hero container">
@@ -149,22 +142,13 @@
         </section>
       </main>
 
-      <footer class="site-footer reference-footer simple-footer fidelity-footer">
-        <div class="container fidelity-footer-inner">
-          <p class="fidelity-footer-brand"><span class="footer-brand-sign">SIGN</span> <span class="footer-brand-trainer">TRAINER</span> <span class="footer-brand-tagline">野球のサインを、チームの力に。</span></p>
-          <nav class="fidelity-footer-nav" aria-label="フッターナビゲーション">
-            <a href="/">トップ</a>
-            <a href="/#capabilities">できること</a>
-            <a href="/install">使い方</a>
-            <a href="/plans">料金プラン</a>
-            <a href="/install">導入事例</a>
-            <a href="/support">FAQ</a>
-            <a href="/terms">利用規約</a>
-            <a href="/privacy">プライバシーポリシー</a>
-          </nav>
-          <p class="fidelity-footer-meta">© 2026 SIGN TRAINER All rights reserved.</p>
-        </div>
-      </footer>
+      <footer class="site-footer reference-footer lp-footer">
+    <div class="container footer-inner">
+      <a class="brand footer-brand" href="/" data-nav aria-label="SIGN TRAINER トップページ"><span class="brand-copy"><span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span><span class="brand-sub">野球のサインを、チームの力に。</span></span></a>
+      <nav class="footer-nav" aria-label="フッターナビゲーション"><a href="/#capabilities">特徴</a><a href="/#capabilities">できること</a><a href="/#howto">使い方</a><a href="/plans">料金プラン</a><a href="/install">導入事例</a><a href="/support">FAQ</a><a href="/terms">利用規約</a><a href="/privacy">プライバシーポリシー</a></nav>
+      <div class="footer-meta">© 2026 SIGN TRAINER. All rights reserved.</div>
+    </div>
+  </footer>
     </div>
     <!-- VITE_ENTRY:landing -->
   </body>

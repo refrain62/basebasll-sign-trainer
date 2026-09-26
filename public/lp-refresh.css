@@ -613,3 +613,47 @@ body { background:#eef5f8; }
     min-height: 32px;
   }
 }
+
+
+/* v1.5.37 UI fix9: result sharing promotion */
+.lp-result-share {
+  padding:32px 0;
+  background:linear-gradient(135deg,#eefaf5 0%,#f8fcfb 52%,#eef7fb 100%);
+  border-top:1px solid #e1ece8;
+  border-bottom:1px solid #e1ece8;
+}
+.lp-result-share-grid { display:grid; grid-template-columns:1.18fr .82fr; gap:26px; align-items:center; }
+.lp-result-share-badge { display:inline-flex; align-items:center; min-height:26px; padding:0 11px; border-radius:999px; color:#067b47; background:#dff6ea; font-size:10px; font-weight:950; letter-spacing:.08em; }
+.lp-result-share-copy h2 { margin:10px 0 10px; color:#071e33; font-size:29px; line-height:1.22; font-weight:950; letter-spacing:-.03em; }
+.lp-result-share-copy p { margin:0; color:#405c6e; font-size:13px; line-height:1.8; font-weight:700; }
+.lp-result-share-copy p strong { color:#071e33; }
+.lp-result-share-copy ul { list-style:none; margin:14px 0 0; padding:0; display:grid; gap:7px; }
+.lp-result-share-copy li { position:relative; padding-left:24px; color:#18384d; font-size:12px; font-weight:850; line-height:1.5; }
+.lp-result-share-copy li::before { content:'✓'; position:absolute; left:0; top:0; width:17px; height:17px; display:grid; place-items:center; border-radius:50%; background:#0bb763; color:#fff; font-size:10px; }
+.lp-result-share-demo { display:grid; gap:10px; }
+.lp-result-card { padding:17px; border:1px solid #d4e7df; border-radius:18px; background:#fff; box-shadow:0 12px 26px rgba(4,61,41,.08); text-align:center; }
+.lp-result-card .result-kicker { display:block; color:#0a9d57; font-size:9px; font-weight:950; letter-spacing:.12em; }
+.lp-result-card > b { display:block; margin:3px 0 10px; color:#092944; font-size:19px; }
+.result-ring { width:132px; height:132px; margin:0 auto 14px; border:12px solid #0aa45c; border-radius:50%; display:grid; place-items:center; align-content:center; color:#082944; }
+.result-ring strong { font-size:39px; line-height:1; }
+.result-ring small { margin-top:-26px; margin-left:60px; font-size:11px; font-weight:900; }
+.result-ring em { margin-top:7px; font-size:10px; font-style:normal; font-weight:900; }
+.result-stats { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #dce8ed; }
+.result-stats span { padding:10px 3px 3px; display:grid; gap:2px; border-left:1px solid #dce8ed; }
+.result-stats span:first-child { border-left:0; }
+.result-stats strong { font-size:18px; }
+.result-stats small { color:#6b7f8d; font-size:9px; }
+.lp-result-share-options { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.lp-result-share-options span { min-height:37px; padding:8px 10px; display:flex; align-items:center; gap:7px; border:1px solid #cfe2da; border-radius:10px; background:#fff; color:#26495c; font-size:10px; font-weight:800; }
+.lp-result-share-options b { color:#058b4e; }
+@media (max-width:900px) {
+  .lp-result-share-grid { grid-template-columns:1fr; }
+  .lp-result-share-copy h2 { font-size:25px; }
+  .lp-result-share-demo { width:min(100%,520px); margin:0 auto; }
+}
+@media (max-width:520px) {
+  .lp-result-share { padding:25px 0; }
+  .lp-result-share-copy h2 { font-size:23px; }
+  .lp-result-share-copy p { font-size:12px; }
+  .lp-result-share-options { grid-template-columns:1fr; }
+}

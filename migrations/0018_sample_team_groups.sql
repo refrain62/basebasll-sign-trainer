@@ -5,7 +5,7 @@ PRAGMA foreign_keys = ON;
 -- Text values can be protected later by the existing data-protection maintenance flow.
 
 INSERT INTO sign_groups(team_id,name,description,explanation_youtube_url,explanation_youtube_video_id,sort_order,enabled)
-SELECT '6BnWv2K3zo','バッティングサイン','打撃時に使う基本サイン。バント、ヒットエンドラン、スクイズなどをまとめています。','','',10,1
+SELECT '6BnWv2K3zo','バッティングサイン','打撃時に使う基本サイン。バント、ヒットエンドラン、スクイズなどをまとめています。','https://youtube.com/shorts/xhDWDEimYaY','xhDWDEimYaY',10,1
 WHERE EXISTS (SELECT 1 FROM teams WHERE id='6BnWv2K3zo')
   AND NOT EXISTS (SELECT 1 FROM sign_groups WHERE team_id='6BnWv2K3zo' AND sort_order=10 AND deleted_at IS NULL);
 

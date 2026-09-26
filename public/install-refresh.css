@@ -1,0 +1,352 @@
+/* SIGN TRAINER /install faithful responsive refresh */
+.install-refresh main { background:#fff; }
+.install-refresh .install-hero { overflow:hidden; background:#061f34; }
+.install-refresh .install-hero img { display:block; width:100%; height:auto; }
+.install-section { padding:34px 0; }
+.install-share-section { padding-top:30px; }
+.install-method-section { background:linear-gradient(180deg,#f3fbf8,#f8fcfb); border-top:1px solid #e3efeb; border-bottom:1px solid #e3efeb; }
+.install-choice-section { padding-top:26px; }
+.install-section-heading { text-align:center; margin-bottom:20px; }
+.install-section-heading h1,.install-section-heading h2 { margin:0; color:#092b4a; font-size:30px; line-height:1.18; font-weight:950; letter-spacing:-.03em; }
+.install-section-heading p { margin:8px 0 0; color:#607384; font-size:13px; font-weight:700; }
+.install-share-grid-v2 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.install-share-card-v2 { min-width:0; border:1px solid #dce7ec; border-radius:12px; padding:16px 14px 0; overflow:hidden; background:#fff; box-shadow:0 4px 14px rgba(7,40,68,.035); }
+.install-card-title { display:flex; align-items:center; gap:10px; }
+.install-card-title h2 { margin:0; font-size:17px; font-weight:950; }
+.install-share-card-v2 > p { min-height:40px; margin:8px 0 12px; color:#607384; font-size:10px; line-height:1.55; font-weight:700; }
+.install-icon { width:42px; height:42px; display:grid; place-items:center; font-size:30px; color:#08af5f; flex:0 0 auto; }
+.install-icon.qr img,.install-icon.line img { width:38px; height:38px; object-fit:contain; }
+.install-phone-shell { min-height:210px; margin:0 auto; width:min(100%,205px); padding:18px 12px 12px; border:4px solid #102536; border-bottom:0; border-radius:23px 23px 0 0; background:#fff; display:flex; flex-direction:column; gap:9px; }
+.install-phone-title { color:#14304a; text-align:center; font-size:12px; font-weight:950; }
+.install-url-field { min-height:34px; border:1px solid #d7e4e9; border-radius:7px; display:flex; align-items:center; padding:0 9px; color:#334e63; font-size:9px; background:#f9fbfc; }
+.install-green-control { min-height:34px; display:grid; place-items:center; border-radius:7px; background:#0dba63; color:#fff; font-size:10px; font-weight:950; }
+.install-outline-control { min-height:33px; display:grid; place-items:center; border:1.5px solid #163f62; border-radius:7px; color:#163f62; font-size:9px; font-weight:950; }
+.install-share-row { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-top:auto; }
+.install-share-row span { min-width:0; text-align:center; color:#0c2842; font-size:16px; font-weight:900; }
+.install-share-row small { display:block; margin-top:2px; font-size:7px; font-weight:800; }
+.install-qr-mock { width:94px; height:94px; margin:2px auto 4px; background:url('/assets/qr-code-icon.svg?v=__ASSET_VERSION__') center/82% no-repeat; border:9px solid #fff; box-shadow:0 0 0 1px #dce7ec; }
+.line-phone { background:#f1f4f5; justify-content:center; }
+.line-message { margin-left:auto; max-width:148px; padding:10px 11px; border-radius:11px; background:#a9ed88; color:#0c2c42; font-size:9px; line-height:1.45; font-weight:900; }
+.line-message span { font-weight:700; }
+.line-preview { margin-left:auto; width:148px; padding:8px; display:flex; align-items:center; gap:7px; border-radius:8px; background:#fff; color:#16344d; font-size:8px; }
+.line-preview img { width:28px; height:28px; border-radius:6px; }
+.install-mini-checks { list-style:none; margin:0; padding:0; display:grid; gap:5px; }
+.install-mini-checks li { position:relative; padding-left:20px; color:#244357; font-size:8px; line-height:1.4; font-weight:800; }
+.install-mini-checks li::before { content:'✓'; position:absolute; left:0; top:-1px; width:14px; height:14px; display:grid; place-items:center; border-radius:50%; color:#fff; background:#0db863; font-size:8px; }
+.install-device-grid-v2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.install-device-card-v2 { border:1px solid #dce7ec; border-radius:12px; padding:16px; background:#fff; }
+.install-device-card-v2 > h3 { margin:0 0 15px; padding-bottom:12px; border-bottom:1px solid #e5edef; color:#0a2b49; font-size:19px; font-weight:950; }
+.device-logo { display:inline-grid; place-items:center; width:31px; height:31px; margin-right:6px; border-radius:50%; font-size:0; vertical-align:middle; }
+.device-logo.apple { background:#0b2742; }
+.device-logo.android { background:#0eb765; }
+.install-device-steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.install-device-step { min-width:0; display:flex; flex-direction:column; }
+.step-title { display:flex; align-items:center; gap:7px; min-height:35px; }
+.step-title span { width:27px; height:27px; display:grid; place-items:center; border-radius:50%; background:#0db763; color:#fff; font-size:12px; font-weight:950; flex:0 0 auto; }
+.step-title b { color:#17334c; font-size:11px; line-height:1.2; }
+.install-device-step p { min-height:46px; margin:4px 0 8px; color:#667989; font-size:8px; line-height:1.45; font-weight:700; }
+.install-device-step img { width:100%; height:150px; object-fit:cover; object-position:top; border-radius:8px 8px 0 0; border:1px solid #dce6ea; border-bottom:0; margin-top:auto; }
+.install-choice-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.install-choice-card { display:grid; grid-template-columns:54px 1fr; grid-template-rows:auto auto; gap:0 12px; align-items:start; border:1px solid #dce7ec; border-radius:12px; padding:17px; background:#fff; }
+.choice-symbol { grid-row:1 / span 2; width:48px; height:48px; display:grid; place-items:center; color:#08ad5e; font-size:30px; font-weight:950; }
+.install-choice-card h3 { margin:3px 0 8px; color:#11344f; font-size:15px; font-weight:950; }
+.install-choice-card ul { list-style:none; margin:0; padding:0; display:grid; gap:5px; }
+.install-choice-card li { position:relative; padding-left:20px; color:#50697a; font-size:10px; line-height:1.45; font-weight:700; }
+.install-choice-card li::before { content:'✓'; position:absolute; left:0; top:-1px; width:14px; height:14px; border-radius:50%; display:grid; place-items:center; color:#fff; background:#0db763; font-size:8px; }
+.install-choice-pill { grid-column:2; justify-self:end; margin-top:12px; min-height:31px; padding:0 18px; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid #0db763; border-radius:999px; color:#069b50!important; background:#fff; font-size:9px; font-weight:950; text-decoration:none; }
+.install-bottom-message { border-top:1px solid #e7edef; background:#fff; }
+.install-bottom-message .container { width:min(100%,1040px); display:grid; grid-template-columns:56% 44%; padding:0; }
+.install-bottom-image { overflow:hidden; min-height:150px; }
+.install-bottom-image img { width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
+.install-bottom-copy { padding:22px 26px; display:flex; flex-direction:column; justify-content:center; background:#07304b; }
+.install-bottom-copy h2 { margin:0 0 10px; color:#fff; font-size:25px; line-height:1.25; font-weight:950; }
+.install-bottom-copy p { margin:0; color:#dceaf0; font-size:11px; line-height:1.75; font-weight:700; }
+.install-bottom-copy strong { color:#fff; font-size:16px; }
+@media (max-width: 1000px) {
+  .install-share-grid-v2 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .install-share-card-v2 > p { min-height:0; }
+  .install-device-grid-v2 { grid-template-columns:1fr; }
+  .install-device-card-v2 { padding:18px; }
+  .install-device-step img { height:190px; }
+}
+@media (max-width: 760px) {
+  .install-refresh .install-hero { min-height:260px; position:relative; }
+  .install-refresh .install-hero img { width:auto; min-width:100%; height:260px; object-fit:cover; object-position:center; }
+  .install-section { padding:26px 0; }
+  .install-section-heading { text-align:left; margin-bottom:16px; }
+  .install-section-heading h1,.install-section-heading h2 { font-size:24px; }
+  .install-section-heading p { font-size:11px; }
+  .install-share-grid-v2 { grid-template-columns:1fr; gap:12px; }
+  .install-share-card-v2 { display:grid; grid-template-columns:1fr; padding:16px; }
+  .install-share-card-v2 > p { font-size:11px; }
+  .install-phone-shell { width:min(100%,300px); min-height:210px; }
+  .install-device-steps { grid-template-columns:1fr; gap:14px; }
+  .install-device-step { display:grid; grid-template-columns:1fr 140px; column-gap:12px; align-items:start; border-top:1px solid #edf1f3; padding-top:12px; }
+  .install-device-step:first-child { border-top:0; padding-top:0; }
+  .step-title,.install-device-step p { grid-column:1; }
+  .install-device-step p { min-height:0; font-size:10px; }
+  .install-device-step img { grid-column:2; grid-row:1 / span 2; width:140px; height:145px; margin:0; }
+  .install-choice-grid { grid-template-columns:1fr; }
+  .install-bottom-message .container { width:100%; grid-template-columns:1fr; }
+  .install-bottom-image { min-height:185px; }
+  .install-bottom-copy { padding:20px; }
+}
+@media (max-width: 480px) {
+  .install-refresh .install-hero { min-height:230px; }
+  .install-refresh .install-hero img { height:230px; object-position:54% center; }
+  .install-section-heading h1,.install-section-heading h2 { font-size:22px; }
+  .install-device-card-v2 { padding:14px; }
+  .install-device-card-v2 > h3 { font-size:17px; }
+  .install-device-step { grid-template-columns:1fr 112px; }
+  .install-device-step img { width:112px; height:122px; }
+  .install-choice-card { grid-template-columns:44px 1fr; padding:14px; }
+  .choice-symbol { width:40px; height:40px; font-size:24px; }
+  .install-choice-pill { grid-column:1 / -1; justify-self:stretch; }
+}
+
+
+/* v1.5.37 UI fix9: top-page capabilities brought into /install */
+.install-capabilities-section { background:#fff; padding-top:30px; padding-bottom:30px; }
+.install-cap-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.install-cap-card { min-width:0; min-height:118px; padding:15px; display:grid; grid-template-columns:42px 1fr; gap:11px; align-items:start; border:1px solid #dce7ec; border-radius:12px; background:#fff; box-shadow:0 4px 14px rgba(7,40,68,.035); }
+.install-cap-icon { width:40px; height:40px; display:grid; place-items:center; border-radius:9px; background:#0db963; color:#fff; font-size:20px; font-weight:950; }
+.install-cap-card h3 { margin:2px 0 5px; color:#0a2b49; font-size:15px; line-height:1.3; font-weight:950; }
+.install-cap-card p { margin:0; color:#5d7281; font-size:10px; line-height:1.6; font-weight:700; }
+.install-result-share { margin-top:14px; padding:18px; display:grid; grid-template-columns:1.3fr .7fr; gap:18px; align-items:center; border:1px solid #cfe7dc; border-radius:14px; background:linear-gradient(135deg,#edf9f3,#f7fcfa); }
+.install-plan-chip { display:inline-flex; min-height:23px; padding:0 9px; align-items:center; border-radius:999px; background:#d9f4e5; color:#07844c; font-size:9px; font-weight:950; letter-spacing:.08em; }
+.install-result-share h3 { margin:7px 0 6px; color:#0a2b49; font-size:18px; font-weight:950; }
+.install-result-share p { margin:0; color:#526c7c; font-size:11px; line-height:1.65; font-weight:700; }
+.install-result-mini { padding:14px; display:grid; gap:4px; border:1px solid #d4e5dd; border-radius:12px; background:#fff; text-align:center; }
+.install-result-mini b { color:#0a9b56; font-size:9px; letter-spacing:.08em; }
+.install-result-mini strong { color:#092944; font-size:24px; }
+.install-result-mini span { color:#536c7b; font-size:9px; font-weight:800; }
+.install-result-mini em { margin-top:5px; padding:7px; border-radius:7px; background:#ecf8f2; color:#087d49; font-size:9px; font-style:normal; font-weight:900; }
+@media (max-width:1000px) {
+  .install-cap-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:760px) {
+  .install-cap-grid { grid-template-columns:1fr; }
+  .install-cap-card { min-height:0; }
+  .install-result-share { grid-template-columns:1fr; }
+  .install-result-mini { width:min(100%,340px); }
+}
+
+
+/* v1.5.37 UI fix10: install flow redesigned to closely match reference */
+.install-method-section {
+  background:#04192d;
+  border-top:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.install-method-section .install-section-heading h2,
+.install-method-section .install-section-heading p {
+  color:#fff;
+}
+.install-method-section .install-section-heading p {
+  color:#bfd1dd;
+}
+.install-flow-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+}
+.install-flow-card {
+  min-width:0;
+  padding:22px 20px 18px;
+  border:1px solid rgba(180,214,235,.18);
+  border-radius:24px;
+  background:linear-gradient(180deg,#041225 0%,#021426 100%);
+  box-shadow:0 10px 24px rgba(0,0,0,.18);
+}
+.install-flow-card h3 {
+  margin:0 0 14px;
+  color:#fff;
+  font-size:20px;
+  line-height:1.2;
+  font-weight:950;
+  letter-spacing:-.02em;
+}
+.install-flow-start {
+  min-height:52px;
+  padding:0 18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:16px;
+  background:#f3f5f7;
+  color:#0d2135;
+  font-size:18px;
+  font-weight:950;
+  text-align:center;
+}
+.install-flow-intro {
+  margin:18px 0 14px;
+  color:#d4e2eb;
+  font-size:12px;
+  line-height:1.8;
+  font-weight:700;
+}
+.install-flow-step-card {
+  margin-top:14px;
+  padding:10px;
+  border:1px solid rgba(102,149,191,.32);
+  border-radius:20px;
+  background:linear-gradient(180deg,rgba(5,32,58,.96),rgba(4,22,41,.96));
+  overflow:hidden;
+}
+.install-flow-step-card img {
+  width:100%;
+  display:block;
+  border-radius:14px;
+  border:1px solid rgba(97,145,187,.28);
+}
+.install-flow-step-copy { padding:12px 6px 4px; }
+.install-flow-step-copy h4 {
+  margin:0 0 6px;
+  color:#fff;
+  font-size:15px;
+  line-height:1.4;
+  font-weight:950;
+}
+.install-flow-step-copy p {
+  margin:0;
+  color:#d5e2ea;
+  font-size:11px;
+  line-height:1.7;
+  font-weight:700;
+}
+.install-flow-note {
+  display:block;
+  margin-top:16px;
+  color:#b6cad7;
+  font-size:11px;
+  line-height:1.75;
+  font-weight:700;
+}
+@media (max-width: 960px) {
+  .install-flow-grid { grid-template-columns:1fr; }
+}
+@media (max-width: 760px) {
+  .install-flow-card {
+    padding:18px 16px 16px;
+    border-radius:20px;
+  }
+  .install-flow-card h3 { font-size:17px; margin-bottom:12px; }
+  .install-flow-start { min-height:48px; font-size:16px; border-radius:14px; }
+  .install-flow-intro { margin:14px 0 12px; font-size:11px; }
+  .install-flow-step-card { margin-top:12px; border-radius:16px; padding:8px; }
+  .install-flow-step-card img { border-radius:12px; }
+  .install-flow-step-copy h4 { font-size:14px; }
+  .install-flow-step-copy p, .install-flow-note { font-size:10px; }
+}
+
+
+/* v1.5.37 UI fix11: preserve the complete /install hero artwork at every width.
+   The approved hero contains meaningful copy on both left and right, so cropping is not allowed. */
+.install-refresh .install-hero {
+  overflow:visible;
+  background:#061f34;
+}
+.install-refresh .install-hero img {
+  display:block;
+  width:100%;
+  height:auto;
+  max-width:100%;
+  object-fit:contain;
+  object-position:center center;
+}
+@media (max-width:760px) {
+  .install-refresh .install-hero {
+    min-height:0;
+    padding:0;
+  }
+  .install-refresh .install-hero img {
+    width:100%;
+    min-width:0;
+    height:auto;
+    object-fit:contain;
+    object-position:center center;
+  }
+}
+@media (max-width:480px) {
+  .install-refresh .install-hero {
+    min-height:0;
+  }
+  .install-refresh .install-hero img {
+    height:auto;
+    object-position:center center;
+  }
+}
+
+
+/* v1.5.37 UI fix12: centered install step numerals and compact visual flow */
+.install-steps-visual-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-top:14px;
+}
+.install-visual-step {
+  min-width:0;
+  padding:12px;
+  border:1px solid rgba(102,149,191,.30);
+  border-radius:18px;
+  background:#fff;
+}
+.install-step-label {
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr);
+  gap:10px;
+  align-items:start;
+  min-height:58px;
+  margin-bottom:10px;
+}
+.install-step-label > span {
+  width:36px;
+  height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  border-radius:50%;
+  background:#0aa15a;
+  color:#fff;
+  font-size:17px;
+  line-height:1;
+  font-weight:950;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.install-step-label b {
+  display:block;
+  color:#0c2e49;
+  font-size:14px;
+  line-height:1.3;
+  font-weight:950;
+}
+.install-step-label small {
+  display:block;
+  margin-top:5px;
+  color:#657b8a;
+  font-size:10px;
+  line-height:1.5;
+  font-weight:700;
+}
+.install-visual-step img {
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:280px;
+  object-fit:contain;
+  object-position:top center;
+  margin:0 auto;
+}
+@media (max-width:760px) {
+  .install-steps-visual-grid { grid-template-columns:1fr; }
+  .install-visual-step { padding:12px; }
+  .install-step-label { grid-template-columns:40px minmax(0,1fr); min-height:0; }
+  .install-step-label > span { width:38px; height:38px; font-size:18px; }
+  .install-step-label b { font-size:15px; }
+  .install-step-label small { font-size:11px; }
+  .install-visual-step img { max-height:360px; }
+}
