@@ -73,6 +73,6 @@
         <div class="share-security-note"><strong>大切：</strong><span id="share-note">合言葉はURLやQRコードには含まれません。</span></div>
       </div>
     </dialog>
-    <script src="/build/assets/team-C2OGEJ4t.js" type="module"></script>
+    <script src="/build/assets/team-IK642PPl.js" type="module"></script>
   </body>
 </html>

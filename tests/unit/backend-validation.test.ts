@@ -75,6 +75,14 @@ test("page routing resolves only expected application pages", () => {
   assert.equal(pageAssetForPath("/join-admin/abcdefghijklmnopqrstuvwxyz"), "/__pages/account.txt");
   assert.equal(pageAssetForPath("/t/abc123"), "/__pages/team.txt");
   assert.equal(pageAssetForPath("/t/abc123/admin"), "/__pages/admin.txt");
+  assert.equal(pageAssetForPath("/t/abc123/admin/groups"), "/__pages/admin.txt");
+  assert.equal(pageAssetForPath("/t/abc123/admin/signs"), "/__pages/admin.txt");
+  assert.equal(pageAssetForPath("/t/abc123/admin/share"), "/__pages/admin.txt");
+  assert.equal(pageAssetForPath("/t/abc123/admin/admins"), "/__pages/admin.txt");
+  assert.equal(pageAssetForPath("/t/abc123/admin/plan-auth"), "/__pages/admin.txt");
+  assert.equal(pageAssetForPath("/t/abc123/admin/notices"), "/__pages/admin.txt");
+  assert.equal(pageAssetForPath("/t/abc123/admin/settings"), "/__pages/admin.txt");
+  assert.equal(pageAssetForPath("/t/abc123/admin/unknown"), null);
   assert.equal(pageAssetForPath("/api/signs"), null);
 });
 

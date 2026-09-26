@@ -10,7 +10,7 @@ const path = location.pathname.replace(/\/$/, "") || "/";
 if (path === "/admin" || path === "/register") {
   renderSystemAdmin({ initialView: path === "/register" ? "create" : "list" });
 } else {
-  const match = path.match(/^\/t\/([A-Za-z0-9_-]+)\/admin$/);
+  const match = path.match(/^\/t\/([A-Za-z0-9_-]+)\/admin(?:\/(?:groups|signs|share|admins|plan-auth|notices|settings))?$/);
   if (match) renderTeamAdmin(match[1]);
   else location.replace("/");
 }
