@@ -7,7 +7,9 @@ export const FEATURE_KEYS = Object.freeze({
   ACTIVITY_LOG: "activity_log",
   PRACTICE_ANALYTICS: "practice_analytics",
   MULTIPLE_SIGN_VIDEOS: "multiple_sign_videos",
-  CUSTOM_VIDEO_THUMBNAIL: "custom_video_thumbnail"
+  CUSTOM_VIDEO_THUMBNAIL: "custom_video_thumbnail",
+  RESULT_TEXT_SHARE: "result_text_share",
+  RESULT_IMAGE_SHARE: "result_image_share"
 });
 
 export const DEFAULT_PLAN_CODE = "free";

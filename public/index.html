@@ -1,472 +1,140 @@
 <!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#082844" />
-    <meta name="description" content="SIGN TRAINERは、チームの野球サインをグループごとに整理し、説明動画を確認してから反復練習できるWebアプリです。" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="サイントレーナー | 野球のサイン練習" />
-    <meta property="og:description" content="見て、覚えて、迷わず動く。サイングループと説明動画で、チームのサインをわかりやすく反復練習。" />
-    <meta property="og:url" content="https://basebasll-sign-trainer.refrain62.workers.dev/" />
-    <meta property="og:image" content="https://basebasll-sign-trainer.refrain62.workers.dev/og.jpg" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="canonical" href="https://basebasll-sign-trainer.refrain62.workers.dev/" />
-    <title>SIGN TRAINER | 野球のサイン練習</title>
-    <link rel="icon" href="/favicon-32.png?v=__ASSET_VERSION__" sizes="32x32" type="image/png" />
-    <link rel="icon" href="/favicon-48.png?v=__ASSET_VERSION__" sizes="48x48" type="image/png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=__ASSET_VERSION__" />
-    <link rel="manifest" href="/manifest.webmanifest?v=__ASSET_VERSION__" />
-    <link rel="stylesheet" href="/styles.css?v=__ASSET_VERSION__" />
-  </head>
-  <body>
-
-    <div class="site-shell lp-v2">
-      <header class="site-header">
-        <div class="container header-inner">
-          <a class="brand" href="/" data-nav aria-label="SIGN TRAINER トップページ">
-    
-  <span class="brand-mark" aria-hidden="true">
-    <img class="brand-icon-img" src="/assets/sign-trainer-icon.webp?v=__ASSET_VERSION__" alt="" width="128" height="128" decoding="async">
-  </span>
-    <span class="brand-copy">
-      <span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span>
-      <span class="brand-sub">野球のサインを、チームの力に。</span>
-    </span>
-  </a>
-          <nav class="header-nav" aria-label="メインナビゲーション">
-            <a href="#features">特徴</a>
-            <a href="#pricing">プラン</a>
-            <a href="#new-features">新機能</a>
-            <a href="#howto">使い方</a>
-            <a href="#for-team">こんな方に</a>
-            <a href="#share">共有方法</a>
-            <a href="#install">インストール</a>
-            <a href="#faq">よくある質問</a>
-            <a href="/account">管理者ログイン</a>
-            <button class="button button-primary button-small header-cta lp-register-button" type="button" data-open-register>チーム登録</button>
-          </nav>
-          <button class="mobile-menu-button" id="mobile-menu-button" type="button" aria-label="メニューを開く" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-        </div>
-        <nav class="mobile-nav" id="mobile-nav" aria-label="スマートフォンメニュー">
-          <a href="#features">特徴</a>
-          <a href="#pricing">プラン</a>
-          <a href="#new-features">新機能</a>
-          <a href="#capabilities">できること</a>
-          <a href="#howto">使い方</a>
-          <a href="#for-team">こんな方に</a>
-          <a href="#install">インストール</a>
-          <a href="#faq">よくある質問</a>
-          <a href="/account">管理者ログイン</a>
-          <button class="button button-primary" type="button" data-open-register>チームを登録する</button>
-          <a class="button button-secondary" href="/t/6BnWv2K3zo?openExternalBrowser=1" data-nav>サンプルチームで試す</a>
-        </nav>
-      </header>
-
-      <main>
-        <section class="hero hero-reference">
-          <div class="container hero-inner">
-            <div class="hero-copy">
-              <h1>見てわかる。<br><span class="hero-highlight">覚えて動ける。</span></h1>
-              <p class="hero-subtitle">チームのサインを<br>みんなのチカラに。</p>
-              <p class="hero-lead">実際のサイン動画を見て、何のサインかを答えるだけ。<br>くり返し練習して、試合で迷わない選手に。</p>
-              <div class="hero-actions">
-                <button class="button button-primary hero-cta" type="button" data-open-register>チームを登録する <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-                <a class="button button-secondary hero-cta" href="/t/6BnWv2K3zo?openExternalBrowser=1" data-nav>サンプルを試す</a>
-              </div>
-              <p class="hero-note">Google / LINEで管理者登録。管理者パスワードの共有は不要です。</p><p class="hero-free-note"><strong>基本機能は現在 ¥0</strong>　サイン登録・1サイン1動画・クイズ・共有までFreeで使えます。</p>
-              <p class="hero-team-note">登録後すぐにチーム専用ページを発行。管理者の追加・交代もアカウント単位で安全に行えます。</p>
-            </div>
-            <div class="hero-script hero-script-top" aria-hidden="true">伝わる。<br>動ける。<br><small>もっと野球が楽しくなる。</small></div>
-            <div class="hero-script hero-script-bottom" aria-hidden="true">サインを知ることは<br>チームを信じることだ。</div>
-          </div>
-        </section>
-
-        <section id="features" class="feature-strip" aria-label="SIGN TRAINERの特徴">
-          <div class="container feature-grid">
-            <div class="feature-item"><div class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.7v12.6L18.5 12 8 5.7Z" fill="currentColor"/></svg></div><div><strong>動画でわかる</strong><span>実際のサインを動画で確認</span></div></div>
-            <div class="feature-item"><div class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.7 9A8 8 0 1 1 5 16.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><strong>間違いだけ復習</strong><span>動画を見直してすぐ再練習</span></div></div>
-            <div class="feature-item"><div class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div><strong>練習履歴が残る</strong><span>正答率や間違いを端末に保存</span></div></div>
-            <div class="feature-item"><div class="feature-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="m8.2 10.9 7.5-4.4M8.2 13.1l7.5 4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div><strong>チームに共有</strong><span>URL・QR・LINEですぐ配布</span></div></div>
-          </div>
-        </section>
-
-
-        <section id="pricing" class="lp-section free-plan-section" aria-labelledby="plan-title">
-          <div class="container">
-            <div class="section-heading compact-heading"><span class="section-kicker">PLAN</span><h2 id="plan-title" class="underline-heading">プランについて</h2><p>基本のサイン練習はFreeで。チーム運用を強化するPlus、分析・監査まで使えるProは現在、対象チーム限定で提供しています。</p></div>
-            <div class="free-plan-card">
-              <div class="free-plan-copy">
-                <span class="section-kicker">FREE PLAN</span>
-                <h2 id="free-plan-title">まずは、チームのサイン練習を無料で。</h2>
-                <p>サイン登録・1サイン1動画・クイズ練習などの基本機能はFreeプランで利用できます。OAuth認証も無料です。</p>
-                <div class="free-plan-includes" aria-label="Freeプランに含まれる機能"><span>サイン登録</span><span>サイングループ1つ</span><span>1サイン1動画</span><span>クイズ練習</span><span>QR・LINE共有</span><span>Google / LINE認証</span></div>
-              </div>
-              <div class="free-plan-price"><span>現在のプラン</span><strong>¥0</strong><small>チーム / 月</small><button class="button button-primary" type="button" data-open-register>無料でチームを登録</button></div>
-            </div>
-            <div class="future-plan-note"><strong>Plus / Proは現在、限定提供です</strong><p>Plusはチーム運用を強化する機能、ProはPlusの全機能に分析・監査を加えた上位プランです。現在は特定チームへSYSTEM管理者が手動で付与しており、一般のお申し込み・オンライン課金にはまだ対応していません。</p></div>
-            <div class="lp-plan-comparison" aria-label="プランの機能比較">
-              <article class="lp-plan-card">
-                <span class="lp-plan-card-kicker">FREE</span><h3>Freeプラン</h3><p>サイン練習を始めるための基本機能を無料で利用できます。</p>
-                <ul class="lp-plan-feature-list"><li>サイン登録・クイズ練習</li><li>サイングループ1つ</li><li>1サインにつき動画1本</li><li>練習履歴 最大50件</li><li>QR・LINE共有 / PWA</li><li>Google / LINE OAuth認証</li><li>メイン管理者1名</li></ul>
-              </article>
-              <article class="lp-plan-card lp-plan-card--limited">
-                <span class="lp-plan-card-kicker">PLUS · LIMITED</span><h3>Plus</h3><p>複数パターンと複数人管理で、チーム運用を強化するプランです。</p>
-                <ul class="lp-plan-feature-list"><li>Freeの全機能</li><li>複数サイングループ</li><li>1サインへの複数動画</li><li>動画プレビュー開始位置の指定</li><li>サブ管理者 最大5名</li></ul>
-                <p class="lp-plan-limited-note">現在は特定チーム限定で提供しています。</p>
-              </article>
-              <article class="lp-plan-card lp-plan-card--limited lp-plan-card--pro">
-                <span class="lp-plan-card-kicker">PRO · LIMITED</span><h3>Pro</h3><p>Plusの運用機能に、選手の苦手分析と管理監査を加えた上位プランです。</p>
-                <ul class="lp-plan-feature-list"><li>Plusの全機能</li><li>正答率・苦手分析</li><li>グループ・サイン・動画別分析</li><li>最近のアクティビティ</li><li>監査ログ</li></ul>
-                <p class="lp-plan-limited-note">現在は特定チーム限定で提供しています。</p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="lp-section why-section">
-          <div class="container why-grid">
-            <div class="why-copy">
-              <h2 class="underline-heading">なぜサインの練習が大切？</h2>
-              <p>サインが正しく伝わり、全員が同じ動きができると、<br>チームの力は大きく上がります。<br>サインを覚えることは、仲間を信じ、試合で力を<br>発揮するための大切な準備です。</p>
-              <ul class="check-list">
-                <li><span class="check-dot">✓</span><span>試合で迷わず動ける</span></li>
-                <li><span class="check-dot">✓</span><span>チームの連携が高まる</span></li>
-                <li><span class="check-dot">✓</span><span>野球がもっと楽しくなる</span></li>
-              </ul>
-            </div>
-            <figure class="baseball-visual"><img src="/assets/why-baseball.webp?v=__ASSET_VERSION__" alt="グラウンドに置かれた野球ボールと『ひとつのサインがチームを動かす。』のメッセージ" width="975" height="643" loading="lazy" decoding="async"></figure>
-          </div>
-        </section>
-
-        <section id="howto" class="lp-section howto-section">
-          <div class="container">
-            <div class="section-heading compact-heading">
-              <h2 class="underline-heading">使い方はかんたん3ステップ</h2>
-            </div>
-            <div class="steps-grid reference-steps">
-              <article class="step-card"><div class="step-label"><span class="step-number">1</span><div><h3>今日のサインを選ぶ</h3><p>グループを決めて問題数を選択</p></div></div><div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">練習設定</div><div class="phone-body"><div class="phone-title">今日はどのサイン？</div><div class="phone-choice is-green">バッティングサイン</div><div class="phone-choice">守備サイン（2塁ランナーあり）</div><div class="phone-choice">すべてのサイン</div><div class="phone-btn green">このグループで練習</div></div></div></div></article>
-              <article class="step-card"><div class="step-label"><span class="step-number">2</span><div><h3>動画を見て答える</h3><p>サイン動画を見て
-何のサインか考えよう</p></div></div><div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">問題 1 / 10</div><div class="phone-body"><div class="phone-video"></div><div class="phone-question">このサインは<br>何でしょう？</div><div class="phone-btn green">答えを見る</div></div></div></div></article>
-              <article class="step-card"><div class="step-label"><span class="step-number">3</span><div><h3>正解を確認</h3><p>答えを見て
-○×で進もう</p></div></div><div class="phone-mock" aria-hidden="true"><div class="phone-screen"><div class="phone-status"><span>9:41</span><span>•••</span></div><div class="phone-mini-header">問題 1 / 10</div><div class="phone-body"><div class="phone-answer-box"><small>正解は…</small><strong>エンドラン</strong></div><div class="phone-btn green">○ 正解した</div><div class="phone-btn red">× 間違えた</div></div></div></div></article>
-              <div class="steps-side-note" aria-hidden="true">くり返すほど<br>自信になる。</div>
-            </div>
-          </div>
-        </section>
-
-        <section id="new-features" class="lp-section latest-features-section" aria-labelledby="latest-features-title">
-          <div class="container">
-            <div class="section-heading compact-heading latest-features-heading">
-              <span class="latest-badge">NEW</span>
-              <h2 id="latest-features-title" class="underline-heading">チームで使いやすい機能を追加しました</h2>
-              <p>「今日はどのサインをやる？」がすぐ決まり、練習前の確認から管理まで、スマホひとつで完結します。</p>
-            </div>
-
-            <div class="latest-feature-grid">
-              <article class="latest-feature-card latest-feature-card--primary">
-                <div class="latest-feature-no">01</div>
-                <div><span class="latest-feature-kicker">SIGN GROUP</span><h3>サインをグループ分け</h3><p>「バッティングサイン」「守備サイン（ランナーなし）」「守備サイン（2塁ランナーあり）」「ピッチングサイン」「走塁サイン」など、用途や状況が分かる名前でグループを作れます。選手は、その日に使うグループだけを選んで練習できます。</p></div>
-              </article>
-              <article class="latest-feature-card">
-                <div class="latest-feature-no">02</div>
-                <div><span class="latest-feature-kicker">GROUP GUIDE</span><h3>グループごとに説明動画</h3><p>サインの考え方や見分け方を、グループ単位の説明文とYouTube動画で共有。トレーニング前にモーダルで確認できます。</p></div>
-              </article>
-              <article class="latest-feature-card">
-                <div class="latest-feature-no">03</div>
-                <div><span class="latest-feature-kicker">2 STEP</span><h3>「グループ → 問題数」の2段階</h3><p>最初に今日のサイングループを決定し、そのあと5問・10問・全問を選択。何を練習しているのか迷いにくい流れです。</p></div>
-              </article>
-              <article class="latest-feature-card">
-                <div class="latest-feature-no">04</div>
-                <div><span class="latest-feature-kicker">MOBILE ADMIN</span><h3>管理画面もスマホで完結</h3><p>チーム・グループ・サイン・動画の登録や修正は、ページ遷移せずモーダルで操作。情報を一覧で見ながらその場で編集できます。</p></div>
-              </article>
-              <article class="latest-feature-card">
-                <div class="latest-feature-no">05</div>
-                <div><span class="latest-feature-kicker">VIDEO VARIATION · LIMITED</span><h3>同じサインを複数パターンで</h3><p>Plus / Proでは、同じサインに複数動画を登録し、動画ごとの用途コメントや確認開始位置を設定できます。Freeは1サイン1動画です。</p></div>
-              </article>
-              <article class="latest-feature-card">
-                <div class="latest-feature-no">06</div>
-                <div><span class="latest-feature-kicker">SHARE & PWA</span><h3>共有も起動もすぐ</h3><p>チーム専用URLをQR・LINE・共有メニューで配布。ホーム画面へ追加すれば、PWAとしてアプリのようにすぐ開けます。</p></div>
-              </article>
-            </div>
-
-            <div class="latest-flow-card" aria-label="メンバー画面の練習フロー">
-              <div class="latest-flow-copy">
-                <span class="latest-feature-kicker">MEMBER FLOW</span>
-                <h3>メンバー画面は、迷わない2ステップ</h3>
-                <p>説明を見る操作と練習開始を分けています。グループを選んだ後は、選択中のグループ名を確認してから問題数へ進みます。</p>
-              </div>
-              <div class="latest-flow-steps">
-                <div class="latest-flow-step"><span>STEP 1</span><strong>今日のサインを選ぶ</strong><small>バッティング / 守備（2塁ランナーあり） / すべて</small></div>
-                <div class="latest-flow-arrow" aria-hidden="true">→</div>
-                <div class="latest-flow-step"><span>STEP 2</span><strong>問題数を選ぶ</strong><small>5問 / 10問 / 全問</small></div>
-                <div class="latest-flow-arrow" aria-hidden="true">→</div>
-                <div class="latest-flow-step latest-flow-step--goal"><span>START</span><strong>動画でトレーニング</strong><small>見て・答えて・復習</small></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="capabilities" class="lp-section capabilities-section">
-          <div class="container">
-            <div class="section-heading compact-heading capabilities-heading">
-              <h2 class="underline-heading">SIGN TRAINERでできること</h2>
-              <p>見る・答えるだけで終わらず、復習・履歴・共有までチーム練習に必要な流れをひとつにまとめています。</p>
-            </div>
-            <div class="capabilities-grid">
-              <article class="capability-card"><div class="capability-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M22 12h-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div><h3>グループ別に5問・10問・全問</h3><p>その日に使うサイングループを選んで、短時間の確認から全問練習まで切り替えられます。</p></div></article>
-              <article class="capability-card"><div class="capability-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.7 9A8 8 0 1 1 5 16.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 4v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><h3>シャッフル出題</h3><p>同じ順番を覚えるのではなく、サインそのものを見分ける練習ができます。</p></div></article>
-              <article class="capability-card"><div class="capability-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4L19 6.8" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><h3>○×で自己採点</h3><p>答えを見て自分で判定。選択肢から推測せず、実戦に近い形で覚えます。</p></div></article>
-              <article class="capability-card"><div class="capability-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.7v12.6L18.5 12 8 5.7Z" fill="currentColor"/></svg></div><div><h3>間違えた動画を再確認</h3><p>間違えたサインは、その動画をもう一度見てから復習できます。</p></div></article>
-              <article class="capability-card"><div class="capability-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div><h3>練習履歴を確認</h3><p>正答率・練習時間・間違えたサインをこの端末に最大50件保存します。</p></div></article>
-              <article class="capability-card"><div class="capability-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="m8.2 10.9 7.5-4.4M8.2 13.1l7.5 4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><div><h3>URL・QR・LINEで共有</h3><p>チームページをリンクコピー、QRコード、共有メニューから簡単に配れます。</p></div></article>
-            </div>
-          </div>
-        </section>
-
-        <section class="lp-section privacy-section" aria-labelledby="privacy-title">
-          <div class="container">
-            <div class="privacy-card">
-              <div class="privacy-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-              <div class="privacy-copy">
-                <span class="privacy-kicker">安心して練習できるように</span>
-                <h2 id="privacy-title">回答や練習履歴は、今使っている端末に保存します</h2>
-                <p>○×の回答、正答率、練習時間、間違えたサインなどの練習結果は、SIGN TRAINERのサーバーには保存せず、操作している端末のブラウザ内に保存します。チームの他の人や運営側へ、あなたの練習結果が自動で共有されることはありません。</p>
-                <div class="privacy-points" aria-label="練習データの保存について">
-                  <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 18.5h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><strong>この端末に保存</strong></span>
-                  <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><strong>練習結果をサーバー保存しない</strong></span>
-                  <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><strong>別端末には自動同期しない</strong></span>
-                </div>
-                <p class="privacy-note">※ ブラウザのデータを削除した場合や端末を変更した場合は、保存した履歴が消えることがあります。合言葉認証やYouTube動画の読み込みには通信を使用します。</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="for-team" class="lp-section audience-section">
-          <div class="container">
-            <div class="section-heading compact-heading">
-              <h2 class="underline-heading">こんなチーム・選手におすすめ</h2>
-            </div>
-            <div class="audience-grid">
-              <article class="audience-card"><div class="audience-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="9.5" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 19c.4-3.3 2.2-5 5.5-5s5.1 1.7 5.5 5M14.5 14.5c2.9-.4 5 .9 5.8 3.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><strong>チーム全員で<br>サインを統一したい</strong></article>
-              <article class="audience-card"><div class="audience-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V11M12 19V5M19 19v-8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></div><strong>効率よく<br>サインを覚えたい</strong></article>
-              <article class="audience-card"><div class="audience-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 10h.01M15.5 10h.01M8.5 14c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><strong>楽しく<br>くり返し練習したい</strong></article>
-              <article class="audience-card"><div class="audience-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 18.5h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div><strong>練習時間を<br>もっと有効に使いたい</strong></article>
-            </div>
-          </div>
-        </section>
-
-        <section class="testimonials-section" aria-labelledby="testimonials-title">
-          <div class="container">
-            <h2 id="testimonials-title" class="testimonials-title">チームでの使い方</h2>
-            <div class="testimonials-grid">
-              <article class="testimonial-card">
-                <p><strong>練習前の確認に</strong><br>集合前の数分で、その日のサインをチーム全員で確認できます。</p>
-                <div class="testimonial-author"><span class="avatar">1</span><span>チーム練習</span></div>
-              </article>
-              <article class="testimonial-card">
-                <p><strong>自宅での反復練習に</strong><br>LINEの専用URLから入り、自分のペースで何度でも練習できます。</p>
-                <div class="testimonial-author"><span class="avatar">2</span><span>自主練習</span></div>
-              </article>
-              <article class="testimonial-card">
-                <p><strong>履歴を見ながら復習に</strong><br>正答率や間違えたサインを履歴で確認し、苦手な問題だけもう一度練習できます。</p>
-                <div class="testimonial-author"><span class="avatar">3</span><span>履歴・復習</span></div>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section id="share" class="lp-section share-guide-section">
-          <div class="container">
-            <div class="section-heading compact-heading">
-              <h2 class="underline-heading">チームへの共有もかんたん</h2>
-              <p class="share-guide-lead">正式利用ではチーム専用ページを発行。URLやQRコードをLINEなどで配るだけで、メンバーがすぐ練習できます。</p>
-            </div>
-            <div class="share-steps" aria-label="チームページの共有手順">
-              <div class="share-step"><span class="share-step-no">1</span><div><strong>専用ページを発行</strong><p>チーム登録後に、推測されにくい専用URLを用意します。</p></div></div>
-              <div class="share-step"><span class="share-step-no">2</span><div><strong>URL・QRを共有</strong><p>リンクコピー、QRコード、LINEやスマホの共有メニューから送れます。</p></div></div>
-              <div class="share-step"><span class="share-step-no">3</span><div><strong>合言葉は別に伝える</strong><p>合言葉はURLやQRには入れず、チーム内で別途共有します。</p></div></div>
-            </div>
-            <div class="share-guide-actions">
-              <button class="button button-primary" id="share-site" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="m8.2 10.9 7.5-4.4M8.2 13.1l7.5 4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> このサイトを共有</button>
-              <button class="button button-secondary" id="share-sample-team" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 14h2v2h-2zM18 14h2v4h-2zM14 18h4v2h-4zM20 20h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> サンプルチームのQRを見る</button>
-            </div>
-          </div>
-        </section>
-
-
-        <section id="install" class="lp-section install-section">
-          <div class="container">
-            <div class="section-heading compact-heading install-heading">
-              <h2 class="underline-heading">アプリとしてインストールする方法</h2>
-              <p>SIGN TRAINERはホーム画面へ追加して、アプリのようにすぐ開けます。端末を選ぶと、その端末だけの手順を大きく表示します。</p>
-            </div>
-
-            <div class="install-tabs" role="tablist" aria-label="インストール方法の端末選択">
-              <button class="install-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="install-panel-iphone" id="install-tab-iphone" data-install-tab="iphone">
-                <span class="install-tab-icon" aria-hidden="true">●</span>
-                <span><strong>iPhone</strong><small>Safari</small></span>
-              </button>
-              <button class="install-tab" type="button" role="tab" aria-selected="false" aria-controls="install-panel-android" id="install-tab-android" data-install-tab="android">
-                <span class="install-tab-icon install-tab-icon-android" aria-hidden="true">●</span>
-                <span><strong>Android</strong><small>Chrome</small></span>
-              </button>
-            </div>
-
-            <div class="install-panel" id="install-panel-iphone" role="tabpanel" aria-labelledby="install-tab-iphone" data-install-panel="iphone">
-              <div class="install-panel-head">
-                <div>
-                  <span class="install-chip">iPhone</span>
-                  <h3>Safariからホーム画面に追加</h3>
-                </div>
-                <p>説明と画面を分けて、操作位置が見つけやすいようにしています。</p>
-              </div>
-              <div class="install-step-list">
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">1</span>
-                    <div><h4>SafariでSIGN TRAINERを開く</h4><p>Safariでサイトを開きます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-1.webp?v=__ASSET_VERSION__" alt="SafariでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">2</span>
-                    <div><h4>共有ボタンをタップ</h4><p>画面下の共有ボタン（四角から上向き矢印）をタップします。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-2.webp?v=__ASSET_VERSION__" alt="Safari下部の共有ボタンをタップする画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">3</span>
-                    <div><h4>「ホーム画面に追加」を選ぶ</h4><p>共有メニューを下へ見て、「ホーム画面に追加」をタップします。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-3.webp?v=__ASSET_VERSION__" alt="Safariの共有メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">4</span>
-                    <div><h4>右上の「追加」で完了</h4><p>確認画面の右上にある「追加」をタップするとホーム画面に追加されます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-iphone-4.webp?v=__ASSET_VERSION__" alt="iPhoneのホーム画面に追加する確認画面" loading="lazy" decoding="async"></figure>
-                </article>
-              </div>
-              <p class="install-note">一度追加すれば、次回からホーム画面のSIGN TRAINERアイコンですぐ開けます。</p>
-            </div>
-
-            <div class="install-panel" id="install-panel-android" role="tabpanel" aria-labelledby="install-tab-android" data-install-panel="android" hidden>
-              <div class="install-panel-head">
-                <div>
-                  <span class="install-chip install-chip-android">Android</span>
-                  <h3>Chromeからホーム画面に追加</h3>
-                </div>
-                <p>インストールボタンが出る場合と、出ない場合の両方を案内します。</p>
-              </div>
-              <div class="install-step-list">
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">1</span>
-                    <div><h4>ChromeでSIGN TRAINERを開く</h4><p>AndroidのChromeでサイトを開きます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-1.webp?v=__ASSET_VERSION__" alt="ChromeでSIGN TRAINERを開いた画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">2</span>
-                    <div><h4>「インストール」が出たらタップ</h4><p>インストール案内が表示された場合は、そのまま「インストール」をタップします。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-2.webp?v=__ASSET_VERSION__" alt="Androidでインストールボタンをタップする画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">3</span>
-                    <div><h4>出ない場合は右上の︙を開く</h4><p>「インストール」が見つからない場合は、右上の︙から「ホーム画面に追加」を選びます。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-3.webp?v=__ASSET_VERSION__" alt="Chrome右上メニューからホーム画面に追加を選ぶ画面" loading="lazy" decoding="async"></figure>
-                </article>
-                <article class="install-step-card">
-                  <div class="install-step-copy">
-                    <span class="install-step-badge">4</span>
-                    <div><h4>追加・インストールで完了</h4><p>確認画面で「追加」または「インストール」を押すと完了です。</p></div>
-                  </div>
-                  <figure class="install-step-figure"><img src="/assets/install-android-4.webp?v=__ASSET_VERSION__" alt="Androidのホーム画面に追加されたSIGN TRAINER" loading="lazy" decoding="async"></figure>
-                </article>
-              </div>
-              <p class="install-note">インストールボタンが見つからない場合でも、右上の︙メニューから追加できます。</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="reference-cta-band">
-          <div class="container reference-cta-grid">
-            <div class="cta-hand-note">⌁ 今日からはじめよう！</div>
-            <div class="cta-center">
-              <button class="button button-primary reference-cta-button" type="button" data-open-register>チームを登録する <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M14 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <a class="button button-secondary" href="/t/6BnWv2K3zo?openExternalBrowser=1" data-nav>まずサンプルを試す</a>
-              <span>Google / LINEで管理者登録できます</span>
-            </div>
-            <div class="cta-hand-note is-right">覚えた分だけ<br>チームは強くなる。</div>
-          </div>
-        </section>
-
-
-        <section id="operation" class="lp-section operations-section" aria-labelledby="operation-title">
-          <div class="container">
-            <div class="section-heading"><span class="section-kicker">TRUST & OPERATION</span><h2 id="operation-title">チームで安心して使うための運用情報</h2><p>管理者登録前に、データの扱い・利用ルール・退会方法を確認できます。</p></div>
-            <div class="operations-grid">
-              <a class="operation-card" href="/terms"><span>TERMS</span><h3>利用規約</h3><p>管理者の責任、禁止事項、登録コンテンツ、サービス変更など。</p><strong>確認する →</strong></a>
-              <a class="operation-card" href="/privacy"><span>PRIVACY</span><h3>プライバシーポリシー</h3><p>Google / LINE認証情報、チームデータ、退会時の取扱いを明示。</p><strong>確認する →</strong></a>
-              <a class="operation-card" href="/external-transmission"><span>DATA FLOW</span><h3>外部送信について</h3><p>Cloudflare、Google、LINE、YouTubeへ送信される情報と目的。</p><strong>確認する →</strong></a>
-              <a class="operation-card" href="/support"><span>SUPPORT</span><h3>運営者情報・お問い合わせ</h3><p>退会手順、セキュリティ連絡、問い合わせ窓口をまとめています。</p><strong>確認する →</strong></a>
-            </div>
-          </div>
-        </section>
-
-        <section id="faq" class="lp-section faq-section">
-          <div class="container">
-            <div class="section-heading compact-heading">
-              <h2 class="underline-heading">よくある質問</h2>
-            </div>
-            <div class="faq-list">
-              <details><summary>動画はどのように登録されていますか？</summary><p>YouTubeの限定公開動画を利用します。練習ページの合言葉認証前には、サイン名やYouTube動画IDをブラウザへ返しません。</p></details>
-              <details><summary>スマホ以外でも使えますか？</summary><p>はい。スマートフォンを中心に設計していますが、タブレットやPCのブラウザでも利用できます。</p></details>
-              <details><summary>チームではどのように利用しますか？</summary><p>チーム登録後に、そのチーム専用の練習ページとURLを発行します。監督・コーチがLINEなどでURLやQRコードをメンバーへ共有し、メンバーはチームの合言葉を入力して練習します。</p></details>
-              <details><summary>サインや動画はあとから変更できますか？</summary><p>はい。チーム管理者専用画面から、サイングループ・説明・説明動画・サイン名・YouTube URL・並び順・有効／無効を変更できます。Freeでは1サイン1動画まで、Plus / Proでは同じサインに複数動画を登録できます。</p></details>
-              <details><summary>動画のサムネイルはどう表示されますか？</summary><p>YouTube動画はYouTubeが用意する標準サムネイルを自動表示します。Plus / Proでは、管理画面の動画確認を指定秒から開始できるため、確認したい動作へすぐ移動できます。</p></details>
-              <details><summary>サイングループはどのように使いますか？</summary><p>Freeプランでは1つのサイングループを利用できます。Plus / Proでは「バッティングサイン」「守備サイン（ランナーなし）」「守備サイン（2塁ランナーあり）」「ピッチングサイン」「走塁サイン」のように用途・状況別の複数グループを作成でき、説明文や説明動画を分けて管理できます。一般のお申し込み・オンライン課金にはまだ対応していません。</p></details>
-              <details><summary>練習結果はあとから見られますか？</summary><p>はい。この端末に練習履歴を最大50件保存し、正答率・練習時間・各問題の○×・間違えたサインを見返せます。履歴から間違えた問題だけ再練習することもできます。</p></details>
-              <details><summary>回答や練習履歴はどこに保存されますか？</summary><p>○×の回答、正答率、練習時間、間違えたサインなどの練習結果は、今使っている端末のブラウザ内に保存します。SIGN TRAINERのサーバーには練習結果を保存せず、別端末にも自動では同期しません。ブラウザデータを削除すると履歴が消える場合があります。</p></details>
-              <details><summary>間違えたサインだけ復習できますか？</summary><p>できます。結果画面や履歴詳細から、間違えたサインの動画をもう一度確認し、その問題だけで再練習できます。</p></details>
-              <details><summary>チーム登録はどうやって行いますか？</summary><p>トップページの「チームを登録する」からGoogleまたはLINEで管理者登録し、チーム名と選手用合言葉を設定します。管理者パスワードを共有する必要はありません。</p></details>
-              <details><summary>管理者が交代するときは？</summary><p>メイン管理者がワンタイムの交代リンクを発行し、新しいメイン管理者がGoogleまたはLINEで本人認証して承認します。メイン管理者の交代とOAuth認証はFreeでも利用できます。サブ管理者（最大5名）はPlus / Proで利用できます。</p></details>
-              <details><summary>管理者は退会できますか？</summary><p>サブ管理者は自分でチームから退会できます。メイン管理者は先に別の管理者へメイン管理者権限を引き継いでから退会します。</p></details>
-              <details><summary>料金はかかりますか？</summary><p>基本的なサイン登録、1つのサイングループ、1サイン1動画、クイズ、共有、Google / LINE認証はFreeプラン（¥0）で利用できます。Plusでは複数サイングループ・複数動画・動画確認位置・サブ管理者を利用できます。Proではさらに練習成績・苦手分析と最近のアクティビティ／監査ログを利用できます。Plus / Proは現在、特定チーム限定で提供しており、一般のお申し込み・オンライン課金にはまだ対応していません。</p></details>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer class="site-footer reference-footer">
-        <div class="container footer-inner">
-          <a class="brand" href="/" data-nav aria-label="SIGN TRAINER トップページ">
-    
-  <span class="brand-mark" aria-hidden="true">
-    <img class="brand-icon-img" src="/assets/sign-trainer-icon.webp?v=__ASSET_VERSION__" alt="" width="128" height="128" decoding="async">
-  </span>
-    <span class="brand-copy">
-      <span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span>
-      <span class="brand-sub">野球のサインを、チームの力に。</span>
-    </span>
-  </a>
-          <nav class="footer-nav" aria-label="フッターナビゲーション">
-            <a href="/" data-nav>トップ</a><a href="#features">特徴</a><a href="#pricing">プラン</a><a href="#new-features">新機能</a><a href="#capabilities">できること</a><a href="#howto">使い方</a><a href="#for-team">こんな方に</a><a href="#share">共有方法</a><a href="#install">インストール</a><a href="#operation">運用情報</a><a href="#faq">よくある質問</a><a href="/terms">利用規約</a><a href="/privacy">プライバシー</a><a href="/external-transmission">外部送信</a><a href="/support">お問い合わせ</a>
-          </nav>
-          <div class="footer-tagline">野球を、もっとシンプルに。<br>もっと楽しく。</div>
-          <div class="footer-meta">© 2026 SIGN TRAINER. All rights reserved.</div>
-        </div>
-      </footer>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#062844" />
+  <meta name="description" content="SIGN TRAINERは、チームの野球サインを動画とクイズで楽しく反復練習できるWebアプリです。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="サイントレーナー | 野球のサイン練習" />
+  <meta property="og:description" content="見てわかる。覚えて動ける。チームのサインを、チームの力に。" />
+  <meta property="og:url" content="https://basebasll-sign-trainer.refrain62.workers.dev/" />
+  <meta property="og:image" content="https://basebasll-sign-trainer.refrain62.workers.dev/og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="canonical" href="https://basebasll-sign-trainer.refrain62.workers.dev/" />
+  <title>SIGN TRAINER | 野球のサイン練習</title>
+  <link rel="icon" href="/favicon-32.png?v=__ASSET_VERSION__" sizes="32x32" type="image/png" />
+  <link rel="icon" href="/favicon-48.png?v=__ASSET_VERSION__" sizes="48x48" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=__ASSET_VERSION__" />
+  <link rel="manifest" href="/manifest.webmanifest?v=__ASSET_VERSION__" />
+  <link rel="stylesheet" href="/styles.css?v=__ASSET_VERSION__" />
+  <link rel="stylesheet" href="/lp-refresh.css?v=__ASSET_VERSION__" />
+</head>
+<body>
+<div class="site-shell lp-v2 lp-refresh">
+  <header class="site-header lp-site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" data-nav aria-label="SIGN TRAINER トップページ">
+        <span class="brand-mark" aria-hidden="true"><img class="brand-icon-img" src="/assets/sign-trainer-icon.webp?v=__ASSET_VERSION__" alt="" width="128" height="128" decoding="async"></span>
+        <span class="brand-copy"><span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span><span class="brand-sub">野球のサインを、チームの力に。</span></span>
+      </a>
+      <nav class="header-nav" aria-label="メインナビゲーション">
+        <a href="#capabilities">できること</a>
+        <a href="/plans">料金プラン</a>
+        <a href="#for-team">導入事例</a>
+        <a href="/support">よくある質問</a>
+        <a class="header-login" href="/account">ログイン</a>
+        <button class="button button-primary button-small header-cta" type="button" data-open-register>無料ではじめる →</button>
+      </nav>
+      <button class="mobile-menu-button" id="mobile-menu-button" type="button" aria-label="メニューを開く" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
     </div>
+    <nav class="mobile-nav" id="mobile-nav" aria-label="スマートフォンメニュー">
+      <a href="#capabilities">できること</a><a href="/plans">料金プラン</a><a href="#for-team">導入事例</a><a href="/install">インストール</a><a href="/support">よくある質問</a><a href="/account">ログイン</a>
+      <button class="button button-primary" type="button" data-open-register>無料ではじめる</button>
+      <a class="button button-secondary" href="/t/6BnWv2K3zo?openExternalBrowser=1" data-nav>デモを見る</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="lp-new-hero">
+      <div class="lp-new-hero-photo" aria-hidden="true"></div>
+      <div class="container lp-new-hero-inner">
+        <div class="lp-new-hero-copy">
+          <h1>見てわかる。<br><span>覚えて動ける。</span></h1>
+          <p class="lp-new-hero-lead"><strong>SIGN TRAINER</strong> は、<br>野球チームのためのサイン練習・共有プラットフォームです。<br>動画で見て、クイズで覚えて、チーム全員が同じサインで動けるようになります。</p>
+          <div class="lp-new-hero-actions">
+            <button class="button button-primary" type="button" data-open-register>無料ではじめる →</button>
+            <a class="button button-dark-outline" href="/t/6BnWv2K3zo?openExternalBrowser=1" data-nav>▶ デモを見る</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="capabilities" class="lp-new-section lp-capabilities">
+      <div class="container">
+        <div class="lp-new-heading centered"><h2>SIGN TRAINERでできること</h2><p>サインの練習から共有まで、チームのコミュニケーションをもっとスムーズに。</p></div>
+        <div class="lp-cap-grid">
+          <article class="lp-cap-card"><div class="lp-cap-icon">▶</div><div><h3>サインを動画で確認</h3><p>実際の動きを動画で見て、正しく理解できます。</p></div><div class="lp-cap-visual lp-cap-video"><span class="play-dot">▶</span></div></article>
+          <article class="lp-cap-card"><div class="lp-cap-icon">☷</div><div><h3>クイズで反復練習</h3><p>クイズで楽しく繰り返し練習し、自然に覚えられます。</p></div><div class="lp-cap-visual lp-selfjudge-mini" aria-label="動画を見て答えを確認し、自分で正解・間違いを記録するクイズ画面のイメージ">
+  <div class="selfjudge-video"><span>?</span><strong>このサインは<br>何でしょう？</strong></div>
+  <div class="selfjudge-result"><small>正解は…</small><b>ヒットエンドラン</b></div>
+  <div class="selfjudge-actions"><span class="is-ok">○ 正解した</span><span class="is-ng">× 間違えた</span></div>
+</div></article>
+          <article class="lp-cap-card"><div class="lp-cap-icon">↗</div><div><h3>チームに共有<br><small>（URL・QR・LINE・合言葉）</small></h3><p>4つの方法で簡単に共有でき、チーム全員がすぐ利用できます。</p></div><div class="lp-share-icons"><span>🔗<small>URL</small></span><span class="qr-icon-cell"><img class="qr-source-icon" src="/assets/qr-code-icon.svg?v=__ASSET_VERSION__" alt="" aria-hidden="true"><small>QRコード</small></span><span class="line-icon-cell"><img class="line-brand-icon" src="/assets/line-brand-icon.svg?v=__ASSET_VERSION__" alt="LINE"><small>LINE</small></span><span>🔑<small>合言葉</small></span></div></article>
+          <article class="lp-cap-card"><div class="lp-cap-icon">▰</div><div><h3>サイングループで整理</h3><p>攻撃・守備などで分類して、見やすく整理できます。</p></div><div class="lp-folder-list"><span>📁 攻撃サイン <b>12</b></span><span>📁 守備サイン <b>8</b></span><span>📁 作戦サイン <b>6</b></span><span>📁 カウント別 <b>4</b></span></div></article>
+          <article class="lp-cap-card"><div class="lp-cap-icon">▥</div><div><h3>練習履歴で定着を確認</h3><p>チームの練習状況を可視化。継続することで定着につながります。</p></div><div class="lp-score-visual"><div class="score-ring"><strong>78%</strong></div><div class="score-bars"><i></i><i></i><i></i><i></i><i></i></div></div></article>
+          <article class="lp-cap-card"><div class="lp-cap-icon">♟</div><div><h3>サブ管理者を追加</h3><p>コーチやスタッフをサブ管理者として追加できます。</p></div><div class="lp-cap-visual lp-cap-coaches"></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="lp-why">
+      <div class="container lp-why-grid">
+        <div class="lp-why-copy"><h2>なぜサインの練習が大切？</h2><p>サインが正しく伝わり、全員が同じ動きができると、チームの力は大きく上がります。<br>サインを覚えることは、仲間を信じ、試合で力を発揮するための大切な準備です。</p><ul><li>試合で迷わず動ける</li><li>チームの連携が高まる</li><li>野球がもっと楽しくなる</li></ul></div>
+        <div class="lp-catcher-visual" role="img" aria-label="キャッチャーが股下で投手に指のサインを出しているイメージ"><img src="/assets/lp-catcher-sign.webp?v=__ASSET_VERSION__" alt="" width="666" height="166" loading="lazy" decoding="async"></div>
+      </div>
+    </section>
+
+    <section id="howto" class="lp-new-section lp-howto">
+      <div class="container">
+        <h2>はじめるのは、たった3ステップ</h2>
+        <div class="lp-step-grid">
+          <article class="lp-step-card"><div class="lp-step-head"><span>1</span><div><h3>無料で登録</h3><p>Google または LINE でかんたんに登録できます。</p></div></div><div class="lp-login-mini"><b>Googleで登録</b><b class="line">LINEで登録</b></div></article>
+          <article class="lp-step-card"><div class="lp-step-head"><span>2</span><div><h3>サインを登録・共有</h3><p>動画を登録して、チームに共有しましょう。</p></div></div><div class="lp-quiz-mini photo"><span>グループを選択</span><b>● バッティングサイン</b><b>● 走塁サイン</b><b>● 守備サイン</b></div></article>
+          <article class="lp-step-card"><div class="lp-step-head"><span>3</span><div><h3>練習を開始</h3><p>動画やクイズで繰り返し練習。チーム全員でレベルアップ。</p></div></div><div class="lp-quiz-mini lp-quiz-selfjudge"><span>Q1　このサインは？</span><i class="answer-label">正解：ヒットエンドラン</i><div class="judge-row"><i>○ 正解した</i><i>× 間違えた</i></div></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="share" class="lp-new-section lp-share-strip">
+      <div class="container"><div class="lp-share-heading"><h2>チームで使いやすい共有方法</h2><p>URL・QRコード・LINE・合言葉の4つの方法で、チーム全員に簡単に共有できます。</p></div><div class="lp-share-grid">
+        <button class="lp-share-card" id="share-site" type="button"><span>🔗</span><strong>URLで共有</strong><small>リンクを発行するだけですぐにアクセスできます。</small></button>
+        <button class="lp-share-card" id="share-sample-team" type="button"><span class="lp-share-logo lp-share-logo-qr"><img class="qr-source-icon" src="/assets/qr-code-icon.svg?v=__ASSET_VERSION__" alt="" aria-hidden="true"></span><strong>QRコードで共有</strong><small>QRコードを読み取ってかんたんに参加できます。</small></button>
+        <div class="lp-share-card lp-share-card-line"><span class="lp-share-logo"><img class="line-brand-icon" src="/assets/line-brand-icon.svg?v=__ASSET_VERSION__" alt="LINE"></span><strong>LINEで共有</strong><small>LINEでサッと送るだけですぐに共有できます。</small></div>
+        <div class="lp-share-card"><span>🔑</span><strong>合言葉で共有</strong><small>チームだけの合言葉で簡単に参加できます。</small></div>
+      </div></div>
+    </section>
+
+    <section id="pricing" class="lp-new-section lp-pricing">
+      <div class="container"><div class="lp-pricing-head"><h2>料金プラン</h2><p>チームの規模や目的に合わせて選べる3つのプラン。すべて税込価格です。</p></div><div class="lp-plan-grid">
+        <article class="lp-price-card"><div><h3>Free <small>無料プラン</small></h3><p>まずは気軽に試したいチームにおすすめ。</p></div><div class="price">¥0 <small>（税込）</small></div><ul><li>基本的な機能をお試し</li><li>少人数のチーム・部活動に</li><li>登録後すぐに開始</li></ul><button class="button button-primary" type="button" data-open-register>無料ではじめる →</button></article>
+        <article class="lp-price-card is-featured" id="plus"><span class="popular">一番人気</span><div><h3>Plus <small>プラスプラン</small></h3><p>チームで便利に活用したいチームにおすすめ。</p></div><div class="price">¥550 <small>（税込）/月</small></div><ul><li>チームでの共有がスムーズに</li><li>練習の効率がぐっと向上</li><li>コストを抑えて本格的に</li></ul><a class="button button-primary" href="/plans#plus">プランの詳細を見る →</a></article>
+        <article class="lp-price-card" id="pro"><div><h3>Pro <small>プロプラン</small></h3><p>本格的にチーム運用をしたいチームにおすすめ。</p></div><div class="price">¥1,100 <small>（税込）/月</small></div><ul><li>より高度な機能でチームを強化</li><li>大人数・複数スタッフにも対応</li><li>継続的なチーム運用に最適</li></ul><a class="button button-primary" href="/plans#pro">プランの詳細を見る →</a></article>
+      </div><p class="lp-pricing-note">※ Plus・Pro などの有償プランは、現在一部の特定チーム限定で先行運用しています。一般提供の内容や時期は、今後変更となる場合があります。</p></div>
+    </section>
+
+    <section id="for-team" class="lp-new-section lp-recommend">
+      <div class="container"><h2>こんなチームにおすすめ</h2><div class="lp-recommend-grid">
+        <article><img src="/assets/lp-rec-team.webp?v=__ASSET_VERSION__" alt="チームで並ぶ選手たち" loading="lazy"><h3>これからサインを<br>覚えはじめるチーム</h3><p>基礎から楽しくサインを覚えたい。</p></article>
+        <article><img src="/assets/lp-rec-bond.webp?v=__ASSET_VERSION__" alt="チームで声を掛け合う選手" loading="lazy"><h3>試合での連携を<br>もっと高めたいチーム</h3><p>サインを共有して勝てるチームに。</p></article>
+        <article><img src="/assets/lp-rec-new.webp?v=__ASSET_VERSION__" alt="作戦を確認するコーチ" loading="lazy"><h3>新しいメンバーが入る<br>機会の多いチーム</h3><p>動画で説明でき、すぐに共有できる。</p></article>
+        <article><img src="/assets/lp-rec-variety.webp?v=__ASSET_VERSION__" alt="ベンチに並ぶ選手" loading="lazy"><h3>サインのバリエーションを<br>増やしたいチーム</h3><p>サインを用途別に整理しやすい。</p></article>
+      </div></div>
+    </section>
+
+    <section class="lp-footer-cta">
+      <div class="container"><div><h2>今すぐ、チームのサイン練習をはじめよう</h2><p>SIGN TRAINERは、すべての野球チームの「伝わる・動ける」を支えます。</p></div><div class="lp-footer-actions"><button class="button button-primary" type="button" data-open-register>無料ではじめる →</button><a class="button button-dark-outline" href="/t/6BnWv2K3zo?openExternalBrowser=1" data-nav>▶ デモを見る</a></div></div>
+    </section>
+  </main>
+
+  <footer class="site-footer reference-footer lp-footer" id="faq-link">
+    <div class="container footer-inner">
+      <a class="brand footer-brand" href="/" data-nav aria-label="SIGN TRAINER トップページ"><span class="brand-copy"><span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span><span class="brand-sub">野球のサインを、チームの力に。</span></span></a>
+      <nav class="footer-nav" aria-label="フッターナビゲーション"><a href="#capabilities">特徴</a><a href="#capabilities">できること</a><a href="#howto">使い方</a><a href="/plans">料金プラン</a><a href="#for-team">こんなチームにおすすめ</a><a href="/support">FAQ</a><a href="/terms">利用規約</a><a href="/privacy">プライバシーポリシー</a></nav>
+      <div class="footer-meta">© 2026 SIGN TRAINER. All rights reserved.</div>
+    </div>
+  </footer>
+</div>
 
     <dialog id="team-register-dialog" class="dialog share-dialog auth-dialog" aria-labelledby="team-register-title">
       <div class="share-dialog-card">
@@ -483,7 +151,7 @@
           <a class="account-provider-button account-provider-button--line is-disabled" id="register-line" data-oauth-base="/api/account/oauth/line/start?intent=register-team" aria-disabled="true"><span class="account-provider-mark" aria-hidden="true">LINE</span><span>LINEで管理者登録</span></a>
         </div>
         <p class="legal-consent-note">認証先へ移動する前に同意が必要です。Google / LINEから取得する情報はプライバシーポリシーに記載しています。</p>
-        <div class="account-security-note"><strong>管理者パスワード不要</strong><p>選手用の合言葉だけチーム内で共有します。メイン管理者の交代・サブ管理者（最大5名）の追加はワンタイム招待リンクで行います。</p></div>
+        <div class="account-security-note"><strong>管理者パスワード不要</strong><p>選手用の合言葉だけチーム内で共有します。メイン管理者の交代・サブ管理者（最大5名）の追加はワンタイム招待リンクで行います。（Proプランのみ）</p></div>
         <p class="auth-dialog-foot">すでに登録済みですか？ <a href="/account">管理者アカウントへログイン</a></p>
       </div>
     </dialog>
@@ -512,6 +180,6 @@
         <div class="share-security-note"><strong>大切：</strong><span id="share-note">合言葉はURLやQRコードには含まれません。</span></div>
       </div>
     </dialog>
-    <script src="/build/assets/landing-CASVG7Lh.js" type="module"></script>
+    <script src="/build/assets/landing-DgE2xFPz.js" type="module"></script>
   </body>
 </html>

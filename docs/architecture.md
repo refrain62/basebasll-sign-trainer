@@ -1,4 +1,4 @@
-# SIGN TRAINER Backend architecture — v1.5.32
+# SIGN TRAINER Backend architecture — v1.5.34
 
 Cloudflare Workers + Hono + D1。ORMを使わずRepository / Service境界を持つ。
 
@@ -18,8 +18,8 @@ Hono routes
 ## Plan / Entitlement
 内部コードは `free`, `team_plus`, `team_pro` を維持する。UI表示は `Free`, `Plus`, `Pro`。
 
-- Plus: `multiple_sign_groups`, `multiple_sign_videos`, `custom_video_thumbnail`, `sub_admin_management`
-- Pro: Plusに加え `practice_analytics`, `activity_log`
+- Plus: `multiple_sign_groups`, `multiple_sign_videos`, `custom_video_thumbnail`, `sub_admin_management`, `result_text_share`
+- Pro: Plusに加え `practice_analytics`, `activity_log`, `result_image_share`
 
 現在Plus / Proは手動付与で、決済プロバイダとは接続しない。
 
@@ -37,3 +37,15 @@ Hono routes
 
 ## Security
 PBKDF2 + pepper、署名Cookie、CSRF防御、rate limit、Cloudflare Access、監査ログを維持する。
+
+
+## Premium module boundary
+
+分析・共有の有償ロジックは`src/premium-modules/module-sources.ts`に分離し、通常のVite client bundleへimportしない。
+
+`GET /api/premium-module`は次を全て満たす場合だけJavaScript moduleを返す。
+1. teamIdが有効でチームがactive
+2. 有効な選手セッションがあり、teamId / session versionが一致
+3. `EntitlementService.assertFeature`で必要featureが有効
+
+レスポンスは`private, no-store`とし、権限不足は403。クライアントはdynamic importするが、最終認可はWorker側。

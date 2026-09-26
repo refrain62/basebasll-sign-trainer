@@ -1,4 +1,4 @@
-# SIGN TRAINER 運用チェックリスト — v1.5.32
+# SIGN TRAINER 運用チェックリスト — v1.5.34
 
 
 ## Wrangler / ローカルD1
@@ -16,7 +16,7 @@
 2. Google / LINE OAuthの本番callback・規約URL・プライバシーURLを確認する。
 3. Cloudflare Accessで `/admin*` と `/api/system/*` を保護する。
 4. Secret（SESSION_SECRET / SYSTEM_ADMIN_SECRET / PASSWORD_PEPPER / DATA_ENCRYPTION_KEY / DATA_LOOKUP_KEY）を環境ごとに別値で設定する。
-5. **`0016_plan_tiers.sql`まで全migrationを適用する。**
+5. **`0017_result_sharing.sql`まで全migrationを適用する。**
 6. `package-lock.json`をGit管理し、`npm ci --ignore-scripts`で再現可能にする。
 7. `npm run check`, `npm run security:preflight`, `npm run ops:preflight`を通す。
 
@@ -25,7 +25,7 @@
 - Freeは新規チームのデフォルト。
 - Plus / Proは現在、特定チーム限定。一般申し込み・オンライン課金はない。
 - プラン変更はSYSTEM管理のチーム編集から実施する。
-- Plus = チーム運用強化。Pro = Plus + 分析・監査。
+- Plus = チーム運用強化 + 練習結果の文章共有。Pro = Plus + 分析・監査 + 画像カード共有。
 - プラン変更は監査ログへ記録する。
 - ダウングレードしても上位プランで作成したデータを物理削除しない。
 
@@ -56,3 +56,16 @@ npm run deploy:prod
 ```
 
 DB migrationはコードdeployより先に適用が必要な版があるため、stagingで必ず同じ順序を検証する。
+
+
+## 有償機能の認可確認
+
+公開前に、Free / Plus / Proそれぞれで`/api/premium-module`を直接叩き、権限不足のmoduleが403になることを確認する。クライアント側のボタン非表示だけを認可として扱わない。
+
+- Free: `analytics`, `result-text`, `result-image` 全て拒否
+- Plus: `result-text`のみ許可、`analytics` / `result-image`は拒否
+- Pro: 3module全て許可
+
+## サンプルチームの共通データ
+
+`0018_sample_team_groups.sql` は固定サンプルチーム `6BnWv2K3zo` に、バッティング・守備2種・ピッチング・走塁の5グループを投入し、既存10サインをバッティング / 走塁へ関連付ける。dev / staging / productionで同じmigrationを適用してサンプル構成を揃える。

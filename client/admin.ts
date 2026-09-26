@@ -27,8 +27,22 @@ function paidFeatureBadge(label = "限定") {
   return `<span class="paid-feature-badge">${esc(label)}</span>`;
 }
 
+
+function premiumPlanUrl(title = "") {
+  const value = String(title || "");
+  if (value.includes("サブ管理者")) return "/plans#sub-admins";
+  if (value.includes("グループ")) return "/plans#multiple-groups";
+  if (value.includes("複数動画") || value.includes("動画を追加")) return "/plans#multiple-videos";
+  if (value.includes("プレビュー")) return "/plans#video-preview";
+  if (value.includes("アクティビティ") || value.includes("監査")) return "/plans#activity";
+  if (value.includes("分析")) return "/plans#analytics";
+  if (value.includes("画像")) return "/plans#result-image";
+  if (value.includes("共有")) return "/plans#result-text";
+  return "/plans";
+}
+
 function limitedFeaturePanel(title, description = "") {
-  return `<section class="admin-card paid-feature-panel"><div class="paid-feature-lock">${adminNavIcon("plan")}</div><div><span class="paid-feature-kicker">LIMITED FEATURE</span><h2>${esc(title)}</h2><p>${esc(description || "この機能は現在のプランでは利用できません。")}</p><strong>${esc(PAID_LIMITED_MESSAGE)}</strong></div></section>`;
+  return `<section class="admin-card paid-feature-panel"><div class="paid-feature-lock">🔒</div><div><span class="paid-feature-kicker">LIMITED FEATURE</span><h2>${esc(title)}</h2><p>${esc(description || "この機能は現在のプランでは利用できません。")}</p><strong>${esc(PAID_LIMITED_MESSAGE)}</strong><div class="paid-feature-actions"><a class="button button-secondary" href="${premiumPlanUrl(title)}" target="_blank" rel="noopener">この機能をプランで見る ↗</a></div></div></section>`;
 }
 
 function openLimitedFeatureModal(title, description = "") {
@@ -571,9 +585,12 @@ function systemTeamCard(team) {
     : `<a class="button button-primary" href="/t/${encodeURIComponent(team.id)}/admin"${relatedPageLinkAttrs()}>チーム管理画面を開く</a>
       <button class="button button-secondary" data-system-edit="${esc(team.id)}" type="button">設定を編集</button>
       <button class="button button-ghost" data-system-status="${esc(team.id)}" data-next-status="${team.status === "active" ? "suspended" : "active"}" type="button">${team.status === "active" ? "利用停止" : "利用再開"}</button>`;
+  const planSummary = planCode === "free" ? "基本のサイン練習・共有" : planCode === "team_plus" ? "複数グループ・サブ管理者などチーム運用強化" : "Plus機能＋分析・監査・高度な共有";
+  const planIcon = planCode === "free" ? "✓" : planCode === "team_plus" ? "↗" : "▥";
   return `<article class="admin-team-card ${isDeleted ? "admin-team-card--deleted" : ""}" data-team-id="${esc(team.id)}" data-team-status="${esc(team.status)}" data-team-plan="${esc(planCode)}" data-team-search="${esc([team.name, team.id, plan.name, planCode].join(" ").toLocaleLowerCase("ja-JP"))}" data-page-item>
+    <div class="system-team-plan-badge system-team-plan-badge--${esc(planCode)}"><span class="system-team-plan-icon" aria-hidden="true">${planIcon}</span><span class="system-team-plan-copy"><small>現在のプラン</small><strong>${esc(plan.name || "Free")}</strong><em>${esc(planSummary)}</em></span></div>
     <div class="admin-team-card-main">
-      <div class="admin-team-title"><div class="admin-team-badges"><span class="admin-status admin-status--${esc(team.status)}">${statusLabel}</span><span class="admin-plan-mini">${esc(plan.name || "Free")}</span></div><h3>${esc(team.name)}</h3><p class="admin-id">${esc(team.id)}</p></div>
+      <div class="admin-team-title"><div class="admin-team-badges"><span class="admin-status admin-status--${esc(team.status)}">${statusLabel}</span></div><h3>${esc(team.name)}</h3><p class="admin-id">${esc(team.id)}</p></div>
       <div class="admin-team-counts"><span><strong>${Number(team.sign_count || 0)}</strong><small>サイン</small></span><span><strong>${Number(team.video_count || 0)}</strong><small>動画</small></span></div>
     </div>
     <div class="admin-row-meta"><span>${dateLabel}</span>${isDeleted ? `<span>データ保持中</span>` : ""}</div>
@@ -1251,7 +1268,7 @@ function teamPlanAuthContent(teamId, team, plan, auth, adminManagement, entitlem
     ["最近のアクティビティ・監査ログ", featureEnabled(entitlements, "activity_log"), "Pro"]
   ];
   return `<div class="team-admin-view"><header class="team-admin-page-head"><div><h1>プラン・認証</h1><p>現在のプランと認証方式を確認できます。OAuth認証はFreeプランでも利用できます。</p></div></header>
-    <section class="admin-plan-card"><div><div class="admin-plan-title"><h2>${esc(plan.name || "Free")}</h2><span class="admin-plan-price">${plan.isFree ? "Free" : "限定提供"}</span></div><p>${plan.code === "team_pro" ? "Plusのチーム運用機能に加えて、成績分析・監査ログまで利用できます。" : plan.code === "team_plus" ? "複数グループ・複数動画・サブ管理者など、チーム運用を強化できます。" : "基本的なサイン登録・練習、規定の1グループ、メイン管理者1名で利用できます。"}</p><div class="admin-plan-feature-list">${features.map(([label, enabled, requiredPlan]) => `<span class="admin-plan-feature ${enabled ? "is-enabled" : "is-locked"}">${enabled ? "✓" : "🔒"} ${esc(label)}${enabled ? "" : " " + paidFeatureBadge(String(requiredPlan))}</span>`).join("")}</div></div><div class="admin-plan-future"><strong>Plus / Proは現在、特定チーム限定で提供しています</strong><span>${esc(PAID_LIMITED_MESSAGE)} プランの変更はSYSTEM管理者が行います。</span></div></section>
+    <section class="admin-plan-card"><div><div class="admin-plan-title"><h2>${esc(plan.name || "Free")}</h2><span class="admin-plan-price">${plan.isFree ? "Free" : "限定提供"}</span></div><p>${plan.code === "team_pro" ? "Plusのチーム運用機能に加えて、成績分析・監査ログまで利用できます。" : plan.code === "team_plus" ? "複数グループ・複数動画・サブ管理者など、チーム運用を強化できます。" : "基本的なサイン登録・練習、規定の1グループ、メイン管理者1名で利用できます。"}</p><div class="admin-plan-feature-list">${features.map(([label, enabled, requiredPlan]) => enabled ? `<span class="admin-plan-feature is-enabled">✓ ${esc(label)}</span>` : `<a class="admin-plan-feature is-locked" href="${premiumPlanUrl(String(label))}" target="_blank" rel="noopener">🔒 ${esc(label)} ${paidFeatureBadge(String(requiredPlan))}<small>詳しく見る ↗</small></a>`).join("")}</div></div><div class="admin-plan-future"><strong>Plus / Proは現在、特定チーム限定で提供しています</strong><span>${esc(PAID_LIMITED_MESSAGE)} プランの変更はSYSTEM管理者が行います。</span><a class="button button-secondary" href="/plans" target="_blank" rel="noopener">プランの違いを見る ↗</a></div></section>
     <section class="admin-card team-admin-settings-summary"><div class="admin-section-heading"><div><h2>認証方式</h2></div><a class="button button-secondary" href="${teamAdminHref(teamId, "admins")}">管理者を管理</a></div><dl><div><dt>現在の認証</dt><dd>${esc(authLabel)}</dd></div><div><dt>あなたの権限</dt><dd>${esc(roleLabel)}</dd></div><div><dt>旧共有パスワード</dt><dd>${legacyEnabled ? "有効" : "無効"}</dd></div></dl><p class="admin-help">Google / LINE OAuth認証自体はFreeプランでも利用できます。</p></section>
   </div>`;
 }
@@ -1502,7 +1519,7 @@ function wireTeamDashboard(teamId, team, groups, signs, playerUrl, auth = {}, ad
   document.querySelector("#team-admin-logout")?.addEventListener("click", teamLogout);
   document.querySelector("#team-menu-logout")?.addEventListener("click", teamLogout);
   wireOAuthAvailability();
-  document.querySelectorAll<HTMLElement>("[data-premium-feature]").forEach((button) => button.addEventListener("click", () => openLimitedFeatureModal(button.dataset.premiumFeature || "限定機能", button.dataset.premiumDescription || "")));
+  document.querySelectorAll<HTMLElement>("[data-premium-feature]").forEach((button) => button.addEventListener("click", () => { window.open(premiumPlanUrl(button.dataset.premiumFeature || "限定機能"), "_blank", "noopener,noreferrer"); }));
   document.querySelector("#open-admin-invite")?.addEventListener("click", () => openAdminInviteModal(teamId));
   document.querySelector("#open-owner-transfer")?.addEventListener("click", () => openOwnerTransferModal(teamId, adminManagement || { members: [] }));
   document.querySelector("#disable-legacy-password")?.addEventListener("click", async () => {

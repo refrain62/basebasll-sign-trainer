@@ -118,3 +118,27 @@ test("planSummaries keeps repository call count constant as team count grows", a
     ["listPlans", ids]
   ]);
 });
+
+test("Plus enables text result sharing but not image sharing", async () => {
+  const { service } = fixture({
+    planCode: "team_plus",
+    entitlements: [
+      { featureKey: FEATURE_KEYS.RESULT_TEXT_SHARE, enabled: true, limitValue: null },
+      { featureKey: FEATURE_KEYS.RESULT_IMAGE_SHARE, enabled: false, limitValue: 0 }
+    ]
+  });
+  assert.equal(await service.canUseFeature("T-PLUS", FEATURE_KEYS.RESULT_TEXT_SHARE), true);
+  assert.equal(await service.canUseFeature("T-PLUS", FEATURE_KEYS.RESULT_IMAGE_SHARE), false);
+});
+
+test("Pro enables both text and image result sharing", async () => {
+  const { service } = fixture({
+    planCode: "team_pro",
+    entitlements: [
+      { featureKey: FEATURE_KEYS.RESULT_TEXT_SHARE, enabled: true, limitValue: null },
+      { featureKey: FEATURE_KEYS.RESULT_IMAGE_SHARE, enabled: true, limitValue: null }
+    ]
+  });
+  assert.equal(await service.canUseFeature("T-PRO", FEATURE_KEYS.RESULT_TEXT_SHARE), true);
+  assert.equal(await service.canUseFeature("T-PRO", FEATURE_KEYS.RESULT_IMAGE_SHARE), true);
+});

@@ -9,6 +9,8 @@ export const MAX_JSON_BYTES = 64 * 1024;
 export const MUTATION_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 export const NO_CACHE_ASSETS = new Set([
   "/index.html",
+  "/plans.html",
+  "/install.html",
   "/team.html",
   "/admin.html",
   "/account.html",

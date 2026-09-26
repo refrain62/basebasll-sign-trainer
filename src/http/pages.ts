@@ -4,6 +4,8 @@ import { applyAssetVersion } from "./versioned-assets.ts";
 export function pageAssetForPath(pathname) {
   const clean = pathname.replace(/\/$/, "") || "/";
   if (clean === "/" || clean === "/index.html") return "/__pages/index.txt";
+  if (clean === "/plans" || clean === "/plans.html") return "/__pages/plans.txt";
+  if (clean === "/install" || clean === "/install.html") return "/__pages/install.txt";
   if (clean === "/register" || clean === "/admin.html" || /^\/admin(?:\/(?:teams|security|notices))?$/.test(clean)) return "/__pages/admin.txt";
   if (clean === "/account" || clean === "/account.html" || /^\/join-admin\/[^/]+$/.test(clean)) return "/__pages/account.txt";
   if (clean === "/terms" || clean === "/terms.html") return "/__pages/terms.txt";
@@ -39,7 +41,7 @@ export async function serveHtmlPage(request, env, url, assetPath) {
   headers.delete("last-modified");
   const html = applyAssetVersion(await assetResponse.text(), env);
   return withHeaders(new Response(html, { status: 200, headers }), {
-    noIndex: url.pathname !== "/" && url.pathname !== "/index.html",
+    noIndex: !["/", "/index.html", "/plans", "/plans.html", "/install", "/install.html"].includes(url.pathname),
     noCache: true
   });
 }

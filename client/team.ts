@@ -28,6 +28,8 @@ const confirmDialog = document.querySelector("#confirm-dialog");
 const logoutDialog = document.querySelector("#logout-dialog");
 const shareDialog = document.querySelector("#share-dialog");
 
+const premiumModulePromises = new Map<string, Promise<any>>();
+
 const state = {
   signs: [],
   groups: [],
@@ -87,6 +89,67 @@ function brand({ footer = false } = {}) {
       <span class="brand-sub">野球のサインを、チームの力に。</span>
     </span>
   </a>`;
+}
+
+
+function clientFeatureEnabled(featureKey: string) {
+  return Boolean(state.entitlements?.[featureKey]?.enabled);
+}
+
+async function loadPremiumModule(moduleName: "analytics" | "result-text" | "result-image") {
+  if (!premiumModulePromises.has(moduleName)) {
+    const moduleUrl = `/api/premium-module?teamId=${encodeURIComponent(activeTeamId)}&module=${encodeURIComponent(moduleName)}&v=${encodeURIComponent(APP_BUILD)}`;
+    premiumModulePromises.set(moduleName, import(/* @vite-ignore */ moduleUrl).catch((error) => {
+      premiumModulePromises.delete(moduleName);
+      throw error;
+    }));
+  }
+  return premiumModulePromises.get(moduleName);
+}
+
+async function shareTextResult(text: string, title: string, status?: HTMLElement | null) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text });
+      if (status) status.textContent = "共有メニューを開きました。";
+      return;
+    } catch (error: any) {
+      if (error?.name === "AbortError") return;
+    }
+  }
+  await copyText(text);
+  if (status) status.textContent = "共有用の文章をコピーしました。";
+}
+
+async function shareImageFile(file: File, text: string, title: string, status?: HTMLElement | null) {
+  const data = { title, text, files: [file] };
+  if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+    try {
+      await navigator.share(data);
+      if (status) status.textContent = "画像の共有メニューを開きました。";
+      return;
+    } catch (error: any) {
+      if (error?.name === "AbortError") return;
+    }
+  }
+  const url = URL.createObjectURL(file);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = file.name || "sign-trainer-result.png";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  await copyText(text).catch(() => false);
+  if (status) status.textContent = "画像を保存し、共有用の文章をコピーしました。";
+}
+
+function currentPracticeShareLabel() {
+  if (state.reviewMode) return "間違い復習";
+  const group = selectedPracticeGroup();
+  if (group?.name) return group.name;
+  if (state.activeGroupId === "all") return "すべてのサイン";
+  return state.practiceMode === "all" ? "全サイン" : `${state.practiceMode}問練習`;
 }
 
 function escapeHtml(value) {
@@ -1212,7 +1275,7 @@ function renderResults() {
 
   app.innerHTML = `<div class="app-bg">
     ${appTopbar()}
-    <main class="app-main">
+    <main class="app-main practice-main result-main">
       <section class="app-panel result-panel result-panel--${celebration.level}">
         <div class="result-title"><span class="result-badge">${celebration.badge}</span><h1>${title}</h1><p>${message}</p></div>
         <div class="result-score result-score--${celebration.level} ${percentageClass(rate)}" id="result-score"><div class="result-score-inner"><div class="result-score-big">${correct}<small> / ${totalQuestions || 0}問</small></div><span class="result-score-small">正答率 ${totalQuestions ? `${rate}%` : "—"}</span></div></div>
@@ -1222,6 +1285,10 @@ function renderResults() {
           <div class="result-stat"><strong>${formatDuration(seconds)}</strong><span>時間${skipped ? `<br>${skipped}問スキップ` : ""}</span></div>
         </div>
         <div class="mistake-summary"><h3>${mistakes.length ? `間違えたサイン：${mistakes.length}種類` : "間違えたサインはありません"}</h3><p>${mistakes.length ? mistakes.map((sign) => escapeHtml(sign.name)).join("・") : "このセットはしっかり確認できました。"}</p></div>
+        <section class="practice-result-share ${resultTextShareEnabled() ? "" : "practice-result-share--locked"}">
+          <div><span class="practice-analytics-kicker">SHARE</span><h3>練習結果を共有</h3><p>${resultTextShareEnabled() ? "具体的なサイン内容や動画URLを含めず、結果だけをLINEなどへ共有できます。" : "Plusでは結果を文章で、Proでは画像カードでも共有できます。"}</p></div>
+          ${resultTextShareEnabled() ? `<div class="practice-result-share-actions"><button class="button button-secondary" id="share-result-text" type="button">${icons.share} 文章で共有</button>${resultImageShareEnabled() ? `<button class="button button-primary" id="share-result-image" type="button">${icons.share} 画像カードで共有</button>` : `<a class="button button-secondary premium-locked-button" href="/plans#result-image" target="_blank" rel="noopener">🔒 画像カードで共有 <span>Pro</span></a>`}</div><p class="practice-result-share-status" id="share-result-status" role="status" aria-live="polite"></p>` : `<div class="practice-result-share-actions"><a class="button button-secondary premium-locked-button" href="/plans#result-text" target="_blank" rel="noopener">🔒 文章で共有 <span>Plus</span></a><a class="button button-secondary premium-locked-button" href="/plans#result-image" target="_blank" rel="noopener">🔒 画像カードで共有 <span>Pro</span></a></div>`}
+        </section>
         <div class="result-actions">
           ${mistakes.length ? `<button class="button button-primary button-full" id="review-mistakes" type="button">間違えた${mistakes.length}問をもう一度</button>` : ""}
           <button class="button button-secondary button-full" id="retry-practice" type="button">${state.reviewMode ? `同じ${totalQuestions}問をもう一度` : state.practiceMode === "all" ? `もう一度全サイン（${totalQuestions}問）` : `もう一度${totalQuestions}問`}</button>
@@ -1240,6 +1307,30 @@ function renderResults() {
       startQuiz("all");
     } else {
       startQuiz(totalQuestions);
+    }
+  });
+  document.querySelector("#share-result-text")?.addEventListener("click", async () => {
+    const status = document.querySelector<HTMLElement>("#share-result-status");
+    try {
+      const module = await loadPremiumModule("result-text");
+      const text = module.buildPracticeResultText({ teamName: state.teamName, total: totalQuestions, correct, rate, durationLabel: formatDuration(seconds), groupName: currentPracticeShareLabel(), completedAt: state.completedAt });
+      await shareTextResult(text, `${state.teamName} | SIGN TRAINER`, status);
+    } catch (error) {
+      console.error("[SIGN TRAINER] result text share failed", error);
+      if (status) status.textContent = "共有機能を利用できません。プラン状態を確認してください。";
+    }
+  });
+  document.querySelector("#share-result-image")?.addEventListener("click", async () => {
+    const status = document.querySelector<HTMLElement>("#share-result-status");
+    try {
+      const [textModule, imageModule] = await Promise.all([loadPremiumModule("result-text"), loadPremiumModule("result-image")]);
+      const payload = { teamName: state.teamName, total: totalQuestions, correct, rate, durationLabel: formatDuration(seconds), groupName: currentPracticeShareLabel(), completedAt: state.completedAt };
+      const text = textModule.buildPracticeResultText(payload);
+      const file = await imageModule.createResultCardFile(payload);
+      await shareImageFile(file, text, `${state.teamName} | SIGN TRAINER`, status);
+    } catch (error) {
+      console.error("[SIGN TRAINER] result image share failed", error);
+      if (status) status.textContent = "画像共有を利用できません。Proプランを確認してください。";
     }
   });
   document.querySelector("#back-setup").addEventListener("click", renderPracticeSetup);
@@ -1375,6 +1466,12 @@ function renderReviewVideoError(item, mistakes, message = "通信環境を確認
   document.querySelector("#back-review-list").addEventListener("click", () => renderMistakeReview(mistakes));
 }
 
+function videoPatternLabel(signId, videoId) {
+  const sign = state.signs.find((item) => String(item.id) === String(signId));
+  const index = sign?.videos?.findIndex((id) => String(id) === String(videoId)) ?? -1;
+  return index >= 0 ? `動画${index + 1}` : "動画パターン";
+}
+
 function getPracticeHistory() {
   try {
     const raw = localStorage.getItem(historyKey());
@@ -1468,113 +1565,55 @@ function getHistoryMistakeSigns(entry) {
 }
 
 function practiceAnalyticsEnabled() {
-  return Boolean(state.entitlements?.practice_analytics?.enabled);
+  return clientFeatureEnabled("practice_analytics");
 }
 
-function analyticsRate(correct, attempts) {
-  return attempts ? Math.round((correct / attempts) * 100) : 0;
+function resultTextShareEnabled() {
+  return clientFeatureEnabled("result_text_share");
 }
 
-function videoPatternLabel(signId, videoId) {
-  const sign = state.signs.find((item) => String(item.id) === String(signId));
-  const index = sign?.videos?.findIndex((id) => id === videoId) ?? -1;
-  return index >= 0 ? `動画${index + 1}` : "動画パターン";
-}
-
-function collectPracticeAnalytics(history = getPracticeHistory()) {
-  const signById = new Map(state.signs.map((sign) => [String(sign.id), sign]));
-  const groupById = new Map(state.groups.map((group) => [String(group.id), group]));
-  const groups = new Map();
-  const signs = new Map();
-  const videos = new Map();
-  const chronologicalGrades = [];
-  let attempts = 0;
-  let correct = 0;
-
-  const bump = (map, key, seed, grade, completedAt) => {
-    if (!map.has(key)) map.set(key, { ...seed, attempts: 0, correct: 0, grades: [], lastAt: 0 });
-    const row = map.get(key);
-    row.attempts += 1;
-    if (grade === "correct") row.correct += 1;
-    row.grades.push(grade);
-    row.lastAt = Math.max(row.lastAt, Number(completedAt || 0));
-    return row;
-  };
-
-  for (const entry of history) {
-    for (const result of (entry.results || [])) {
-      if (result.grade !== "correct" && result.grade !== "wrong") continue;
-      attempts += 1;
-      if (result.grade === "correct") correct += 1;
-      chronologicalGrades.push(result.grade);
-      const signId = String(result.id);
-      const currentSign = signById.get(signId);
-      const groupIdValue = result.groupId ?? currentSign?.groupId ?? null;
-      const groupKey = groupIdValue == null ? "ungrouped" : String(groupIdValue);
-      const groupName = groupKey === "ungrouped" ? "未分類" : (groupById.get(groupKey)?.name || `グループ ${groupKey}`);
-      bump(groups, groupKey, { id: groupIdValue, name: groupName }, result.grade, entry.completedAt);
-      bump(signs, signId, { id: result.id, name: result.name || currentSign?.name || `サイン ${signId}`, groupId: groupIdValue, groupName }, result.grade, entry.completedAt);
-      if (result.videoId) {
-        const key = `${signId}:${result.videoId}`;
-        bump(videos, key, { signId: result.id, signName: result.name || currentSign?.name || `サイン ${signId}`, videoId: result.videoId, label: videoPatternLabel(result.id, result.videoId) }, result.grade, entry.completedAt);
-      }
-    }
-  }
-
-  const finish = (rows) => [...rows.values()].map((row) => {
-    const recent = row.grades.slice(0, 10);
-    const recentCorrect = recent.filter((grade) => grade === "correct").length;
-    return { ...row, rate: analyticsRate(row.correct, row.attempts), recentRate: analyticsRate(recentCorrect, recent.length), recentAttempts: recent.length };
-  });
-  const signRows = finish(signs).sort((a, b) => a.rate - b.rate || b.attempts - a.attempts || a.name.localeCompare(b.name, "ja"));
-  const groupRows = finish(groups).sort((a, b) => a.rate - b.rate || b.attempts - a.attempts);
-  const allVideoRows = finish(videos);
-  const videoPatternCounts = new Map();
-  allVideoRows.forEach((row) => videoPatternCounts.set(String(row.signId), Number(videoPatternCounts.get(String(row.signId)) || 0) + 1));
-  const videoRows = allVideoRows.filter((row) => {
-    const sign = signById.get(String(row.signId));
-    return (sign?.videos?.length || 0) > 1 || Number(videoPatternCounts.get(String(row.signId)) || 0) > 1;
-  }).sort((a, b) => a.rate - b.rate || b.attempts - a.attempts);
-  const weakSigns = signRows.filter((row) => row.attempts >= 3).slice(0, 5);
-  const recent = chronologicalGrades.slice(0, 10);
-  return {
-    attempts,
-    correct,
-    rate: analyticsRate(correct, attempts),
-    recentRate: analyticsRate(recent.filter((grade) => grade === "correct").length, recent.length),
-    recentAttempts: recent.length,
-    groupRows,
-    signRows,
-    videoRows,
-    weakSigns
-  };
+function resultImageShareEnabled() {
+  return clientFeatureEnabled("result_image_share");
 }
 
 function analyticsBar(row, { label = row.name, meta = "" } = {}) {
   return `<div class="practice-analytics-row"><div class="practice-analytics-row-head"><div><strong>${escapeHtml(label)}</strong>${meta ? `<small>${escapeHtml(meta)}</small>` : ""}</div><span><b>${row.rate}%</b><small>${row.correct}/${row.attempts}</small></span></div><div class="practice-analytics-bar"><span class="practice-analytics-bar-fill ${percentageClass(row.rate)}"></span></div>${row.recentAttempts ? `<p>直近${row.recentAttempts}回 ${row.recentRate}%</p>` : ""}</div>`;
 }
 
-function renderPracticeAnalyticsSummary(history) {
+function renderPracticeAnalyticsSummaryShell() {
   if (!practiceAnalyticsEnabled()) {
-    return `<section class="practice-analytics practice-analytics--summary practice-analytics--locked"><div class="practice-analytics-lock">${icons.lock}</div><div><span class="practice-analytics-kicker">PRO FEATURE</span><h2>正答率・苦手分析</h2><p>Proでは練習履歴から、苦手なサインやグループを見つけられます。</p><button class="button button-secondary" id="history-open-analytics" type="button">機能を見る</button></div></section>`;
+    return `<section class="practice-analytics practice-analytics--summary practice-analytics--locked"><div class="practice-analytics-lock">${icons.lock}</div><div><span class="practice-analytics-kicker">PRO FEATURE</span><h2>正答率・苦手分析</h2><p>Proでは練習履歴から、苦手なサインやグループを見つけられます。</p><a class="button button-secondary" href="/plans#analytics" target="_blank" rel="noopener">🔒 Proの内容を見る ↗</a></div></section>`;
   }
-  const stats = collectPracticeAnalytics(history);
-  if (!stats.attempts) {
-    return `<section class="practice-analytics practice-analytics--summary"><div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>成績サマリー</h2><p>練習すると、ここに正答率と苦手サインが表示されます。</p></div><button class="button button-secondary" id="history-open-analytics" type="button">詳しい分析を見る</button></div></section>`;
-  }
-  const weak = stats.weakSigns.slice(0, 3);
-  return `<section class="practice-analytics practice-analytics--summary"><div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>成績サマリー</h2><p>ざっと確認して、詳しい分析は専用ページで見られます。</p></div><button class="button button-secondary" id="history-open-analytics" type="button">詳しい分析を見る</button></div>
-    <div class="practice-analytics-summary practice-analytics-summary--compact"><div class="practice-analytics-summary-stat"><strong>${stats.rate}%</strong><span>累計正答率</span></div><div class="practice-analytics-summary-stat"><strong>${stats.recentRate}%</strong><span>直近${stats.recentAttempts}回答</span></div><div class="practice-analytics-summary-stat"><strong>${stats.attempts}</strong><span>総回答数</span></div></div>
-    <div class="practice-analytics-weak-summary"><div class="practice-analytics-section-head"><h3>苦手サイン</h3><span>3回答以上・上位3件</span></div>${weak.length ? weak.map((row) => analyticsBar(row, { meta: `${row.groupName} · ${row.attempts}回答` })).join("") : `<p class="practice-analytics-empty">もう少し練習すると苦手傾向を表示します。</p>`}</div>
-  </section>`;
+  return `<section class="practice-analytics practice-analytics--summary" id="history-analytics-summary"><div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>成績サマリー</h2><p>成績データをこの端末内で集計しています…</p></div><button class="button button-secondary" id="history-open-analytics" type="button">詳しい分析を見る</button></div></section>`;
 }
 
-function renderPracticeAnalyticsDetail(history) {
-  if (!practiceAnalyticsEnabled()) {
-    return `<section class="practice-analytics practice-analytics--locked"><div class="practice-analytics-lock">${icons.lock}</div><div><span class="practice-analytics-kicker">PRO FEATURE</span><h2>正答率・苦手分析</h2><p>Proではサイングループ・サイン・動画パターンごとの正答率をグラフで確認し、苦手なサインだけ練習できます。</p><strong>Plus / Proは現在、特定チーム限定で提供しています。一般のお申し込み・オンライン課金にはまだ対応していません。</strong></div></section>`;
+function renderPracticeAnalyticsSummaryFromStats(stats) {
+  if (!stats?.attempts) {
+    return `<div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>成績サマリー</h2><p>練習すると、ここに正答率と苦手サインが表示されます。</p></div><button class="button button-secondary" id="history-open-analytics" type="button">詳しい分析を見る</button></div>`;
   }
-  const stats = collectPracticeAnalytics(history);
-  if (!stats.attempts) {
+  const weak = stats.weakSigns.slice(0, 3);
+  return `<div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>成績サマリー</h2><p>ざっと確認して、詳しい分析は専用ページで見られます。</p></div><button class="button button-secondary" id="history-open-analytics" type="button">詳しい分析を見る</button></div>
+    <div class="practice-analytics-summary practice-analytics-summary--compact"><div class="practice-analytics-summary-stat"><strong>${stats.rate}%</strong><span>累計正答率</span></div><div class="practice-analytics-summary-stat"><strong>${stats.recentRate}%</strong><span>直近${stats.recentAttempts}回答</span></div><div class="practice-analytics-summary-stat"><strong>${stats.attempts}</strong><span>総回答数</span></div></div>
+    <div class="practice-analytics-weak-summary"><div class="practice-analytics-section-head"><h3>苦手サイン</h3><span>3回答以上・上位3件</span></div>${weak.length ? weak.map((row) => analyticsBar(row, { meta: `${row.groupName} · ${row.attempts}回答` })).join("") : `<p class="practice-analytics-empty">もう少し練習すると苦手傾向を表示します。</p>`}</div>`;
+}
+
+async function hydratePracticeAnalyticsSummary(history) {
+  if (!practiceAnalyticsEnabled()) return;
+  const target = document.querySelector<HTMLElement>("#history-analytics-summary");
+  if (!target) return;
+  try {
+    const module = await loadPremiumModule("analytics");
+    const stats = module.analyzePractice(history, state.signs, state.groups);
+    target.innerHTML = renderPracticeAnalyticsSummaryFromStats(stats);
+    target.querySelector("#history-open-analytics")?.addEventListener("click", () => navigate(`${activeTeamPath()}?view=analytics`));
+  } catch (error) {
+    console.error("[SIGN TRAINER] premium analytics summary load failed", error);
+    target.innerHTML = `<div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>成績サマリー</h2><p>成績分析を読み込めませんでした。もう一度お試しください。</p></div></div>`;
+  }
+}
+
+function renderPracticeAnalyticsDetail(stats) {
+  if (!stats?.attempts) {
     return `<section class="practice-analytics"><div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>正答率・苦手分析</h2></div></div><div class="history-empty history-empty--compact"><h3>分析できる回答がまだありません</h3><p>練習をすると、グループ・サイン・動画パターン別の正答率がここに表示されます。</p></div></section>`;
   }
   const weakIds = stats.weakSigns.map((row) => String(row.id)).join(",");
@@ -1590,17 +1629,47 @@ function renderPracticeAnalyticsDetail(history) {
   </section>`;
 }
 
+async function renderAnalyticsShareActions(stats) {
+  const host = document.querySelector<HTMLElement>("#analytics-share-actions");
+  if (!host || !stats?.attempts) return;
+  host.innerHTML = `<section class="practice-result-share"><div><span class="practice-analytics-kicker">SHARE</span><h3>成績サマリーを共有</h3><p>Proでは文章と画像カードの両方で共有できます。サイン名や動画URLは初期状態では含めません。</p></div><div class="practice-result-share-actions"><button class="button button-secondary" id="share-analytics-text" type="button">${icons.share} 文章で共有</button><button class="button button-primary" id="share-analytics-image" type="button">${icons.share} 画像カードで共有</button></div><p class="practice-result-share-status" id="share-analytics-status" role="status" aria-live="polite"></p></section>`;
+  const status = () => document.querySelector<HTMLElement>("#share-analytics-status");
+  document.querySelector("#share-analytics-text")?.addEventListener("click", async () => {
+    try {
+      const module = await loadPremiumModule("result-image");
+      const text = module.buildAnalyticsText({ teamName: state.teamName, rate: stats.rate, recentRate: stats.recentRate, attempts: stats.attempts, weakCount: stats.weakSigns.length });
+      await shareTextResult(text, `${state.teamName} 成績分析 | SIGN TRAINER`, status());
+    } catch (error) {
+      console.error("[SIGN TRAINER] analytics text share failed", error);
+      if (status()) status().textContent = "共有機能を利用できません。";
+    }
+  });
+  document.querySelector("#share-analytics-image")?.addEventListener("click", async () => {
+    try {
+      const imageModule = await loadPremiumModule("result-image");
+      const text = imageModule.buildAnalyticsText({ teamName: state.teamName, rate: stats.rate, recentRate: stats.recentRate, attempts: stats.attempts, weakCount: stats.weakSigns.length });
+      const file = await imageModule.createAnalyticsCardFile({ teamName: state.teamName, stats, includeSignNames: false });
+      await shareImageFile(file, text, `${state.teamName} 成績分析 | SIGN TRAINER`, status());
+    } catch (error) {
+      console.error("[SIGN TRAINER] analytics image share failed", error);
+      if (status()) status().textContent = "画像共有を利用できません。Proプランを確認してください。";
+    }
+  });
+}
+
 function renderPracticeAnalyticsPage() {
   cleanupPlayer();
   const history = getPracticeHistory();
   document.title = "成績分析 | SIGN TRAINER";
+  const locked = !practiceAnalyticsEnabled();
   app.innerHTML = `<div class="app-bg">
     ${appTopbar('<button class="button button-ghost" id="analytics-back" type="button">履歴へ</button>')}
     <main class="app-main practice-main">
       <section class="app-panel history-panel analytics-detail-panel">
         ${practiceTeamIdentity()}
         <div class="history-heading"><div><h1>成績分析</h1><p class="panel-lead">サイングループ・サイン・動画パターンごとの正答率から、苦手を見つけて練習できます。</p></div></div>
-        ${renderPracticeAnalyticsDetail(history)}
+        <div id="analytics-premium-content">${locked ? `<section class="practice-analytics practice-analytics--locked"><div class="practice-analytics-lock">${icons.lock}</div><div><span class="practice-analytics-kicker">PRO FEATURE</span><h2>正答率・苦手分析</h2><p>Proではサイングループ・サイン・動画パターンごとの正答率をグラフで確認し、苦手なサインだけ練習できます。</p><strong>Proは現在、特定チーム限定で提供しています。一般のお申し込み・オンライン課金にはまだ対応していません。</strong><a class="button button-secondary" href="/plans#analytics" target="_blank" rel="noopener">🔒 Proでできることを見る ↗</a></div></section>` : `<section class="practice-analytics"><div class="practice-analytics-heading"><div><span class="practice-analytics-kicker">ANALYTICS</span><h2>成績データを読み込んでいます…</h2><p>Pro専用モジュールを安全に確認しています。</p></div></div></section>`}</div>
+        <div id="analytics-share-actions"></div>
         <div class="result-actions"><button class="button button-secondary button-full" id="analytics-history" type="button">練習履歴を見る</button><button class="button button-primary button-full" id="analytics-practice" type="button">練習をはじめる</button></div>
       </section>
     </main>
@@ -1608,11 +1677,24 @@ function renderPracticeAnalyticsPage() {
   document.querySelector("#analytics-back")?.addEventListener("click", () => navigate(`${activeTeamPath()}?view=history`));
   document.querySelector("#analytics-history")?.addEventListener("click", () => navigate(`${activeTeamPath()}?view=history`));
   document.querySelector("#analytics-practice")?.addEventListener("click", () => navigate(activeTeamPath()));
-  document.querySelector("#history-practice-weak")?.addEventListener("click", (event) => {
-    const ids = String((event.currentTarget as HTMLElement).dataset.weakSignIds || "").split(",").filter(Boolean);
-    const weakSigns = state.signs.filter((sign) => ids.includes(String(sign.id)));
-    if (weakSigns.length) startQuiz(weakSigns.length, weakSigns, { review: true });
-  });
+  if (locked) return;
+  (async () => {
+    const content = document.querySelector<HTMLElement>("#analytics-premium-content");
+    try {
+      const module = await loadPremiumModule("analytics");
+      const stats = module.analyzePractice(history, state.signs, state.groups);
+      if (content) content.innerHTML = renderPracticeAnalyticsDetail(stats);
+      document.querySelector("#history-practice-weak")?.addEventListener("click", (event) => {
+        const ids = String((event.currentTarget as HTMLElement).dataset.weakSignIds || "").split(",").filter(Boolean);
+        const weakSigns = state.signs.filter((sign) => ids.includes(String(sign.id)));
+        if (weakSigns.length) startQuiz(weakSigns.length, weakSigns, { review: true });
+      });
+      renderAnalyticsShareActions(stats);
+    } catch (error) {
+      console.error("[SIGN TRAINER] Pro analytics module load failed", error);
+      if (content) content.innerHTML = `<section class="practice-analytics"><div class="history-empty history-empty--compact"><h3>成績分析を読み込めませんでした</h3><p>プラン状態を確認して、もう一度お試しください。</p></div></section>`;
+    }
+  })();
 }
 
 function renderPracticeHistory() {
@@ -1627,7 +1709,7 @@ function renderPracticeHistory() {
       <section class="app-panel history-panel">
         ${practiceTeamIdentity()}
         <div class="history-heading"><div><h1>練習履歴</h1><p class="panel-lead">この端末で行った練習結果を確認できます。</p></div>${history.length ? `<strong class="history-total-count">全${history.length}件</strong>` : ""}</div>
-        ${renderPracticeAnalyticsSummary(history)}
+        ${renderPracticeAnalyticsSummaryShell()}
         ${history.length ? `<div class="history-list" data-history-list>
           ${history.map((entry, index) => {
             const mistakes = getHistoryMistakeResults(entry);
@@ -1663,6 +1745,7 @@ function renderPracticeHistory() {
     if (scroll) document.querySelector(".history-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
   renderHistoryPage();
+  hydratePracticeAnalyticsSummary(history);
   document.querySelector("#history-open-analytics")?.addEventListener("click", () => navigate(`${activeTeamPath()}?view=analytics`));
   document.querySelector("#history-prev")?.addEventListener("click", () => { if (page <= 1) return; page -= 1; renderHistoryPage(true); });
   document.querySelector("#history-next")?.addEventListener("click", () => { if (page >= totalPages) return; page += 1; renderHistoryPage(true); });

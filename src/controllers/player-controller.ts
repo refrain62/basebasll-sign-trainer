@@ -1,4 +1,6 @@
 import { PLAYER_COOKIE, SAMPLE_TEAM_ID } from "../config/constants.ts";
+import { FEATURE_KEYS } from "../config/features.ts";
+import { PRO_ANALYTICS_MODULE_SOURCE, SHARE_IMAGE_MODULE_SOURCE, SHARE_TEXT_MODULE_SOURCE } from "../premium-modules/module-sources.ts";
 import { apiJson } from "../http/response.ts";
 import { createAuditRepository } from "../repositories/audit-repository.ts";
 import { createTeamRepository } from "../repositories/team-repository.ts";
@@ -67,4 +69,43 @@ export async function playerSigns(request, env, url) {
   const groups = await teams.getGroups(teamId, { onlyEnabled: true });
   const plan = await createServices(env.DB, env).entitlements.summary(teamId);
   return apiJson({ team: { id: team.id, name: team.name }, groups, signs, plan });
+}
+
+
+const PREMIUM_MODULES: Record<string, { feature: string; source: string }> = Object.freeze({
+  analytics: { feature: FEATURE_KEYS.PRACTICE_ANALYTICS, source: PRO_ANALYTICS_MODULE_SOURCE },
+  "result-text": { feature: FEATURE_KEYS.RESULT_TEXT_SHARE, source: SHARE_TEXT_MODULE_SOURCE },
+  "result-image": { feature: FEATURE_KEYS.RESULT_IMAGE_SHARE, source: SHARE_IMAGE_MODULE_SOURCE }
+});
+
+export async function playerPremiumModule(request, env, url) {
+  const teamId = normalizeTeamId(url.searchParams.get("teamId"));
+  const moduleName = String(url.searchParams.get("module") || "");
+  const module = PREMIUM_MODULES[moduleName];
+  if (!teamId || !module) return apiJson({ error: "invalid_request", message: "モジュールを確認できません。" }, 400);
+  const teams = createTeamRepository(env.DB, createDataProtectorFromEnv(env));
+  const team = await teams.findById(teamId);
+  if (!team || team.status !== "active") return apiJson({ error: "team_inactive", message: "チームを利用できません。" }, 403);
+  const session = await readRoleSession(request, env, PLAYER_COOKIE, "player");
+  if (!session || session.teamId !== teamId || Number(session.ver || 0) !== Number(team.player_session_version || 1)) {
+    return apiJson({ error: "unauthorized", message: "合言葉を入力してください。" }, 401);
+  }
+  const services = createServices(env.DB, env);
+  try {
+    await services.entitlements.assertFeature(teamId, module.feature, "この機能は現在のプランでは利用できません。");
+  } catch (error) {
+    if (error && typeof error === "object" && "status" in error) {
+      const serviceError = error as any;
+      return apiJson({ error: serviceError.code || "feature_not_available", message: serviceError.message || "この機能は現在のプランでは利用できません。", feature: module.feature }, Number(serviceError.status) || 403);
+    }
+    throw error;
+  }
+  return new Response(module.source, {
+    status: 200,
+    headers: {
+      "content-type": "text/javascript; charset=utf-8",
+      "cache-control": "private, no-store, max-age=0",
+      "x-content-type-options": "nosniff"
+    }
+  });
 }

@@ -3,13 +3,15 @@ import path from "node:path";
 
 export const PAGE_ENTRIES = {
   index: "landing",
+  plans: "landing",
+  install: "landing",
   team: "team",
   admin: "admin-entry",
   account: "account",
   terms: "legal",
   privacy: "legal",
   "external-transmission": "legal",
-  support: "legal"
+  support: "landing"
 } as const;
 
 export function renderVitePages(entryFiles: Readonly<Record<string, string>>, rootDir = process.cwd()): void {

@@ -68,6 +68,8 @@ test("page routing resolves only expected application pages", () => {
   assert.equal(pageAssetForPath("/admin"), "/__pages/admin.txt");
   assert.equal(pageAssetForPath("/register"), "/__pages/admin.txt");
   assert.equal(pageAssetForPath("/account"), "/__pages/account.txt");
+  assert.equal(pageAssetForPath("/plans"), "/__pages/plans.txt");
+  assert.equal(pageAssetForPath("/install"), "/__pages/install.txt");
   assert.equal(pageAssetForPath("/terms"), "/__pages/terms.txt");
   assert.equal(pageAssetForPath("/privacy"), "/__pages/privacy.txt");
   assert.equal(pageAssetForPath("/external-transmission"), "/__pages/external-transmission.txt");

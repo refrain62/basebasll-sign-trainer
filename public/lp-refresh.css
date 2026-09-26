@@ -1,0 +1,615 @@
+/* SIGN TRAINER LP refresh - 2026-09-27 */
+body { background:#eef5f8; }
+.lp-refresh { width:min(100%,1180px); margin:0 auto; background:#fff; box-shadow:0 0 45px rgba(3,35,58,.06); }
+.lp-refresh .container { width:min(calc(100% - 44px),1040px); }
+.lp-refresh h1,.lp-refresh h2,.lp-refresh h3,.lp-refresh p,.lp-refresh li,.lp-refresh a,.lp-refresh button { color:#071e33; }
+
+/* header */
+.lp-refresh .lp-site-header { position:sticky; top:0; z-index:50; background:rgba(255,255,255,.97); border-bottom:1px solid #dbe5ea; backdrop-filter:blur(12px); }
+.lp-refresh .lp-site-header .header-inner { min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:22px; }
+.lp-refresh .lp-site-header .brand { flex:0 0 auto; }
+.lp-refresh .lp-site-header .brand-mark { width:38px; height:38px; }
+.lp-refresh .lp-site-header .brand-name { font-size:17px; }
+.lp-refresh .lp-site-header .brand-sub { font-size:9px; }
+.lp-refresh .lp-site-header .header-nav { display:flex; align-items:center; gap:22px; margin-left:auto; }
+.lp-refresh .lp-site-header .header-nav > a { text-decoration:none; font-size:13px; font-weight:900; white-space:nowrap; }
+.lp-refresh .lp-site-header .header-login { min-height:38px; padding:0 22px; border:1.5px solid #173e5d; border-radius:999px; display:inline-flex; align-items:center; }
+.lp-refresh .lp-site-header .header-cta { min-height:40px; padding-inline:20px; font-size:13px; color:#fff; }
+.lp-refresh .mobile-menu-button { display:none; }
+.lp-refresh .mobile-nav { display:none; }
+
+/* hero */
+.lp-new-hero { position:relative; min-height:390px; overflow:hidden; background:linear-gradient(90deg,#031827 0%,#082a43 46%,#163a54 100%); }
+.lp-new-hero::before { content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(2,22,36,.98) 0%,rgba(2,22,36,.94) 32%,rgba(2,22,36,.58) 43%,rgba(2,22,36,.12) 55%,rgba(2,22,36,0) 68%); z-index:1; }
+.lp-new-hero-photo { position:absolute; inset:0; background:url('/assets/lp-hero-composite.webp?v=__ASSET_VERSION__') center/cover no-repeat; z-index:0; }
+.lp-new-hero-inner { position:relative; z-index:2; min-height:390px; display:flex; align-items:center; }
+.lp-new-hero-copy { width:min(54%,560px); padding:38px 0 34px; }
+.lp-new-hero-copy h1 { margin:0; color:#fff; font-size:clamp(43px,5.6vw,72px); line-height:.98; letter-spacing:-.045em; font-weight:950; text-shadow:0 2px 12px rgba(0,0,0,.22); }
+.lp-new-hero-copy h1 span { display:inline-block; position:relative; color:#fff; }
+.lp-new-hero-copy h1 span::after { content:""; position:absolute; left:0; right:-4%; bottom:-8px; height:8px; border-radius:999px; background:#10c66b; transform:rotate(-1deg); }
+.lp-new-hero-lead { margin:28px 0 0; color:#fff!important; font-size:15px; line-height:1.72; font-weight:700; }
+.lp-new-hero-lead strong { color:#fff; font-size:16px; }
+.lp-new-hero-actions { display:flex; gap:14px; margin-top:25px; }
+.lp-new-hero-actions .button { min-width:190px; min-height:48px; }
+.button-dark-outline { border:1.5px solid rgba(255,255,255,.85); color:#fff!important; background:rgba(1,18,30,.45); }
+
+/* generic heading */
+.lp-new-section { padding:34px 0; background:#fff; }
+.lp-new-heading h2,.lp-share-heading h2,.lp-pricing-head h2,.lp-recommend h2,.lp-howto h2 { margin:0; color:#071e33; font-size:29px; line-height:1.2; font-weight:950; letter-spacing:-.025em; }
+.lp-new-heading p,.lp-share-heading p,.lp-pricing-head p { margin:8px 0 0; color:#4d6474; font-size:13px; line-height:1.6; font-weight:700; }
+.lp-new-heading.centered { text-align:center; }
+
+/* capabilities */
+.lp-capabilities { padding-top:26px; padding-bottom:28px; }
+.lp-cap-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:20px; }
+.lp-cap-card { min-height:220px; padding:15px; display:grid; grid-template-columns:42px 1fr; grid-template-rows:auto 1fr; gap:8px 10px; border:1px solid #dce7ec; border-radius:12px; background:#fff; box-shadow:0 5px 14px rgba(8,40,68,.035); overflow:hidden; }
+.lp-cap-icon { width:40px; height:40px; border-radius:8px; display:grid; place-items:center; color:#fff!important; background:#08b963; font-size:20px; font-weight:950; }
+.lp-cap-card h3 { margin:1px 0 4px; font-size:16px; line-height:1.25; font-weight:950; }
+.lp-cap-card h3 small { font-size:11px; }
+.lp-cap-card p { margin:0; color:#4c6575; font-size:11px; line-height:1.55; font-weight:700; }
+.lp-cap-visual,.lp-folder-list,.lp-score-visual,.lp-share-icons { grid-column:1 / -1; align-self:end; min-height:88px; }
+.lp-cap-video { position:relative; border-radius:8px; background:linear-gradient(180deg,rgba(4,30,48,.02),rgba(4,30,48,.16)),url('/assets/lp-feature-video.webp?v=__ASSET_VERSION__') center/cover no-repeat; }
+.lp-cap-video::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,transparent 45%,rgba(1,20,32,.06)); }
+.play-dot { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:42px; height:42px; display:grid; place-items:center; border-radius:50%; color:#fff!important; background:rgba(2,28,45,.68); border:2px solid #fff; z-index:2; }
+.lp-cap-phone { padding:9px 12px; border-radius:8px; background:linear-gradient(rgba(255,255,255,.82),rgba(255,255,255,.94)),url('/assets/lp-feature-quiz.webp?v=__ASSET_VERSION__') center/cover no-repeat; border:1px solid #e3ecef; display:grid; gap:5px; }
+.lp-cap-phone span,.lp-cap-phone b,.lp-cap-phone i { display:block; padding:5px 8px; border-radius:6px; font-size:10px; font-style:normal; }
+.lp-cap-phone b { color:#fff; background:#0fbd67; }
+.lp-cap-phone i { background:#fff; border:1px solid #dce6eb; }
+.lp-share-icons { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; align-items:center; }
+.lp-share-icons span { min-height:68px; display:grid; place-items:center; align-content:center; gap:4px; color:#09a85c; font-size:23px; font-weight:950; text-align:center; }
+.lp-share-icons small { display:block; font-size:9px; color:#0b2340; }
+.lp-folder-list { display:grid; gap:5px; padding:8px; border-radius:8px; background:#f4f8fa; }
+.lp-folder-list span { display:flex; justify-content:space-between; padding:4px 6px; border-radius:5px; background:#fff; color:#244b68; font-size:10px; font-weight:800; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+.lp-folder-list b { color:#4f7bb3; }
+.lp-score-visual { display:grid; grid-template-columns:100px 1fr; gap:16px; align-items:end; padding:8px 6px; }
+.score-ring { width:84px; height:84px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#0db861 0 78%,#d9eee3 78%); position:relative; }
+.score-ring::after { content:""; width:62px; height:62px; position:absolute; border-radius:50%; background:#fff; }
+.score-ring strong { position:relative; z-index:1; font-size:18px; }
+.score-bars { height:80px; display:flex; align-items:end; gap:7px; }
+.score-bars i { flex:1; min-width:8px; background:#0db861; border-radius:2px 2px 0 0; }
+.score-bars i:nth-child(1){height:28%}.score-bars i:nth-child(2){height:42%}.score-bars i:nth-child(3){height:55%}.score-bars i:nth-child(4){height:73%}.score-bars i:nth-child(5){height:94%}
+.lp-cap-coaches { background:url('/assets/lp-feature-admin.webp?v=__ASSET_VERSION__') center/cover no-repeat; border-radius:8px; }
+
+/* why */
+.lp-why { background:#fff; border-top:1px solid #edf2f4; border-bottom:1px solid #edf2f4; }
+.lp-why .container { width:min(100%,1040px); }
+.lp-why-grid { display:grid; grid-template-columns:40% 60%; min-height:245px; }
+.lp-why-copy { padding:28px 22px 24px 0; align-self:center; }
+.lp-why-copy h2 { margin:0 0 12px; font-size:28px; line-height:1.2; font-weight:950; }
+.lp-why-copy p { margin:0; color:#263f52; font-size:12px; line-height:1.75; font-weight:700; }
+.lp-why-copy ul { list-style:none; margin:12px 0 0; padding:0; display:grid; gap:5px; }
+.lp-why-copy li { position:relative; padding-left:26px; font-size:13px; font-weight:950; }
+.lp-why-copy li::before { content:"✓"; position:absolute; left:0; top:-1px; width:19px; height:19px; border-radius:50%; display:grid; place-items:center; color:#fff; background:#09b762; font-size:11px; }
+.lp-catcher-visual { min-height:245px; background:#fff url('/assets/lp-catcher-sign.webp?v=__ASSET_VERSION__') center/contain no-repeat; }
+
+/* steps */
+.lp-howto { padding-top:28px; padding-bottom:26px; }
+.lp-step-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:15px; }
+.lp-step-card { min-height:170px; padding:13px 14px 0; border:1px solid #e2eaee; border-radius:10px; background:#fff; overflow:hidden; }
+.lp-step-head { display:grid; grid-template-columns:36px 1fr; gap:10px; align-items:start; }
+.lp-step-head > span { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:#fff!important; background:#10b962; font-size:16px; font-weight:950; }
+.lp-step-head h3 { margin:0 0 2px; font-size:14px; font-weight:950; }
+.lp-step-head p { margin:0; color:#5b7180; font-size:10px; line-height:1.45; font-weight:700; }
+.lp-login-mini { width:78%; margin:11px auto 0; display:grid; gap:5px; padding:10px; border:3px solid #0c2031; border-bottom:0; border-radius:18px 18px 0 0; background:#fff; }
+.lp-login-mini b { padding:7px 8px; border:1px solid #d4e0e6; border-radius:7px; font-size:10px; text-align:center; }
+.lp-login-mini .line { color:#fff; background:#0bc363; }
+.lp-quiz-mini { width:88%; margin:12px auto 0; display:grid; gap:4px; padding:10px; border:3px solid #0c2031; border-bottom:0; border-radius:16px 16px 0 0; background:#fff; font-size:9px; }
+.lp-quiz-mini span { font-weight:900; }
+.lp-quiz-mini b,.lp-quiz-mini i { padding:5px 8px; border:1px solid #d8e3e8; border-radius:999px; font-style:normal; }
+.lp-quiz-mini b { color:#fff; background:#11b963; border-color:#11b963; }
+.lp-quiz-mini.photo { background:linear-gradient(180deg,rgba(255,255,255,.76),#fff),url('/assets/lp-catcher-sign.webp?v=__ASSET_VERSION__') center/cover no-repeat; }
+
+/* sharing */
+.lp-share-strip { padding-top:10px; padding-bottom:24px; background:#fbfdfc; border-top:1px solid #eef2f4; border-bottom:1px solid #e7eeeb; }
+.lp-share-heading { display:flex; align-items:baseline; gap:14px; }
+.lp-share-heading h2 { font-size:24px; }
+.lp-share-heading p { margin:0; }
+.lp-share-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-top:11px; }
+.lp-share-card { appearance:none; min-height:100px; padding:12px; display:grid; grid-template-columns:42px 1fr; gap:3px 9px; align-items:start; border:1px solid #dce7ec; border-radius:10px; background:#fff; text-align:left; }
+.lp-share-card > span { grid-row:1 / span 2; font-size:29px; color:#08ac5d; font-weight:950; }
+.lp-share-card strong { font-size:13px; color:#0a2239; }
+.lp-share-card small { display:block; font-size:9px; color:#647886; line-height:1.45; }
+
+/* pricing */
+.lp-pricing { padding-top:22px; padding-bottom:22px; }
+.lp-pricing-head { display:flex; align-items:baseline; gap:14px; }
+.lp-pricing-head h2 { font-size:27px; }
+.lp-pricing-head p { margin:0; }
+.lp-plan-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:12px; }
+.lp-price-card { position:relative; padding:16px; border:1px solid #dce6eb; border-radius:11px; display:grid; grid-template-rows:auto auto 1fr auto; background:#fff; }
+.lp-price-card.is-featured { border:2px solid #11b962; box-shadow:0 0 0 4px rgba(17,185,98,.05); }
+.lp-price-card .popular { position:absolute; top:-12px; left:50%; transform:translateX(-50%); padding:3px 24px; border-radius:999px; background:#0db55f; color:#fff!important; font-size:10px; font-weight:900; }
+.lp-price-card h3 { margin:0; font-size:20px; }
+.lp-price-card h3 small { font-size:11px; margin-left:4px; }
+.lp-price-card p { margin:4px 0 0; color:#657887; font-size:9px; line-height:1.5; font-weight:700; }
+.lp-price-card .price { margin:11px 0 5px; font-size:26px; font-weight:950; }
+.lp-price-card .price small { font-size:11px; }
+.lp-price-card ul { list-style:none; margin:3px 0 12px; padding:0; display:grid; gap:4px; }
+.lp-price-card li { position:relative; padding-left:18px; font-size:10px; line-height:1.4; font-weight:800; }
+.lp-price-card li::before { content:"✓"; position:absolute; left:0; color:#0bb55f; font-weight:950; }
+.lp-price-card .button { width:100%; min-height:36px; padding:0 14px; font-size:10px; color:#fff; }
+
+/* recommendations */
+.lp-recommend { padding-top:8px; padding-bottom:18px; }
+.lp-recommend h2 { font-size:22px; }
+.lp-recommend-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-top:8px; }
+.lp-recommend article { overflow:hidden; border:1px solid #e0e8ec; border-radius:9px; background:#fff; text-align:center; }
+.lp-recommend img { width:100%; height:62px; object-fit:cover; }
+.lp-recommend h3 { margin:8px 7px 3px; font-size:11px; line-height:1.35; }
+.lp-recommend p { margin:0 7px 10px; color:#6a7d8a; font-size:8px; line-height:1.45; font-weight:700; }
+
+/* CTA/footer */
+.lp-footer-cta { position:relative; padding:18px 0; overflow:hidden; background:linear-gradient(90deg,rgba(3,26,43,.97),rgba(4,44,62,.93)),url('/assets/why-baseball.webp?v=__ASSET_VERSION__') 82% 73%/cover no-repeat; }
+.lp-footer-cta .container { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.lp-footer-cta h2 { margin:0; color:#fff; font-size:19px; font-weight:950; }
+.lp-footer-cta p { margin:5px 0 0; color:#d6e5ec; font-size:9px; font-weight:700; }
+.lp-footer-actions { display:flex; gap:10px; }
+.lp-footer-actions .button { min-height:38px; padding-inline:24px; font-size:10px; }
+.lp-refresh .lp-footer { background:#032038; color:#fff; border-top:1px solid rgba(255,255,255,.08); }
+.lp-refresh .lp-footer .footer-inner { min-height:78px; display:grid; grid-template-columns:auto 1fr auto; gap:28px; align-items:center; }
+.lp-refresh .lp-footer .brand-name { color:#fff; }
+.lp-refresh .lp-footer .brand-sign { color:#fff; }
+.lp-refresh .lp-footer .brand-trainer { color:#21c77a; }
+.lp-refresh .lp-footer .brand-sub { color:#d7e3e9; }
+.lp-refresh .lp-footer .footer-nav { display:flex; flex-wrap:wrap; gap:8px 18px; justify-content:center; }
+.lp-refresh .lp-footer .footer-nav a { color:#eef5f8; font-size:9px; font-weight:800; text-decoration:none; }
+.lp-refresh .lp-footer .footer-meta { color:#d7e3e9; font-size:8px; white-space:nowrap; }
+
+/* hide old generic sections if injected elsewhere */
+.lp-refresh .operations-section,.lp-refresh .faq-section,.lp-refresh .testimonials-section { display:none!important; }
+
+/* Secondary pages: same header/footer tone */
+.secondary-page .site-header { background:#fff; border-bottom:1px solid #dce6eb; }
+.secondary-page .site-footer { background:#032038; }
+.secondary-page .site-footer .brand-name,.secondary-page .site-footer .brand-sub,.secondary-page .site-footer .footer-nav a,.secondary-page .site-footer .footer-meta { color:#fff; }
+
+@media (max-width: 900px) {
+  .lp-refresh { width:100%; box-shadow:none; }
+  .lp-refresh .container { width:min(calc(100% - 24px),680px); }
+  .lp-refresh .lp-site-header .header-inner { min-height:54px; }
+  .lp-refresh .lp-site-header .header-nav { display:none; }
+  .lp-refresh .mobile-menu-button { display:grid; width:42px; height:42px; place-items:center; border:0; background:transparent; color:#082844; }
+  .lp-refresh .mobile-menu-button svg { width:24px; height:24px; }
+  .lp-refresh .mobile-nav.is-open,.lp-refresh .mobile-nav[aria-hidden="false"] { display:grid; }
+  .lp-refresh .mobile-nav { position:absolute; top:54px; left:0; right:0; z-index:60; padding:14px; gap:4px; background:#fff; border-bottom:1px solid #dce6eb; box-shadow:0 18px 30px rgba(3,30,50,.12); }
+  .lp-refresh .mobile-nav a { padding:11px 10px; text-decoration:none; font-size:14px; font-weight:900; }
+  .lp-refresh .mobile-nav .button { width:100%; margin-top:5px; }
+
+  .lp-new-hero { min-height:500px; }
+  .lp-new-hero-photo { inset:0; background-position:66% center; }
+  .lp-new-hero::before { background:linear-gradient(180deg,rgba(2,20,33,.18) 0%,rgba(2,20,33,.38) 34%,rgba(2,20,33,.91) 64%,rgba(2,20,33,.98) 100%); }
+  .lp-new-hero-inner { min-height:500px; align-items:flex-end; }
+  .lp-new-hero-copy { width:100%; padding:120px 0 28px; }
+  .lp-new-hero-copy h1 { font-size:42px; }
+  .lp-new-hero-lead { margin-top:23px; font-size:13px; }
+  .lp-new-hero-actions { display:grid; grid-template-columns:1fr; gap:8px; }
+  .lp-new-hero-actions .button { width:100%; }
+
+  .lp-cap-grid { grid-template-columns:1fr; gap:10px; }
+  .lp-cap-card { min-height:0; grid-template-columns:46px 1fr; padding:14px; }
+  .lp-cap-card h3 { font-size:17px; }
+  .lp-cap-card p { font-size:12px; }
+  .lp-cap-visual,.lp-folder-list,.lp-score-visual,.lp-share-icons { min-height:100px; }
+
+  .lp-why .container { width:100%; }
+  .lp-why-grid { grid-template-columns:1fr; }
+  .lp-why-copy { padding:25px 18px 18px; }
+  .lp-why-copy h2 { font-size:25px; }
+  .lp-why-copy p { font-size:12px; }
+  .lp-catcher-visual { min-height:190px; background-position:center; background-size:contain; }
+
+  .lp-howto { padding-bottom:14px; }
+  .lp-step-grid { grid-template-columns:1fr; gap:10px; }
+  .lp-step-card { min-height:230px; padding:15px 15px 0; }
+  .lp-step-head h3 { font-size:16px; }
+  .lp-step-head p { font-size:12px; }
+  .lp-login-mini,.lp-quiz-mini { width:min(88%,360px); }
+
+  .lp-share-heading,.lp-pricing-head { display:block; }
+  .lp-share-heading p,.lp-pricing-head p { margin-top:5px; }
+  .lp-share-grid { grid-template-columns:1fr; }
+  .lp-share-card { min-height:84px; grid-template-columns:50px 1fr; align-items:center; }
+  .lp-share-card > span { grid-row:1 / span 2; }
+  .lp-share-card strong { font-size:15px; }
+  .lp-share-card small { font-size:11px; }
+
+  .lp-plan-grid { grid-template-columns:1fr; gap:14px; }
+  .lp-price-card { padding:18px; }
+  .lp-price-card h3 { font-size:22px; }
+  .lp-price-card p { font-size:11px; }
+  .lp-price-card .price { font-size:30px; }
+  .lp-price-card li { font-size:12px; }
+  .lp-price-card .button { min-height:44px; font-size:12px; }
+
+  .lp-recommend-grid { grid-template-columns:1fr; gap:10px; }
+  .lp-recommend article { display:grid; grid-template-columns:120px 1fr; grid-template-rows:auto auto; text-align:left; align-items:center; }
+  .lp-recommend img { grid-row:1 / span 2; width:120px; height:92px; }
+  .lp-recommend h3 { margin:9px 12px 0; font-size:13px; }
+  .lp-recommend p { margin:3px 12px 9px; font-size:10px; }
+
+  .lp-footer-cta { padding:20px 0; }
+  .lp-footer-cta .container { display:grid; gap:12px; }
+  .lp-footer-cta h2 { font-size:18px; }
+  .lp-footer-actions { display:grid; grid-template-columns:1fr 1fr; }
+  .lp-footer-actions .button { width:100%; }
+  .lp-refresh .lp-footer .footer-inner { grid-template-columns:1fr; gap:13px; padding:20px 0; }
+  .lp-refresh .lp-footer .footer-nav { justify-content:flex-start; }
+  .lp-refresh .lp-footer .footer-meta { white-space:normal; }
+}
+
+@media (max-width: 520px) {
+  .lp-refresh .container { width:calc(100% - 20px); }
+  .lp-refresh .lp-site-header .brand-mark { width:34px; height:34px; }
+  .lp-refresh .lp-site-header .brand-name { font-size:14px; }
+  .lp-refresh .lp-site-header .brand-sub { font-size:7px; }
+  .lp-new-hero { min-height:470px; }
+  .lp-new-hero-inner { min-height:470px; }
+  .lp-new-hero-copy h1 { font-size:37px; }
+  .lp-new-hero-lead { font-size:12px; line-height:1.65; }
+  .lp-new-heading h2 { font-size:23px; }
+  .lp-capabilities { padding-top:20px; }
+  .lp-cap-grid { margin-top:12px; }
+  .lp-cap-card { border-radius:9px; }
+  .lp-why-copy h2 { font-size:23px; }
+  .lp-howto h2,.lp-share-heading h2,.lp-pricing-head h2 { font-size:22px; }
+  .lp-step-card { min-height:215px; }
+  .lp-recommend h2 { font-size:20px; }
+  .lp-footer-actions { grid-template-columns:1fr; }
+  .lp-footer-cta p { font-size:9px; }
+}
+.secondary-plan-price{margin:6px 0 14px;color:#071e33;font-size:30px;font-weight:950;letter-spacing:-.03em}.secondary-plan-price small{font-size:12px;font-weight:900}
+
+
+/* v1.5.37 LP follow-up: actual quiz flow + LINE icon + no message clipping */
+.line-brand-icon { display:block; width:28px; height:28px; object-fit:contain; flex:0 0 auto; }
+.lp-share-icons .line-icon-cell { overflow:visible; }
+.lp-share-icons .line-icon-cell .line-brand-icon { width:30px; height:30px; margin:0 auto; }
+.lp-share-card .lp-share-logo { grid-row:1 / span 2; width:42px; min-height:42px; display:grid; place-items:center; }
+.lp-share-card .lp-share-logo .line-brand-icon { width:32px; height:32px; }
+.lp-share-card-line { overflow:hidden; }
+
+.lp-selfjudge-mini {
+  padding:8px;
+  border-radius:8px;
+  background:#062844;
+  display:grid;
+  grid-template-columns:1.08fr .92fr;
+  grid-template-areas:
+    "video answer"
+    "video result"
+    "video actions";
+  gap:5px 7px;
+  color:#fff;
+  border:1px solid #dfe8ed;
+}
+.lp-selfjudge-mini * { box-sizing:border-box; }
+.selfjudge-video { grid-area:video; min-height:98px; border-radius:7px; background:linear-gradient(145deg,#182235,#43506f); display:grid; place-items:center; align-content:center; gap:5px; text-align:center; }
+.selfjudge-video span { width:30px; height:30px; border-radius:50%; display:grid; place-items:center; background:#fff; color:#082844; font-size:20px; font-weight:950; }
+.selfjudge-video strong { color:#fff; font-size:9px; line-height:1.35; }
+.selfjudge-answer { grid-area:answer; min-height:27px; display:grid; place-items:center; border-radius:6px; background:#0cad5d; color:#fff; font-size:9px; font-weight:900; }
+.selfjudge-result { grid-area:result; padding:5px 6px; border-radius:6px; background:#ecfaf3; color:#082844; text-align:center; }
+.selfjudge-result small { display:block; color:#07934f; font-size:7px; font-weight:900; }
+.selfjudge-result b { display:block; margin-top:2px; font-size:8px; line-height:1.2; }
+.selfjudge-actions { grid-area:actions; display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+.selfjudge-actions span { min-width:0; padding:5px 2px; border-radius:6px; font-size:7px; font-weight:900; text-align:center; white-space:nowrap; }
+.selfjudge-actions .is-ok { background:#0cad5d; color:#fff; }
+.selfjudge-actions .is-ng { background:#fff; color:#ef3340; box-shadow:inset 0 0 0 1px #ef3340; }
+
+.lp-quiz-selfjudge .answer-label { color:#092d49; background:#eaf8f1; border-color:#c7ead8; border-radius:7px; font-weight:900; text-align:center; }
+.lp-quiz-selfjudge .judge-row { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+.lp-quiz-selfjudge .judge-row i:first-child { color:#fff; background:#0cad5d; border-color:#0cad5d; }
+.lp-quiz-selfjudge .judge-row i:last-child { color:#ef3340; background:#fff; border-color:#ef3340; }
+
+@media (min-width:901px) {
+  .lp-new-hero-photo { background-size:cover; background-position:center; }
+  .lp-catcher-visual { background-size:contain; }
+}
+@media (max-width:900px) {
+  /* Official LINE guideline minimum is 40px on mobile; keep the mark readable where used as a standalone icon. */
+  .lp-share-card .lp-share-logo { width:50px; min-height:50px; }
+  .lp-share-card .lp-share-logo .line-brand-icon { width:40px; height:40px; }
+  .lp-share-icons .line-icon-cell .line-brand-icon { width:40px; height:40px; }
+  .lp-selfjudge-mini { min-height:145px; }
+  .lp-catcher-visual { background-size:contain; }
+}
+
+
+/* v1.5.37 follow-up: exact QR affordance selected by the project owner. */
+.qr-source-icon {
+  display:block;
+  width:30px;
+  height:30px;
+  object-fit:contain;
+  color:#08ac5d;
+}
+.lp-share-icons .qr-icon-cell { overflow:visible; }
+.lp-share-icons .qr-icon-cell .qr-source-icon { width:30px; height:30px; margin:0 auto; }
+.lp-share-card .lp-share-logo-qr .qr-source-icon { width:32px; height:32px; }
+.share-card-icon--qr { overflow:hidden; }
+.share-card-icon--qr .qr-source-icon { width:30px; height:30px; color:#fff; }
+@media (max-width:900px) {
+  .lp-share-icons .qr-icon-cell .qr-source-icon { width:40px; height:40px; }
+  .lp-share-card .lp-share-logo-qr .qr-source-icon { width:40px; height:40px; }
+}
+
+/* v1.5.37 UI fix3: crop tuning, mobile footer, and LP fidelity */
+/* Crop away the tiny source-image seam at the top without changing the hero composition. */
+.lp-new-hero-photo { inset:-3px; }
+
+/* Keep the catcher copy fully visible while cropping the stray text fragment at the left edge. */
+.lp-catcher-visual {
+  background-position:right center;
+  background-size:auto 106%;
+  overflow:hidden;
+}
+
+/* The quiz preview represents the post-reveal self-judgement state, so it does not show a fake CTA. */
+.lp-selfjudge-mini {
+  grid-template-areas:
+    "video result"
+    "video actions";
+  grid-template-rows:1fr auto;
+}
+
+/* Recommendation photography should have the same visual weight as the approved mockup. */
+.lp-recommend img { height:93px; }
+
+@media (max-width:900px) {
+  /* On phones, use the tighter source so the coach's hands/sign remain in the visible crop. */
+  .lp-new-hero-photo {
+    inset:-3px;
+    background-image:url('/assets/lp-hero-back.webp?v=__ASSET_VERSION__');
+    background-size:cover;
+    background-position:28% center;
+  }
+  .lp-catcher-visual {
+    background-position:right center;
+    background-size:auto 110%;
+  }
+  .lp-recommend img { height:138px; }
+}
+
+@media (max-width:520px) {
+  /* Footer links are text navigation, not pill buttons. One item per row is intentionally roomy. */
+  .lp-refresh .lp-footer .footer-nav {
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:0;
+    border-top:1px solid rgba(255,255,255,.12);
+    border-bottom:1px solid rgba(255,255,255,.12);
+  }
+  .lp-refresh .lp-footer .footer-nav a {
+    min-height:0;
+    padding:11px 2px;
+    display:block;
+    border:0;
+    border-bottom:1px solid rgba(255,255,255,.09);
+    border-radius:0;
+    background:transparent;
+    color:#eef5f8;
+    font-size:11px;
+    line-height:1.35;
+    text-align:left;
+  }
+  .lp-refresh .lp-footer .footer-nav a:last-child { border-bottom:0; }
+}
+.share-card-icon--line { overflow:hidden; display:grid; place-items:center; }
+.share-card-icon--line .line-brand-icon { width:30px; height:30px; }
+@media (max-width:900px) {
+  .share-card-icon--line .line-brand-icon { width:40px; height:40px; }
+}
+
+
+/* v1.5.37 UI fix4: mobile hero/catcher framing + tablet footer text navigation */
+@media (max-width:1100px) {
+  .lp-refresh .lp-footer .footer-inner {
+    grid-template-columns:1fr;
+    gap:14px;
+    padding:22px 0;
+  }
+  .lp-refresh .lp-footer .footer-nav {
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:0 18px;
+    justify-content:stretch;
+    border-top:1px solid rgba(255,255,255,.13);
+    border-bottom:1px solid rgba(255,255,255,.13);
+  }
+  .lp-refresh .lp-footer .footer-nav a {
+    min-height:0 !important;
+    padding:11px 2px !important;
+    display:block !important;
+    border:0 !important;
+    border-bottom:1px solid rgba(255,255,255,.09) !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    color:#eef5f8 !important;
+    font-size:10px !important;
+    line-height:1.35;
+    text-align:left;
+    justify-content:flex-start !important;
+  }
+  .lp-refresh .lp-footer .footer-meta { white-space:normal; }
+}
+
+@media (max-width:900px) {
+  /* Keep the coach's hand sign visible and move the headline away from it. */
+  .lp-new-hero-photo { background-position:38% center; }
+  .lp-new-hero-copy h1 {
+    width:min(62%,300px);
+    margin-left:auto;
+    text-align:right;
+  }
+  .lp-new-hero-copy h1 span::after { left:8%; right:0; }
+  /* Show the catcher's signalling hand while retaining the handwritten message. */
+  .lp-catcher-visual {
+    background-position:70% center;
+    background-size:auto 112%;
+  }
+}
+
+@media (max-width:700px) {
+  .lp-refresh .lp-footer .footer-nav { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
+@media (max-width:520px) {
+  .lp-refresh .lp-footer .footer-nav { grid-template-columns:1fr; }
+}
+
+
+/* v1.5.37 UI fix5: full catcher message, cleaner tablet crop, and mobile hero framing */
+/* Use the complete catcher artwork as an image rather than a cropped background so the
+   handwritten message and the hand sign are never cut off at narrow widths. */
+.lp-catcher-visual {
+  position:relative;
+  min-height:0;
+  background:none !important;
+  overflow:hidden;
+}
+.lp-catcher-visual > img {
+  display:block;
+  width:100%;
+  height:auto;
+}
+/* The approved composite still has a tiny text fragment in its white lead-in area.
+   Mask only that empty white margin; the catcher starts well to the right of it. */
+.lp-catcher-visual::before {
+  content:"";
+  position:absolute;
+  z-index:1;
+  left:0;
+  top:0;
+  bottom:0;
+  width:8%;
+  max-width:58px;
+  background:#fff;
+  pointer-events:none;
+}
+
+@media (max-width:900px) {
+  /* Put the coach farther right so the headline has a clean left-side reading area. */
+  .lp-new-hero-photo {
+    background-position:-12% center;
+  }
+  .lp-new-hero-copy h1 {
+    width:min(68%,320px);
+    margin-left:0;
+    margin-right:auto;
+    text-align:left;
+  }
+  .lp-new-hero-copy h1 span::after {
+    left:0;
+    right:-4%;
+  }
+  /* Keep the full catcher illustration and the complete handwritten copy visible. */
+  .lp-catcher-visual {
+    min-height:0;
+    background:none !important;
+  }
+  .lp-catcher-visual > img {
+    width:100%;
+    height:auto;
+    object-fit:contain;
+  }
+}
+
+/* v1.5.37 UI fix6: final LP framing polish from review */
+/* Make the capability preview images taller so they match the approved mockup density. */
+.lp-cap-video,
+.lp-cap-coaches {
+  min-height: 112px;
+}
+
+/* The catcher montage should not show the thin line at the top edge. */
+.lp-catcher-visual {
+  padding-top: 3px;
+}
+.lp-catcher-visual > img {
+  display:block;
+  width:100%;
+  height:auto;
+  margin-top:-3px;
+}
+
+@media (min-width: 521px) and (max-width: 900px) {
+  /* Tablet: remove the stray text fragment in the white lead-in area more aggressively. */
+  .lp-catcher-visual::before {
+    width: 14%;
+    max-width: 92px;
+  }
+}
+
+@media (max-width: 900px) {
+  /* Phone/tablet hero: ease the coach slightly back to the left from the previous over-shift. */
+  .lp-new-hero-photo {
+    background-position: 2% center;
+  }
+
+  /* Keep the entire handwritten catcher message visible by slightly shrinking and centering the art. */
+  .lp-catcher-visual {
+    padding-top: 4px;
+  }
+  .lp-catcher-visual > img {
+    width: 96%;
+    margin: -4px auto 0;
+  }
+
+  .lp-cap-video,
+  .lp-cap-coaches {
+    min-height: 136px;
+  }
+}
+
+@media (max-width: 520px) {
+  /* Phones need the full catcher copy and signal hand to fit together. */
+  .lp-catcher-visual::before {
+    width: 0;
+    max-width: 0;
+  }
+  .lp-catcher-visual > img {
+    width: 95%;
+    margin: -4px auto 0;
+  }
+
+  /* Fine tune the coach framing so the hand sign stays visible but the face is not pushed too far right. */
+  .lp-new-hero-photo {
+    background-position: 10% center;
+  }
+}
+
+
+/* v1.5.37 UI fix6: pricing note, footer label continuity, and larger self-judgement actions */
+.lp-pricing-note {
+  margin: 14px 4px 0;
+  color:#516879;
+  font-size:12px;
+  line-height:1.7;
+  font-weight:700;
+}
+.selfjudge-actions span {
+  min-height: 28px;
+  display:grid;
+  place-items:center;
+  padding: 8px 4px;
+}
+.lp-quiz-selfjudge .judge-row {
+  gap:6px;
+}
+.lp-quiz-selfjudge .judge-row i {
+  min-height: 28px;
+  display:grid;
+  place-items:center;
+  padding: 8px 6px;
+}
+@media (max-width: 900px) {
+  .lp-pricing-note {
+    margin-top: 12px;
+    font-size: 11px;
+  }
+  .selfjudge-actions span,
+  .lp-quiz-selfjudge .judge-row i {
+    min-height: 32px;
+  }
+}

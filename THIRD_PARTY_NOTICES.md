@@ -35,3 +35,18 @@ Unit testing uses Vitest 5.0.1 with `@vitest/coverage-v8` 5.0.1.
 
 - License: MIT
 - Purpose: TypeScript-aware unit test runner, watch mode and V8 coverage.
+
+
+## LINE Brand Icon
+
+The LP uses a locally bundled LINE-style brand icon for the LINE sharing affordance. Usage should follow the official LINE logo/app icon guideline: https://www.line.me/ja/logo . Do not recolor, distort, rotate, decorate, or crowd the icon.
+
+
+## ICON BOX QR icon
+
+The LP and install guide use the “QRコードの無料アイコン8” artwork from ICON BOX for QR-code affordances.
+
+- Source artwork: https://iconbox.fun/wp/wp-content/uploads/1031_q_h.svg
+- Catalog page: https://iconbox.fun/qr%E3%82%B3%E3%83%BC%E3%83%89%E3%81%AE%E7%84%A1%E6%96%99%E3%82%A2%E3%82%A4%E3%82%B3%E3%83%B38/
+- Provider description: commercial-use-free icon material; see the provider license page for the current terms.
+- Runtime note: the icon is bundled locally as `public/assets/qr-code-icon.svg`; no runtime request to ICON BOX is required.

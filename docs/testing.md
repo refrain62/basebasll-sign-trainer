@@ -1,4 +1,4 @@
-# Testing strategy — v1.5.32
+# Testing strategy — v1.5.34
 
 SIGN TRAINERはVitest + TypeScript + Vite production build + tooling checksを`npm run check`でまとめて実行する。
 
@@ -14,6 +14,8 @@ npm run test:coverage
 - Free: 複数グループ不可、複数動画不可、サブ管理者不可、分析不可、監査表示不可
 - Plus: 複数グループ・複数動画・動画開始位置・サブ管理者可、分析・監査は不可
 - Pro: Plus機能 + 分析・監査可
+- Plus: `result_text_share`可、`result_image_share`不可
+- Pro: `result_text_share` / `result_image_share`可
 - OAuthはFreeでも利用可
 - SYSTEM管理からFree / Plus / Proを変更できる
 - ダウングレードで既存データを削除しない
@@ -49,5 +51,12 @@ npm run test:coverage
 - 一覧ページャー・検索・フィルター
 - 375px幅でカード枠・余白が重ならない
 
+### 有償機能の直アクセス耐性
+- Freeで`/api/premium-module?module=result-text`を直接叩いて403
+- Plusで`module=analytics` / `module=result-image`を直接叩いて403
+- Proで`analytics` / `result-text` / `result-image`を取得可能
+- `client/team.ts`にPro分析アルゴリズム本体を同梱しない
+- DevToolsで`state.entitlements`相当を改変してもpremium module取得時のサーバー判定を突破できない
+
 ## Migration
-空DBへ`0001`〜`0016`を順番に適用できることを確認する。既存DBを想定し、ALTER/UPSERTの再適用方針も確認する。
+空DBへ`0001`〜`0017`を順番に適用できることを確認する。既存DBを想定し、ALTER/UPSERTの再適用方針も確認する。

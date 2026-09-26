@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="QRコード">
+  <g fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M62 22H22v40"/>
+    <path d="M194 22h40v40"/>
+    <path d="M22 194v40h40"/>
+    <path d="M194 234h40v-40"/>
+    <rect x="47" y="47" width="70" height="70" rx="1"/>
+    <rect x="139" y="47" width="70" height="70" rx="1"/>
+    <rect x="47" y="139" width="70" height="70" rx="1"/>
+  </g>
+  <rect x="69" y="69" width="26" height="26" fill="currentColor"/>
+  <rect x="161" y="69" width="26" height="26" fill="currentColor"/>
+  <rect x="69" y="161" width="26" height="26" fill="currentColor"/>
+  <rect x="148" y="148" width="49" height="49" rx="2" fill="currentColor"/>
+</svg>
