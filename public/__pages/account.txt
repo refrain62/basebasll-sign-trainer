@@ -9,7 +9,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=__ASSET_VERSION__" />
     <link rel="manifest" href="/manifest.webmanifest?v=__ASSET_VERSION__" />
     <link rel="stylesheet" href="/styles.css?v=__ASSET_VERSION__" />
-    <script src="/build/assets/account-BhGwPMt5.js" type="module"></script>
+    <script src="/build/assets/account-DUsjrT9o.js" type="module"></script>
   </head>
   <body class="account-page">
     <header class="site-header account-header">
