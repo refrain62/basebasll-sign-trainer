@@ -1247,7 +1247,7 @@ function teamAdminsContent(teamId, team, auth, adminManagement, entitlements = {
   const inviteButton = owner
     ? canUseSubAdmins
       ? `<button class="button button-primary" id="open-admin-invite" type="button" ${management?.canInviteSubAdmin === false ? "disabled" : ""}>＋ サブ管理者を招待</button>`
-      : `<button class="button button-primary" data-premium-feature="サブ管理者" data-premium-description="Freeプランはメイン管理者1名で利用します。Plus / Proではサブ管理者を最大5名まで追加できます。" type="button">＋ サブ管理者を招待 ${paidFeatureBadge("Plus")}</button>`
+      : `<button class="button button-primary" data-premium-feature="サブ管理者" data-premium-description="Freeプランはメイン管理者1名で利用します。Plusではサブ管理者を最大5名、Proでは最大10名まで追加できます。" type="button">＋ サブ管理者を招待 ${paidFeatureBadge("Plus")}</button>`
     : "";
   return `<div class="team-admin-view"><header class="team-admin-page-head"><div><h1>管理者</h1><p>メイン管理者とサブ管理者だけを管理します。OAuth認証（Google / LINE）はFreeプランでも利用できます。</p></div>${inviteButton}</header>
     ${!canUseSubAdmins && auth?.type === "account" ? `<div class="notice notice-info"><strong>サブ管理者の追加はPlus / Pro機能です</strong><br>既存のサブ管理者データは削除されません。Freeプラン中はメイン管理者のみ管理画面を利用できます。<br>${esc(PAID_LIMITED_MESSAGE)}</div>` : ""}
@@ -1266,7 +1266,7 @@ function teamPlanAuthContent(teamId, team, plan, auth, adminManagement, entitlem
     ["複数サイングループ", featureEnabled(entitlements, "multiple_sign_groups"), "Plus"],
     ["1サイン複数動画", featureEnabled(entitlements, "multiple_sign_videos"), "Plus"],
     ["動画プレビュー開始位置の秒数指定", featureEnabled(entitlements, "custom_video_thumbnail"), "Plus"],
-    ["サブ管理者（最大5名）", featureEnabled(entitlements, "sub_admin_management"), "Plus"],
+    ["サブ管理者（Plusは最大5名・Proは最大10名）", featureEnabled(entitlements, "sub_admin_management"), "Plus"],
     ["練習成績・苦手分析", featureEnabled(entitlements, "practice_analytics"), "Pro"],
     ["最近のアクティビティ・監査ログ", featureEnabled(entitlements, "activity_log"), "Pro"]
   ];

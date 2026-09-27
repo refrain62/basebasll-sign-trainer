@@ -67,7 +67,7 @@
                 <div class="faq-accordion-list">
                   <details open><summary>インストールしなくても使えますか？</summary><p>はい。ブラウザからそのまま利用できます。繰り返し使う場合は、iPhone / iPadではSafariの「ホーム画面に追加」、Android / Chromeでは「アプリをインストール」または「ホーム画面に追加」を使うと、アプリのようにすぐ起動できます。</p></details>
                   <details><summary>スマートフォンだけで使えますか？PCやタブレットでも使えますか？</summary><p>スマートフォン、タブレット、PCのブラウザに対応したレスポンシブ設計です。選手はスマートフォンで練習し、管理者はPCやタブレットでサインを整理するといった使い分けもできます。</p></details>
-                  <details><summary>Freeプランでどこまで試せますか？</summary><p>Freeでは、サイン登録、動画での確認、クイズ練習、練習履歴、URL・QRコード・LINE・合言葉での共有など、基本的な練習機能を試せます。サイングループは1グループ、1サインの動画は1本までです。</p></details>
+                  <details><summary>Freeプランでどこまで試せますか？</summary><p>Freeでは、サイン登録、動画での確認、クイズ練習、練習履歴、URL・QRコード・LINE・合言葉での共有など、基本的な練習機能を試せます。サイングループは1グループ、1サインの動画は1本、練習履歴は最大10件までです。</p></details>
                   <details><summary>PlusとProはいくらですか？</summary><p>Plusは月額550円（税込）、Proは月額1,100円（税込）です。なお、有償プランは現在、一部の特定チーム限定で先行運用しています。一般提供の内容や時期は変更になる場合があります。</p></details>
                   <details><summary>チームメンバー全員が管理者アカウントを作る必要がありますか？</summary><p>いいえ。管理者アカウントと、選手が使う練習ページは分かれています。選手側は共有されたURL・QRコード・LINE・合言葉などから練習ページへアクセスできます。</p></details>
                 </div>
@@ -90,7 +90,7 @@
                   <details><summary>クイズは自動で正解・不正解を判定しますか？</summary><p>自動採点ではありません。動画を見て自分で答えを考え、「正解」を確認したあとに「正解した」「間違えた」を本人が記録する方式です。実戦に近い形で、自分が本当に理解できたかを振り返れます。</p></details>
                   <details><summary>同じサインをもう一度見直せますか？</summary><p>はい。問題中に動画を見直したり、練習後に間違えたサインを振り返ったりできます。短時間で何度も反復する使い方を想定しています。</p></details>
                   <details><summary>わからない問題を飛ばすことはできますか？</summary><p>はい。練習画面からその問題を飛ばして次へ進めます。無理に止まらず、最後まで一通り練習したあとに振り返ることができます。</p></details>
-                  <details><summary>練習履歴は残りますか？</summary><p>はい。正解・不正解や練習時間などを履歴として確認できます。Freeでは履歴は最大50件までです。上位プランでは、より継続的な振り返りに使えます。</p></details>
+                  <details><summary>練習履歴は残りますか？</summary><p>はい。正解・不正解や練習時間などを履歴として確認できます。Freeは最大10件、Plusは最大50件、Proは最大100件まで保存できます。短期の確認から継続的な振り返りまで、チームの使い方に合わせて選べます。</p></details>
                   <details><summary>練習結果をLINEなどで共有できますか？</summary><p>Plusでは練習結果を文章で共有できます。Proでは文章に加えて画像カードでも共有できます。正答率やタイムをチーム内で見せ合い、ゲーム感覚で楽しく競う使い方ができます。</p></details>
                   <details><summary>苦手なサインを分析できますか？</summary><p>Proでは正答率や苦手傾向の分析機能を利用できます。どのサインで間違いが多いかを確認し、練習内容の見直しに役立てられます。</p></details>
                 </div>
@@ -111,7 +111,7 @@
                 <div class="faq-category-heading"><span>05</span><div><h3 id="faq-admin-title">チーム管理</h3><p>管理者・権限・複数チーム運用について</p></div></div>
                 <div class="faq-accordion-list">
                   <details><summary>管理者のログイン方法は？</summary><p>管理者はGoogleまたはLINEの認証を使ってログインします。チーム全員で共通の管理者パスワードを使い回す方式ではありません。</p></details>
-                  <details><summary>サブ管理者は追加できますか？</summary><p>対応プランでは、コーチやスタッフをサブ管理者として最大5名まで追加できます。アカウントを共有せず、本人ごとの認証で管理できます。</p></details>
+                  <details><summary>サブ管理者は追加できますか？</summary><p>Plusでは、コーチやスタッフをサブ管理者として最大5名まで追加できます。Proでは最大10名まで追加できます。アカウントを共有せず、本人ごとの認証で管理できます。</p></details>
                   <details><summary>メイン管理者を交代できますか？</summary><p>はい。メイン管理者の交代やサブ管理者の追加は、ワンタイム招待リンクを使って行います。リンクは対象者本人へ送り、公開場所には掲載しない運用を想定しています。</p></details>
                   <details><summary>同じ人が複数チームの管理者になれますか？</summary><p>はい。同じ管理者アカウントで複数チームを管理できます。チームごとにサインや設定を分けて運用できます。</p></details>
                   <details><summary>選手名簿やメンバーアカウントを管理する機能はありますか？</summary><p>チームメンバーの個別アカウント一覧を管理する方式ではありません。SIGN TRAINERは、サインの登録・共有・練習・定着確認を中心にしたサービスです。</p></details>
@@ -122,7 +122,7 @@
               <section class="faq-category-block" aria-labelledby="faq-plan-title">
                 <div class="faq-category-heading"><span>06</span><div><h3 id="faq-plan-title">プラン・困ったとき</h3><p>プラン選びとサポート</p></div></div>
                 <div class="faq-accordion-list">
-                  <details><summary>Free・Plus・Proの違いはどこで確認できますか？</summary><p>料金プランページで、サイン登録、複数グループ、複数動画、結果共有、分析・管理機能などを○ / －の比較表で確認できます。</p></details>
+                  <details><summary>Free・Plus・Proの違いはどこで確認できますか？</summary><p>料金プランページで、サイン登録、複数グループ、複数動画、結果共有、分析・管理機能などを○・△・－の比較表で確認できます。</p></details>
                   <details><summary>Plusはどんなチームに向いていますか？</summary><p>複数のサイングループや複数動画を使いたい、練習結果を文章で共有してチーム内で楽しく競いたい、といったチームに向いています。</p></details>
                   <details><summary>Proはどんなチームに向いていますか？</summary><p>結果を画像カードでも共有したい、正答率・苦手分析や管理機能まで使って、継続的にチーム運用したい場合に向いています。</p></details>
                   <details><summary>有償プランは今すぐ申し込めますか？</summary><p>現在、Plus / Proは一部の特定チーム限定で先行運用しています。一般提供の内容・時期・申込方法は今後変更となる場合があります。</p></details>

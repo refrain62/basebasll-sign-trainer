@@ -10,7 +10,7 @@ WHERE code='free';
 
 UPDATE plans
 SET name='Plus',
-    description='特定チーム限定のチーム運用強化プラン。複数サイングループ、1サイン複数動画、動画プレビュー開始位置、サブ管理者最大5名を利用できます。',
+    description='特定チーム限定のチーム運用強化プラン。複数サイングループ、1サイン複数動画、動画プレビュー開始位置、サブ管理者最大10名を利用できます。',
     monthly_price_yen=NULL, available_for_purchase=0, active=1, sort_order=20, updated_at=CURRENT_TIMESTAMP
 WHERE code='team_plus';
 
@@ -38,7 +38,7 @@ INSERT INTO plan_entitlements(plan_code,feature_key,enabled,limit_value) VALUES
   ('team_pro','multiple_sign_groups',1,NULL),
   ('team_pro','multiple_sign_videos',1,NULL),
   ('team_pro','custom_video_thumbnail',1,NULL),
-  ('team_pro','sub_admin_management',1,5),
+  ('team_pro','sub_admin_management',1,10),
   ('team_pro','practice_analytics',1,NULL),
   ('team_pro','activity_log',1,NULL)
 ON CONFLICT(plan_code,feature_key) DO UPDATE SET

@@ -9,7 +9,12 @@ console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
 const SAMPLE_TEAM_ID = "6BnWv2K3zo";
 const SAMPLE_TEAM_PATH = `/t/${SAMPLE_TEAM_ID}`;
 const SAMPLE_LINE_TEAM_PATH = `${SAMPLE_TEAM_PATH}?openExternalBrowser=1`;
-const HISTORY_LIMIT = 50;
+function practiceHistoryLimit() {
+  const planCode = String(state.plan?.code || "free");
+  if (planCode === "team_pro") return 100;
+  if (planCode === "team_plus") return 50;
+  return 10;
+}
 let activeTeamId = SAMPLE_TEAM_ID;
 
 function activeTeamPath() {
@@ -1485,7 +1490,7 @@ function getPracticeHistory() {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((entry) => entry && typeof entry.id === "string");
+    return parsed.filter((entry) => entry && typeof entry.id === "string").slice(0, practiceHistoryLimit());
   } catch (error) {
     console.warn("[SIGN TRAINER] 練習履歴を読み込めませんでした", error);
     return [];
@@ -1494,7 +1499,7 @@ function getPracticeHistory() {
 
 function writePracticeHistory(history) {
   try {
-    localStorage.setItem(historyKey(), JSON.stringify(history.slice(0, HISTORY_LIMIT)));
+    localStorage.setItem(historyKey(), JSON.stringify(history.slice(0, practiceHistoryLimit())));
     return true;
   } catch (error) {
     console.warn("[SIGN TRAINER] 練習履歴を保存できませんでした", error);

@@ -2,6 +2,7 @@ import { randomId } from "../validation/common.ts";
 import { randomToken, sha256Token } from "../security/tokens.ts";
 import { ServiceError } from "./errors.ts";
 import { MAX_SUB_ADMINS } from "../config/constants.ts";
+import { FEATURE_KEYS } from "../config/features.ts";
 
 export function createAdminMembershipService({
   membershipRepository,
@@ -9,6 +10,7 @@ export function createAdminMembershipService({
   transitionRepository,
   teamRepository,
   auditRepository,
+  entitlementService = null,
   createInviteId = () => `inv_${randomId(16)}`,
   createRawToken = () => randomToken(32),
   now = () => Math.floor(Date.now() / 1000)
@@ -24,8 +26,22 @@ export function createAdminMembershipService({
   async function subAdminCount(teamId) {
     return membershipRepository.countByRole(teamId, "admin");
   }
-  function subAdminLimitError() {
-    return new ServiceError("sub_admin_limit_reached", `サブ管理者は最大${MAX_SUB_ADMINS}名までです。既存のサブ管理者を外すか、承認待ちの招待を取り消してから追加してください。`, 409, { maxSubAdmins: MAX_SUB_ADMINS });
+  async function maxSubAdminsForTeam(teamId) {
+    if (!entitlementService) return MAX_SUB_ADMINS;
+    try {
+      const summary = await entitlementService.summary(teamId);
+      const entitlement = summary?.entitlements?.[FEATURE_KEYS.SUB_ADMIN_MANAGEMENT];
+      if (entitlement?.enabled) {
+        const limit = Number(entitlement.limit);
+        if (Number.isFinite(limit) && limit > 0) return Math.trunc(limit);
+      }
+      return 0;
+    } catch {
+      return MAX_SUB_ADMINS;
+    }
+  }
+  function subAdminLimitError(maxSubAdmins) {
+    return new ServiceError("sub_admin_limit_reached", `サブ管理者は最大${maxSubAdmins}名までです。既存のサブ管理者を外すか、承認待ちの招待を取り消してから追加してください。`, 409, { maxSubAdmins });
   }
   async function inviteByToken(rawToken) {
     const tokenHash = await sha256Token(rawToken);
@@ -46,17 +62,18 @@ export function createAdminMembershipService({
       const pendingInvites = actor.role === "owner" ? await inviteRepository.listPending(teamId, now()) : [];
       const subAdminCountValue = members.filter((member) => member.role === "admin").length;
       const pendingSubAdminInvites = pendingInvites.filter((invite) => invite.kind === "admin").length;
-      const reservedSubAdminSlots = Math.min(MAX_SUB_ADMINS, subAdminCountValue + pendingSubAdminInvites);
+      const maxSubAdmins = await maxSubAdminsForTeam(teamId);
+      const reservedSubAdminSlots = Math.min(maxSubAdmins, subAdminCountValue + pendingSubAdminInvites);
       return {
         currentRole: actor.role,
         members,
         pendingInvites,
         legacyPasswordEnabled: Boolean(team.admin_password_enabled),
-        maxSubAdmins: MAX_SUB_ADMINS,
+        maxSubAdmins,
         subAdminCount: subAdminCountValue,
         pendingSubAdminInvites,
-        subAdminSlotsRemaining: Math.max(0, MAX_SUB_ADMINS - reservedSubAdminSlots),
-        canInviteSubAdmin: reservedSubAdminSlots < MAX_SUB_ADMINS
+        subAdminSlotsRemaining: Math.max(0, maxSubAdmins - reservedSubAdminSlots),
+        canInviteSubAdmin: reservedSubAdminSlots < maxSubAdmins
       };
     },
 
@@ -82,11 +99,12 @@ export function createAdminMembershipService({
       const kind = input?.kind === "transfer" ? "transfer" : "admin";
       const creatorExit = kind === "transfer" && Boolean(input?.creatorExit);
       const activeSubAdmins = await subAdminCount(teamId);
+      const maxSubAdmins = await maxSubAdminsForTeam(teamId);
       if (kind === "admin") {
         const pendingSubAdmins = pending.filter((invite) => invite.kind === "admin").length;
-        if (activeSubAdmins + pendingSubAdmins >= MAX_SUB_ADMINS) throw subAdminLimitError();
-      } else if (!creatorExit && activeSubAdmins >= MAX_SUB_ADMINS) {
-        throw new ServiceError("sub_admin_limit_transfer", `現在サブ管理者が${MAX_SUB_ADMINS}名いるため、メイン管理者が残る形では交代できません。「交代後、自分は外れる」を選ぶか、先にサブ管理者を減らしてください。`, 409, { maxSubAdmins: MAX_SUB_ADMINS });
+        if (activeSubAdmins + pendingSubAdmins >= maxSubAdmins) throw subAdminLimitError(maxSubAdmins);
+      } else if (!creatorExit && activeSubAdmins >= maxSubAdmins) {
+        throw new ServiceError("sub_admin_limit_transfer", `現在サブ管理者が${maxSubAdmins}名いるため、メイン管理者が残る形では交代できません。「交代後、自分は外れる」を選ぶか、先にサブ管理者を減らしてください。`, 409, { maxSubAdmins });
       }
       const requestedHours = Number(input?.expiresHours || 24);
       const expiresHours = Number.isFinite(requestedHours) ? Math.max(1, Math.min(72, Math.trunc(requestedHours))) : 24;
@@ -126,17 +144,19 @@ export function createAdminMembershipService({
       let accepted = false;
       if (invite.kind === "admin") {
         const existing = await membershipRepository.find(invite.team_id, userId);
-        if (!existing && await subAdminCount(invite.team_id) >= MAX_SUB_ADMINS) throw subAdminLimitError();
+        const maxSubAdmins = await maxSubAdminsForTeam(invite.team_id);
+        if (!existing && await subAdminCount(invite.team_id) >= maxSubAdmins) throw subAdminLimitError(maxSubAdmins);
         try {
-          accepted = await transitionRepository.acceptAdminInvite({ inviteId: invite.id, teamId: invite.team_id, userId, maxSubAdmins: MAX_SUB_ADMINS });
+          accepted = await transitionRepository.acceptAdminInvite({ inviteId: invite.id, teamId: invite.team_id, userId, maxSubAdmins });
         } catch (error) {
-          if (String(error?.message || error).includes("sub_admin_limit_reached")) throw subAdminLimitError();
+          if (String(error?.message || error).includes("sub_admin_limit_reached")) throw subAdminLimitError(maxSubAdmins);
           throw error;
         }
       } else {
         const targetMembership = await membershipRepository.find(invite.team_id, userId);
-        if (!invite.creator_exit && targetMembership?.role !== "admin" && await subAdminCount(invite.team_id) >= MAX_SUB_ADMINS) {
-          throw new ServiceError("sub_admin_limit_transfer", `現在サブ管理者が${MAX_SUB_ADMINS}名いるため、メイン管理者が残る形では交代できません。`, 409, { maxSubAdmins: MAX_SUB_ADMINS });
+        const maxSubAdmins = await maxSubAdminsForTeam(invite.team_id);
+        if (!invite.creator_exit && targetMembership?.role !== "admin" && await subAdminCount(invite.team_id) >= maxSubAdmins) {
+          throw new ServiceError("sub_admin_limit_transfer", `現在サブ管理者が${maxSubAdmins}名いるため、メイン管理者が残る形では交代できません。`, 409, { maxSubAdmins });
         }
         accepted = await transitionRepository.acceptTransferInvite({
           inviteId: invite.id,
@@ -144,7 +164,7 @@ export function createAdminMembershipService({
           currentOwnerUserId: invite.created_by_user_id,
           nextOwnerUserId: userId,
           currentOwnerExit: Boolean(invite.creator_exit),
-          maxSubAdmins: MAX_SUB_ADMINS
+          maxSubAdmins
         });
       }
       if (!accepted) throw new ServiceError("invite_used", "この招待リンクはすでに使用済みです。", 409);

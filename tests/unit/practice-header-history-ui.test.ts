@@ -16,8 +16,11 @@ describe("practice header and history", () => {
     expect(practiceHeaderSource).toContain('id="practice-header-menu"');
   });
 
-  test("up to 50 practice history records are paged ten at a time", () => {
-    expect(teamSource).toContain("const HISTORY_LIMIT = 50");
+  test("practice history limit is plan-aware and still paged ten at a time", () => {
+    expect(teamSource).toContain("function practiceHistoryLimit()");
+    expect(teamSource).toContain('if (planCode === "team_pro") return 100;');
+    expect(teamSource).toContain('if (planCode === "team_plus") return 50;');
+    expect(teamSource).toContain("return 10;");
     expect(teamSource).toContain("const pageSize = 10");
     expect(teamSource).toContain('id="history-prev"');
     expect(teamSource).toContain('id="history-next"');

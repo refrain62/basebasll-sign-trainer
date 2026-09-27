@@ -48,7 +48,7 @@ export function createServices(db, env: Record<string, any> = {}) {
     team: createTeamService({ teamRepository, auditRepository, hashPassword: passwordHasher }),
     systemTeams: createSystemTeamService({ teamRepository, auditRepository, hashPassword: passwordHasher, entitlementService: entitlements }),
     account: createAccountService({ userRepository, membershipRepository, teamRepository, provisioningRepository, auditRepository, hashPassword: passwordHasher, entitlementService: entitlements }),
-    adminMembership: createAdminMembershipService({ membershipRepository, inviteRepository, transitionRepository, teamRepository, auditRepository }),
+    adminMembership: createAdminMembershipService({ membershipRepository, inviteRepository, transitionRepository, teamRepository, auditRepository, entitlementService: entitlements }),
     entitlements,
     dataProtection
   };
