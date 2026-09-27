@@ -1,0 +1,1 @@
+ALTER TABLE sign_videos ADD COLUMN comment TEXT NOT NULL DEFAULT '';

@@ -1,20 +1,121 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "basebasll-sign-trainer",
-  "main": "./src/index.js",
+  "main": "./src/index.ts",
   "compatibility_date": "2026-09-22",
+  "workers_dev": true,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
     "run_worker_first": true,
-    "not_found_handling": "none"
+    "not_found_handling": "none",
+    "html_handling": "none"
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sign-trainer-production",
+      "database_id": "bdd534e9-1c42-4db7-adbe-c62e35e123b5",
+      "migrations_dir": "./migrations"
+    }
+  ],
   "secrets": {
-    "required": ["TEAM_PASSPHRASE", "SESSION_SECRET"]
+    "required": [
+      "SESSION_SECRET",
+      "SYSTEM_ADMIN_SECRET",
+      "PASSWORD_PEPPER",
+      "DATA_ENCRYPTION_KEY",
+      "DATA_LOOKUP_KEY"
+    ]
   },
   "vars": {
-    "TEAM_ID": "6BnWv2K3zo",
-    "TEAM_NAME": "サンプルチーム",
-    "SESSION_DAYS": "30"
+    "SESSION_DAYS": "30",
+    "ADMIN_SESSION_HOURS": "12",
+    "ENVIRONMENT": "production",
+    "REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN": "true",
+    "CF_ACCESS_TEAM_DOMAIN": "",
+    "CF_ACCESS_POLICY_AUD": "",
+    "SYSTEM_ADMIN_ALLOWED_EMAILS": "",
+    "ACCOUNT_SESSION_DAYS": "30",
+    "LINE_REQUEST_EMAIL": "false",
+    "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
+    "PUBLIC_SUPPORT_URL": ""
+  },
+  "env": {
+    "dev": {
+      "workers_dev": true,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sign-trainer-dev",
+          "database_id": "3b47491c-8e2a-412a-b2a7-1a06922b3604",
+          "migrations_dir": "./migrations"
+        }
+      ],
+      "secrets": {
+        "required": [
+          "SESSION_SECRET",
+          "SYSTEM_ADMIN_SECRET",
+          "PASSWORD_PEPPER",
+          "DATA_ENCRYPTION_KEY",
+          "DATA_LOOKUP_KEY"
+        ]
+      },
+      "vars": {
+        "SESSION_DAYS": "30",
+        "ADMIN_SESSION_HOURS": "12",
+        "ENVIRONMENT": "dev",
+        "REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN": "true",
+        "SYSTEM_ADMIN_ALLOWED_EMAILS": "",
+        "ACCOUNT_SESSION_DAYS": "30",
+        "LINE_REQUEST_EMAIL": "false",
+        "CF_ACCESS_TEAM_DOMAIN": "",
+        "CF_ACCESS_POLICY_AUD": "",
+        "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
+        "PUBLIC_SUPPORT_URL": ""
+      },
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA"
+      }
+    },
+    "staging": {
+      "workers_dev": true,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sign-trainer-staging",
+          "database_id": "2ca39d6b-e06f-44b4-862b-b0c2932d9310",
+          "migrations_dir": "./migrations"
+        }
+      ],
+      "secrets": {
+        "required": [
+          "SESSION_SECRET",
+          "SYSTEM_ADMIN_SECRET",
+          "PASSWORD_PEPPER",
+          "DATA_ENCRYPTION_KEY",
+          "DATA_LOOKUP_KEY"
+        ]
+      },
+      "vars": {
+        "SESSION_DAYS": "30",
+        "ADMIN_SESSION_HOURS": "12",
+        "ENVIRONMENT": "staging",
+        "REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN": "true",
+        "SYSTEM_ADMIN_ALLOWED_EMAILS": "",
+        "ACCOUNT_SESSION_DAYS": "30",
+        "LINE_REQUEST_EMAIL": "false",
+        "CF_ACCESS_TEAM_DOMAIN": "",
+        "CF_ACCESS_POLICY_AUD": "",
+        "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
+        "PUBLIC_SUPPORT_URL": ""
+      },
+      "version_metadata": {
+        "binding": "CF_VERSION_METADATA"
+      }
+    }
+  },
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
   }
 }
