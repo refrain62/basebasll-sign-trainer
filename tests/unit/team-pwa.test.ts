@@ -28,7 +28,9 @@ describe("team-specific PWA", () => {
     const headerSource = readFileSync("client/components/practice-header.ts", "utf8");
     expect(teamSource).toContain('navigator.serviceWorker.register("/sw.js", { scope: "/" })');
     expect(teamSource).toContain("このチームをホーム画面に追加");
-    expect(teamSource).toContain("SIGN TRAINER本体ではなく");
+    expect(teamSource).toContain('<details class="team-pwa-login-guide">');
+    expect(teamSource).toContain("ホーム画面への追加方法を見る");
+    expect(teamSource).toContain("pwa-install-entry-button");
     expect(teamSource).toContain("複数チームに所属していても");
     expect(teamSource).toContain("チーム管理者ログイン");
     expect(teamSource).toContain("activeTeamAdminPath()");

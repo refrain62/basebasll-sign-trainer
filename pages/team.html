@@ -76,13 +76,61 @@
 
     <dialog id="pwa-install-dialog" class="dialog pwa-install-dialog" aria-labelledby="pwa-install-title">
       <div class="dialog-card pwa-install-dialog-card">
-        <div class="dialog-icon" aria-hidden="true">⌂</div>
-        <h2 id="pwa-install-title">このチームをホーム画面に追加</h2>
+        <div class="pwa-install-dialog-head">
+          <div class="dialog-icon" aria-hidden="true">⌂</div>
+          <div>
+            <p class="pwa-install-eyebrow">チーム専用PWA</p>
+            <h2 id="pwa-install-title">このチームをホーム画面に追加</h2>
+          </div>
+        </div>
         <p class="pwa-install-team-label">ホーム画面での表示名</p>
         <strong class="pwa-install-team-name" id="pwa-install-team-name">このチーム</strong>
-        <p id="pwa-install-help">ブラウザのメニューからホーム画面に追加してください。</p>
-        <p class="pwa-install-note">追加後は、選手の個別ログインなしでこのチームの練習ページを直接開けます。初回または認証期限後のみ、チームの合言葉を確認します。</p>
-        <button class="button button-primary button-full" data-pwa-install-close type="button">閉じる</button>
+        <p id="pwa-install-help" class="pwa-install-help">端末に合った手順を見ながらホーム画面に追加してください。</p>
+
+        <div class="pwa-platform-guides">
+          <section class="pwa-platform-guide" aria-labelledby="pwa-iphone-title">
+            <div class="pwa-platform-title"><span class="pwa-platform-badge">iPhone / iPad</span><h3 id="pwa-iphone-title">Safariから追加</h3></div>
+            <ol class="pwa-install-steps">
+              <li>
+                <span class="pwa-step-no">1</span>
+                <div class="pwa-step-body"><strong>このチームページをSafariで開く</strong><p>LINEなどのアプリ内ブラウザではなく、Safariでチームページを表示します。</p></div>
+              </li>
+              <li class="pwa-step-with-image">
+                <span class="pwa-step-no">2</span>
+                <div class="pwa-step-body"><strong>画面下の「共有」ボタンをタップ</strong><p>四角から上向き矢印が出ているボタンです。</p><img src="/assets/pwa-iphone-share.webp" alt="Safari画面下部にある共有ボタンの位置" width="600" height="210" loading="lazy" decoding="async" /></div>
+              </li>
+              <li class="pwa-step-with-image">
+                <span class="pwa-step-no">3</span>
+                <div class="pwa-step-body"><strong>「ホーム画面に追加」を選ぶ</strong><p>共有メニューを少し下へスクロールすると表示されます。</p><img src="/assets/pwa-iphone-add-home.webp" alt="Safari共有メニュー内のホーム画面に追加の位置" width="612" height="340" loading="lazy" decoding="async" /></div>
+              </li>
+              <li class="pwa-step-with-image">
+                <span class="pwa-step-no">4</span>
+                <div class="pwa-step-body"><strong>右上の「追加」をタップ</strong><p>表示名はチーム名のままでOKです。</p><img src="/assets/pwa-iphone-confirm-add.webp" alt="iPhoneのホーム画面に追加画面にある追加ボタンの位置" width="570" height="230" loading="lazy" decoding="async" /></div>
+              </li>
+            </ol>
+          </section>
+
+          <section class="pwa-platform-guide" aria-labelledby="pwa-android-title">
+            <div class="pwa-platform-title"><span class="pwa-platform-badge pwa-platform-badge-android">Android</span><h3 id="pwa-android-title">Chromeから追加</h3></div>
+            <ol class="pwa-install-steps">
+              <li>
+                <span class="pwa-step-no">1</span>
+                <div class="pwa-step-body"><strong>このチームページをChromeで開く</strong><p>Chromeでチームページを表示します。</p></div>
+              </li>
+              <li class="pwa-step-with-image">
+                <span class="pwa-step-no">2</span>
+                <div class="pwa-step-body"><strong>案内が出たら「インストール」をタップ</strong><p>画面にインストール案内が表示された場合は、そのまま進めます。</p><img src="/assets/pwa-android-install.webp" alt="Android Chromeのインストールボタンの位置" width="612" height="350" loading="lazy" decoding="async" /></div>
+              </li>
+              <li class="pwa-step-with-image">
+                <span class="pwa-step-no">3</span>
+                <div class="pwa-step-body"><strong>案内が出ない場合は右上の「︙」をタップ</strong><p>メニュー内の「ホーム画面に追加」を選びます。</p><img src="/assets/pwa-android-menu.webp" alt="Android Chrome右上のメニューボタンとホーム画面に追加の位置" width="612" height="780" loading="lazy" decoding="async" /></div>
+              </li>
+            </ol>
+          </section>
+        </div>
+
+        <p class="pwa-install-note"><strong>追加後はチーム名のアイコンから直接起動できます。</strong><br />選手の個別ログインは不要です。複数チームを追加した場合も、ホーム画面のチーム名で見分けられます。</p>
+        <button class="button button-primary button-full pwa-install-close" data-pwa-install-close type="button">閉じる</button>
       </div>
     </dialog>
 

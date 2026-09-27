@@ -5136,3 +5136,327 @@ body.practice-menu-open { overflow: hidden; }
 .team-pwa-login-steps b { display:block; color:#153d2e; font-size:10px; line-height:1.45; }
 .team-pwa-login-steps small { display:block; margin-top:1px; color:#688078; font-size:9px; line-height:1.45; }
 .team-pwa-login-guide .team-pwa-login-multi { margin-top:10px; padding-top:9px; border-top:1px solid #dceae3; font-weight:800; }
+
+
+/* v1.5.37 UI fix36: text-first, visual-aid PWA install dialog */
+.pwa-install-dialog {
+  width: min(calc(100% - 22px), 720px);
+  max-height: 94vh;
+}
+.pwa-install-dialog-card {
+  max-width: none;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 22px;
+  text-align: left;
+  overscroll-behavior: contain;
+}
+.pwa-install-dialog-head {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.pwa-install-dialog-head .dialog-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  font-size: 20px;
+}
+.pwa-install-eyebrow {
+  margin: 0 0 2px !important;
+  color: #0b8a51 !important;
+  font-size: 9px !important;
+  font-weight: 950;
+  letter-spacing: .09em;
+}
+.pwa-install-dialog-card h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.pwa-install-team-label {
+  margin: 16px 0 3px !important;
+}
+.pwa-install-team-name {
+  margin-bottom: 5px;
+}
+.pwa-install-help {
+  margin-top: 5px !important;
+  color: #50677b !important;
+}
+.pwa-platform-guides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.pwa-platform-guide {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #d8e4ed;
+  border-radius: 16px;
+  background: #f8fbfd;
+}
+.pwa-platform-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 8px;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #dfe8ef;
+}
+.pwa-platform-title h3 {
+  margin: 0;
+  color: #082844;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.pwa-platform-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e6f0fb;
+  color: #0a4c85;
+  font-size: 9px;
+  font-weight: 950;
+}
+.pwa-platform-badge-android {
+  background: #e8f8ef;
+  color: #087946;
+}
+.pwa-install-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pwa-install-steps li {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr);
+  gap: 8px;
+  padding: 11px 0;
+  border-bottom: 1px solid #e5edf2;
+}
+.pwa-install-steps li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.pwa-step-no {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #0db963;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 950;
+}
+.pwa-step-body strong {
+  display: block;
+  color: #14384f;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.pwa-step-body > p {
+  margin: 3px 0 0 !important;
+  color: #64798a !important;
+  font-size: 9.5px !important;
+  line-height: 1.6 !important;
+}
+.pwa-step-body img {
+  display: block;
+  width: min(100%, 220px);
+  max-height: 150px;
+  object-fit: contain;
+  object-position: left top;
+  margin-top: 8px;
+  border: 1px solid #d5e0e9;
+  border-radius: 10px;
+  background: #fff;
+}
+.pwa-platform-guide:last-child .pwa-install-steps li:last-child img {
+  width: min(100%, 150px);
+  max-height: 190px;
+}
+.pwa-install-dialog-card .pwa-install-note {
+  margin-top: 14px;
+  padding: 11px 12px;
+  text-align: left;
+}
+.pwa-install-close {
+  margin-top: 14px;
+}
+@media (max-width: 640px) {
+  .pwa-install-dialog {
+    width: calc(100% - 14px);
+    max-height: 96vh;
+  }
+  .pwa-install-dialog-card {
+    max-height: 94vh;
+    padding: 18px 15px 16px;
+    border-radius: 18px;
+  }
+  .pwa-install-dialog-head {
+    grid-template-columns: 38px 1fr;
+    gap: 9px;
+  }
+  .pwa-install-dialog-head .dialog-icon {
+    width: 38px;
+    height: 38px;
+  }
+  .pwa-install-dialog-card h2 {
+    font-size: 17px;
+  }
+  .pwa-platform-guides {
+    grid-template-columns: 1fr;
+  }
+  .pwa-platform-guide {
+    padding: 12px;
+  }
+  .pwa-step-body img {
+    width: min(100%, 210px);
+  }
+}
+
+/* v1.5.37 UI fix36: text-first PWA instructions on the team passphrase screen */
+.team-pwa-login-guide .pwa-platform-guides-inline {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.team-pwa-login-guide .team-pwa-login-intro {
+  margin-top: 10px;
+}
+.team-pwa-login-guide .pwa-platform-guide {
+  padding: 12px;
+  background: #fff;
+}
+.team-pwa-login-guide .pwa-platform-title {
+  padding-bottom: 9px;
+}
+.team-pwa-login-guide .pwa-install-steps li {
+  padding: 10px 0;
+}
+.team-pwa-login-guide .pwa-step-body strong {
+  font-size: 10.5px;
+}
+.team-pwa-login-guide .pwa-step-body > p {
+  font-size: 9.5px !important;
+  line-height: 1.65 !important;
+}
+.team-pwa-login-guide .pwa-step-body img {
+  width: min(100%, 190px);
+  max-height: 112px;
+  margin-top: 7px;
+  object-fit: contain;
+  object-position: left top;
+}
+.team-pwa-login-guide .pwa-platform-guide:last-child .pwa-install-steps li:last-child img {
+  width: min(100%, 145px);
+  max-height: 170px;
+}
+@media (max-width: 640px) {
+  .team-pwa-login-guide {
+    padding: 13px;
+  }
+  .team-pwa-login-guide .pwa-platform-guide {
+    padding: 11px;
+  }
+  .team-pwa-login-guide .pwa-step-body img {
+    width: min(100%, 175px);
+    max-height: 105px;
+  }
+  .team-pwa-login-guide .pwa-platform-guide:last-child .pwa-install-steps li:last-child img {
+    width: min(100%, 135px);
+    max-height: 160px;
+  }
+}
+
+/* v1.5.37 UI fix37: compact passphrase-page install guide + blue install CTA */
+.pwa-install-entry-button {
+  color: #fff !important;
+  background: linear-gradient(180deg, #1677d2 0%, #0b5da8 100%) !important;
+  border-color: #0b5da8 !important;
+  box-shadow: 0 8px 18px rgba(11, 93, 168, .20);
+}
+.pwa-install-entry-button:hover {
+  background: linear-gradient(180deg, #126fc7 0%, #095496 100%) !important;
+  border-color: #095496 !important;
+  filter: none;
+}
+.pwa-install-entry-button:focus-visible {
+  outline: 3px solid rgba(22, 119, 210, .25);
+  outline-offset: 2px;
+}
+.pwa-install-entry-button svg { color: currentColor; }
+
+.team-pwa-login-guide {
+  margin-top: 14px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #d6e3ec;
+  border-radius: 14px;
+  background: #f8fbfd;
+}
+.team-pwa-login-guide-summary {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 20px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 13px;
+  cursor: pointer;
+  list-style: none;
+  color: #082844;
+  user-select: none;
+}
+.team-pwa-login-guide-summary::-webkit-details-marker { display: none; }
+.team-pwa-login-guide-summary::marker { content: ""; }
+.team-pwa-login-guide-summary:hover { background: #f1f7fb; }
+.team-pwa-login-guide-summary-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e6f1ff;
+  color: #0b5da8;
+}
+.team-pwa-login-guide-summary-icon svg { width: 18px; height: 18px; }
+.team-pwa-login-guide-summary-copy { min-width: 0; }
+.team-pwa-login-guide-summary-copy small {
+  display: block;
+  margin-bottom: 2px;
+  color: #6b7e8d;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+.team-pwa-login-guide-summary-copy strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.team-pwa-login-guide-summary-arrow {
+  display: grid;
+  place-items: center;
+  color: #6f8798;
+  font-size: 22px;
+  line-height: 1;
+  transform: rotate(90deg);
+  transition: transform .18s ease;
+}
+.team-pwa-login-guide[open] .team-pwa-login-guide-summary-arrow { transform: rotate(-90deg); }
+.team-pwa-login-guide-content {
+  padding: 0 13px 13px;
+  border-top: 1px solid #e3ebf1;
+  background: #f6fafc;
+}
+.team-pwa-login-guide-content .team-pwa-login-intro { margin-top: 12px; }
+.team-pwa-login-guide-content .team-pwa-login-multi { margin-bottom: 0; }
+@media (max-width: 640px) {
+  .team-pwa-login-guide { padding: 0; }
+  .team-pwa-login-guide-summary { padding: 11px 12px; }
+  .team-pwa-login-guide-content { padding: 0 11px 11px; }
+  .team-pwa-login-guide-summary-copy strong { font-size: 11.5px; }
+}
