@@ -1,5 +1,6 @@
 // Source of truth: TypeScript. Vite generates content-hashed browser bundles under public/build/.
 import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils";
+import { initSiteChrome } from "./site-chrome";
 
 const APP_BUILD = __APP_VERSION__;
 const TERMS_VERSION = "2026-09-25";
@@ -201,27 +202,10 @@ function initInstallTabs() {
   });
 }
 
-function initMobileMenu() {
-  const button = document.querySelector("#mobile-menu-button");
-  const nav = document.querySelector("#mobile-nav");
-  if (!button || !nav) return;
-  const closedIcon = button.innerHTML;
-  button.addEventListener("click", () => {
-    const open = nav.classList.toggle("is-open");
-    button.setAttribute("aria-expanded", String(open));
-    button.setAttribute("aria-label", open ? "メニューを閉じる" : "メニューを開く");
-    button.innerHTML = open ? "×" : closedIcon;
-  });
-  nav.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => {
-    nav.classList.remove("is-open");
-    button.setAttribute("aria-expanded", "false");
-    button.innerHTML = closedIcon;
-  }));
-}
 
 initShareDialog();
 initRegistrationDialog();
 initInstallTabs();
-initMobileMenu();
+initSiteChrome();
 document.querySelector("#share-site")?.addEventListener("click", () => { void openShareDialog("site"); });
 document.querySelector("#share-sample-team")?.addEventListener("click", () => { void openShareDialog("team"); });

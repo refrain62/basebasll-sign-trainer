@@ -1,5 +1,5 @@
 // Source of truth: TypeScript. Vite generates content-hashed browser bundles under public/build/.
-export {};
+import { initSiteChrome } from "./site-chrome";
 const APP_BUILD = __APP_VERSION__;
 console.info(`[SIGN TRAINER] build ${APP_BUILD} legal`);
 
@@ -36,3 +36,5 @@ async function loadLegalConfig() {
 }
 
 loadLegalConfig();
+
+initSiteChrome();

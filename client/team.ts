@@ -1,5 +1,6 @@
 // Source of truth: TypeScript. Vite generates content-hashed browser bundles under public/build/.
 import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils";
+import { practiceHeader } from "./components/practice-header";
 import { filterPracticeSigns, findPracticeGroup, getPracticeOptions } from "./practice-utils";
 
 const APP_BUILD = __APP_VERSION__;
@@ -588,16 +589,22 @@ function appTopbar(action = "") {
   const analyticsBadge = practiceAnalyticsEnabled() ? "" : `<span class="practice-menu-premium">Pro</span>`;
   const requestedView = new URLSearchParams(location.search).get("view");
   const menuView = requestedView === "history" ? "history" : requestedView === "analytics" ? "analytics" : "practice";
-  return `<header class="app-topbar app-topbar--modern"><div class="app-topbar-inner">${brand()}<div class="practice-header-actions">${action}<button class="mobile-menu-button practice-header-menu-button" id="practice-menu-button" type="button" aria-label="メニューを開く" aria-controls="practice-header-menu" aria-expanded="false">${icons.menu}</button></div></div></header><nav class="practice-header-menu" id="practice-header-menu" aria-label="練習ページメニュー" role="dialog" aria-modal="true" hidden>
-    <header class="practice-header-menu-head"><div><span>チーム練習</span><strong>${escapeHtml(state.teamName || "サイン練習チーム")}</strong></div><button class="practice-header-menu-close" type="button" data-practice-menu-close aria-label="メニューを閉じる">${icons.close}</button></header>
-    <div class="practice-header-menu-list">
-      <button class="practice-header-menu-link ${menuView === "practice" ? "is-active" : ""}" type="button" data-practice-menu-action="practice"><span class="practice-header-menu-icon">${icons.play}</span><span>練習ページ</span><span class="practice-header-menu-arrow">›</span></button>
-      <button class="practice-header-menu-link ${menuView === "history" ? "is-active" : ""}" type="button" data-practice-menu-action="history"><span class="practice-header-menu-icon">${icons.clock}</span><span>練習履歴</span><span class="practice-header-menu-arrow">›</span></button>
-      <button class="practice-header-menu-link ${menuView === "analytics" ? "is-active" : ""}" type="button" data-practice-menu-action="analytics"><span class="practice-header-menu-icon">${icons.chart}</span><span>成績分析</span>${analyticsBadge}<span class="practice-header-menu-arrow">›</span></button>
-      <button class="practice-header-menu-link" type="button" data-practice-menu-action="share"><span class="practice-header-menu-icon">${icons.share}</span><span>チームに共有</span><span class="practice-header-menu-arrow">›</span></button>
-    </div>
-    <div class="practice-header-menu-footer"><button class="practice-header-menu-link practice-header-menu-link--danger" type="button" data-practice-menu-action="logout"><span class="practice-header-menu-icon">${icons.logout}</span><span>この端末の認証を解除</span><span class="practice-header-menu-arrow">›</span></button></div>
-  </nav>`;
+  return practiceHeader({
+    brandHtml: brand(),
+    actionHtml: action,
+    teamName: state.teamName || "サイン練習チーム",
+    activeView: menuView,
+    analyticsBadgeHtml: analyticsBadge,
+    icons: {
+      menu: icons.menu,
+      close: icons.close,
+      play: icons.play,
+      clock: icons.clock,
+      chart: icons.chart,
+      share: icons.share,
+      logout: icons.logout
+    }
+  });
 }
 
 function practiceTeamIdentity() {

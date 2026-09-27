@@ -2212,9 +2212,9 @@ svg { display: block; }
 }
 
 /* build 70: account registration & admin lifecycle */
-.account-page { min-height: 100dvh; background: #f3f7f5; color: #12364e; }
+.account-page { min-height: 100dvh; background: #f3f7f5; color: #12364e; display:flex; flex-direction:column; }
 .account-header { position: sticky; top: 0; z-index: 30; background: rgba(255,255,255,.96); backdrop-filter: blur(12px); }
-.account-main { padding: 32px 0 64px; }
+.account-main { padding: 32px 0 64px; flex:1 0 auto; }
 .account-container { max-width: 980px; }
 .account-loading { min-height: 45vh; display: grid; place-items: center; align-content: center; gap: 12px; color: #667d8b; }
 .account-auth-layout { min-height: calc(100dvh - 180px); display: grid; place-items: center; }
@@ -2376,8 +2376,6 @@ svg { display: block; }
 .legal-config-warning { margin-bottom: 14px; }
 .legal-config-missing { color: #9b3b2d; font-weight: 800; }
 .legal-footer { margin-top: 0; }
-.account-legal-footer { padding: 18px 14px 28px; text-align: center; color: #71828c; font-size: 12px; }
-.account-legal-footer a { margin: 0 7px; color: #476172; }
 @media (max-width: 860px) { .operations-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 620px) {
   .operations-grid { grid-template-columns: 1fr; }
@@ -4953,4 +4951,103 @@ body.practice-menu-open { overflow: hidden; }
     width:100% !important;
     max-width:none !important;
   }
+}
+
+
+/* v1.5.37 UI fix16: shared public footer on team member/practice pages */
+.reference-footer.lp-footer {
+  background:#032038;
+  color:#fff;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.reference-footer.lp-footer .footer-inner {
+  min-height:78px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  grid-template-areas:"brand nav meta";
+  gap:28px;
+  align-items:center;
+}
+.reference-footer.lp-footer .footer-brand { grid-area:brand; align-self:center; }
+.reference-footer.lp-footer .brand-name,
+.reference-footer.lp-footer .brand-sign { color:#fff; }
+.reference-footer.lp-footer .brand-trainer { color:#21c77a; }
+.reference-footer.lp-footer .brand-sub { color:#d7e3e9; }
+.reference-footer.lp-footer .footer-nav {
+  grid-area:nav;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 18px;
+  justify-content:center;
+}
+.reference-footer.lp-footer .footer-nav a {
+  min-height:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#eef5f8;
+  font-size:9px;
+  font-weight:800;
+  line-height:1.45;
+  text-decoration:none;
+}
+.reference-footer.lp-footer .footer-meta {
+  grid-area:meta;
+  justify-self:end;
+  color:#d7e3e9;
+  font-size:8px;
+  white-space:nowrap;
+}
+
+@media (max-width:1100px) {
+  .reference-footer.lp-footer .footer-inner {
+    grid-template-columns:1fr;
+    grid-template-areas:"brand" "nav" "meta";
+    gap:14px;
+    padding:22px 0;
+  }
+  .reference-footer.lp-footer .footer-brand { justify-self:start; }
+  .reference-footer.lp-footer .footer-nav {
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:0 18px;
+    justify-content:stretch;
+    border-top:1px solid rgba(255,255,255,.13);
+    border-bottom:1px solid rgba(255,255,255,.13);
+  }
+  .reference-footer.lp-footer .footer-nav a {
+    min-height:0 !important;
+    padding:11px 2px !important;
+    display:block !important;
+    border:0 !important;
+    border-bottom:1px solid rgba(255,255,255,.09) !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    color:#eef5f8 !important;
+    font-size:10px !important;
+    line-height:1.35;
+    text-align:left;
+  }
+  .reference-footer.lp-footer .footer-meta {
+    justify-self:start;
+    white-space:normal;
+  }
+}
+@media (max-width:700px) {
+  .reference-footer.lp-footer .footer-nav { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:520px) {
+  .reference-footer.lp-footer .footer-nav { grid-template-columns:1fr; }
+}
+
+/* v1.5.37 UI fix19: keep team withdrawal action directly below its explanatory copy */
+.team-withdraw-card { display:block; }
+.team-withdraw-content { min-width:0; }
+.team-withdraw-actions { margin-top:14px; display:flex; align-items:center; justify-content:flex-start; }
+.team-withdraw-actions .button { width:auto; }
+@media (max-width:620px) {
+  .team-withdraw-actions { display:block; }
+  .team-withdraw-actions .button { width:100%; }
 }

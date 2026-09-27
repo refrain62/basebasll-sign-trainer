@@ -1,5 +1,7 @@
 // Source of truth: TypeScript. Vite generates content-hashed browser bundles under public/build/.
 import { qrImageUrl, teamUrl } from "./share-utils";
+import { systemAdminHeader } from "./components/system-admin-header";
+import { teamAdminHeader } from "./components/team-admin-header";
 
 const TERMS_VERSION = "2026-09-25";
 const PRIVACY_VERSION = "2026-09-25";
@@ -62,13 +64,14 @@ function esc(value) {
     .replaceAll("'", "&#039;");
 }
 
-function shell(title, body, action = "") {
+function shell(title, body, action = "", headerKind: "system" | "team" | undefined = undefined) {
   document.title = `${title} | SIGN TRAINER`;
+  const resolvedHeaderKind = headerKind || (String(title).startsWith("チーム") ? "team" : "system");
+  const header = resolvedHeaderKind === "team"
+    ? teamAdminHeader({ iconUrl: ICON, actionHtml: action })
+    : systemAdminHeader({ iconUrl: ICON, actionHtml: action });
   app.innerHTML = `<div class="admin-page">
-    <header class="app-topbar admin-topbar"><div class="app-topbar-inner">
-      <a class="brand" href="/"><span class="brand-mark"><img class="brand-icon-img" src="${ICON}" alt="" width="128" height="128"></span><span class="brand-copy"><span class="brand-name"><span class="brand-sign">SIGN</span> <span class="brand-trainer">TRAINER</span></span><span class="brand-sub">野球のサインを、チームの力に。</span></span></a>
-      ${action}
-    </div></header>
+    ${header}
     <main class="admin-main">${body}</main>
   </div>`;
 }
@@ -1287,7 +1290,7 @@ function teamSettingsContent(team, auth, accountManaged = false) {
     : auth?.type !== "account" && accountManaged
       ? "管理者アカウントへ移行済みのため、メイン管理者がGoogle / LINEでログインして手続きしてください。"
       : "退会すると選手用ページと管理画面を利用できなくなります。登録済みデータは誤操作からの復旧や監査のため直ちには物理削除せず、運営管理下で利用停止状態になります。";
-  return `<div class="team-admin-view"><header class="team-admin-page-head"><div><h1>チーム設定</h1><p>普段は確認だけ。変更するときだけ編集ダイアログを開きます。</p></div><button class="button button-primary" id="open-team-settings" type="button">設定を変更</button></header><section class="admin-card team-admin-settings-summary"><dl><div><dt>チーム名</dt><dd>${esc(team.name)}</dd></div><div><dt>選手用合言葉</dt><dd>設定済み</dd></div><div><dt>管理者認証</dt><dd>${esc(authLabel)}</dd></div></dl><p class="admin-help">合言葉の変更やチーム名の変更は「設定を変更」から行えます。</p></section><section class="admin-card team-withdraw-card"><div><span class="team-withdraw-kicker">DANGER ZONE</span><h2>チームの退会</h2><p>${esc(withdrawHelp)}</p></div>${canWithdraw ? `<button class="button button-danger" id="open-team-withdraw" type="button">退会手続き</button>` : `<span class="admin-status admin-status--suspended">手続き不可</span>`}</section></div>`;
+  return `<div class="team-admin-view"><header class="team-admin-page-head"><div><h1>チーム設定</h1><p>普段は確認だけ。変更するときだけ編集ダイアログを開きます。</p></div><button class="button button-primary" id="open-team-settings" type="button">設定を変更</button></header><section class="admin-card team-admin-settings-summary"><dl><div><dt>チーム名</dt><dd>${esc(team.name)}</dd></div><div><dt>選手用合言葉</dt><dd>設定済み</dd></div><div><dt>管理者認証</dt><dd>${esc(authLabel)}</dd></div></dl><p class="admin-help">合言葉の変更やチーム名の変更は「設定を変更」から行えます。</p></section><section class="admin-card team-withdraw-card"><div class="team-withdraw-content"><span class="team-withdraw-kicker">DANGER ZONE</span><h2>チームの退会</h2><p>${esc(withdrawHelp)}</p><div class="team-withdraw-actions">${canWithdraw ? `<button class="button button-danger" id="open-team-withdraw" type="button">退会手続き</button>` : `<span class="admin-status admin-status--suspended">手続き不可</span>`}</div></div></section></div>`;
 }
 
 async function renderTeamDashboard(teamId, { message = "", view = teamAdminViewFromPath() } = {}) {

@@ -22,6 +22,8 @@ function renderWorkerPages(): Plugin {
     apply: "build",
     buildStart() {
       for (const pageName of Object.keys(PAGE_ENTRIES)) this.addWatchFile(path.join(rootDir, "pages", `${pageName}.html`));
+      this.addWatchFile(path.join(rootDir, "pages", "components", "site-header.html"));
+      this.addWatchFile(path.join(rootDir, "pages", "components", "site-footer.html"));
     },
     writeBundle(_options, bundle) {
       const entries = new Map<string, string>();

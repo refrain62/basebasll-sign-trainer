@@ -11,6 +11,8 @@ export function pageAssetForPath(pathname) {
   if (clean === "/terms" || clean === "/terms.html") return "/__pages/terms.txt";
   if (clean === "/privacy" || clean === "/privacy.html") return "/__pages/privacy.txt";
   if (clean === "/external-transmission" || clean === "/external-transmission.html") return "/__pages/external-transmission.txt";
+  if (clean === "/legal" || clean === "/legal.html") return "/__pages/legal.txt";
+  if (clean === "/contact" || clean === "/contact.html") return "/__pages/contact.txt";
   if (clean === "/support" || clean === "/support.html") return "/__pages/support.txt";
   if (clean === "/team.html") return "/__pages/team.txt";
   if (/^\/t\/[^/]+\/admin(?:\/(?:activity|groups|signs|share|admins|plan-auth|notices|settings))?$/.test(clean)) return "/__pages/admin.txt";

@@ -914,3 +914,8 @@ build 93でモバイル時の3枚サマリーを1列化していましたが、�
 - SYSTEM管理の「管理画面」は「チーム管理画面を開く」へ、チーム管理の「選手用ページ」は「選手用ページを開く」へ名称を変更しました。通常ブラウザでは別タブ、PWA standalone時は同一画面で開きます。
 - サイングループ管理に名称検索を追加しました。
 - LPに「プランについて」の比較表示を追加し、Freeと現在特定チーム限定で提供している有償機能の差を明記しました。一般申し込み・オンライン課金には未対応です。
+
+### UI component note (v1.5.37 fix17)
+- Public LP navigation now uses 「はじめ方」 for `/install`.
+- System admin, team admin, and team practice headers are separate TypeScript components under `client/components/`.
+- The LP includes an actual training-flow section showing self-judgement, result review, and Plus/Pro result sharing.
