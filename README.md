@@ -101,6 +101,10 @@ npm run security:preflight
 
 生成された `package-lock.json` は必ずGit管理してください。以後は `npm install` ではなく **`npm ci --ignore-scripts`** を使います。
 
+## Cloudflare 環境運用手順書
+
+local / dev / staging / production の初回構築、Secret・OAuth・Cloudflare Access、D1 migration、デプロイ、スモークテスト、ロールバックまでの実運用手順は [`docs/CLOUDFLARE_ENVIRONMENT_RUNBOOK.md`](docs/CLOUDFLARE_ENVIRONMENT_RUNBOOK.md) にまとめています。
+
 ## 環境構成
 
 | 環境 | Worker | D1 |

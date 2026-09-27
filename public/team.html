@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#082844" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="SIGN TRAINER" />
     <meta name="description" content="SIGN TRAINERは、チームの野球サインを動画でくり返し練習するシンプルなWebアプリです。" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="サイントレーナー | 野球のサイン練習" />
@@ -69,6 +73,19 @@
       </form>
     </dialog>
 
+
+    <dialog id="pwa-install-dialog" class="dialog pwa-install-dialog" aria-labelledby="pwa-install-title">
+      <div class="dialog-card pwa-install-dialog-card">
+        <div class="dialog-icon" aria-hidden="true">⌂</div>
+        <h2 id="pwa-install-title">このチームをホーム画面に追加</h2>
+        <p class="pwa-install-team-label">ホーム画面での表示名</p>
+        <strong class="pwa-install-team-name" id="pwa-install-team-name">このチーム</strong>
+        <p id="pwa-install-help">ブラウザのメニューからホーム画面に追加してください。</p>
+        <p class="pwa-install-note">追加後は、選手の個別ログインなしでこのチームの練習ページを直接開けます。初回または認証期限後のみ、チームの合言葉を確認します。</p>
+        <button class="button button-primary button-full" data-pwa-install-close type="button">閉じる</button>
+      </div>
+    </dialog>
+
     <dialog id="share-dialog" class="dialog share-dialog" aria-labelledby="share-title">
       <div class="share-dialog-card">
         <button class="share-dialog-close" id="share-close" type="button" aria-label="共有画面を閉じる">×</button>
@@ -95,6 +112,6 @@
         <div class="share-security-note"><strong>大切：</strong><span id="share-note">合言葉はURLやQRコードには含まれません。</span></div>
       </div>
     </dialog>
-    <script src="/build/assets/team-Bzy8FhlI.js" type="module"></script>
+    <script src="/build/assets/team-eY-cnjfr.js" type="module"></script>
   </body>
 </html>

@@ -19,7 +19,8 @@ export const NO_CACHE_ASSETS = new Set([
   "/external-transmission.html",
   "/support.html",
   "/styles.css",
-  "/manifest.webmanifest"
+  "/manifest.webmanifest",
+  "/sw.js"
 ]);
 
 export const FRESH_AUTH_MAX_AGE_SECONDS = 10 * 60;

@@ -17,6 +17,98 @@ function practiceHistoryLimit() {
 }
 let activeTeamId = SAMPLE_TEAM_ID;
 
+type TeamInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: string }>;
+};
+
+let deferredTeamInstallPrompt: TeamInstallPromptEvent | null = null;
+
+function activeTeamManifestUrl() {
+  return `/pwa/team/${encodeURIComponent(activeTeamId)}/manifest.webmanifest`;
+}
+
+function activeTeamAdminPath() {
+  return `/t/${encodeURIComponent(activeTeamId)}/admin`;
+}
+
+function ensureTeamManifestLink() {
+  if (!location.pathname.match(/^\/t\/[A-Za-z0-9_-]+\/?$/)) return;
+  let manifest = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+  if (!manifest) {
+    manifest = document.createElement("link");
+    manifest.rel = "manifest";
+    document.head.appendChild(manifest);
+  }
+  manifest.href = activeTeamManifestUrl();
+}
+
+function syncTeamPwaIdentity() {
+  ensureTeamManifestLink();
+  const name = String(state.teamName || "SIGN TRAINER").trim() || "SIGN TRAINER";
+  let appleTitle = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]');
+  if (!appleTitle) {
+    appleTitle = document.createElement("meta");
+    appleTitle.name = "apple-mobile-web-app-title";
+    document.head.appendChild(appleTitle);
+  }
+  appleTitle.content = name;
+}
+
+function isStandalonePwa() {
+  return window.matchMedia?.("(display-mode: standalone)")?.matches || Boolean((navigator as any).standalone);
+}
+
+function installHelpMessage() {
+  const userAgent = navigator.userAgent || "";
+  const isiOS = /iPhone|iPad|iPod/i.test(userAgent);
+  const isAndroid = /Android/i.test(userAgent);
+  if (isiOS) return "Safariの共有ボタンをタップし、「ホーム画面に追加」を選んでください。追加後は、このチーム名のアイコンから直接練習ページを開けます。";
+  if (isAndroid) return "Chromeのメニューから「アプリをインストール」または「ホーム画面に追加」を選んでください。追加後は、このチーム名のアイコンから直接練習ページを開けます。";
+  return "ブラウザのメニューから「アプリをインストール」または「ホーム画面に追加」を選んでください。追加後は、このチーム名から直接練習ページを開けます。";
+}
+
+function showTeamPwaInstallDialog(message = "") {
+  const dialog = document.querySelector<HTMLDialogElement>("#pwa-install-dialog");
+  const teamName = document.querySelector<HTMLElement>("#pwa-install-team-name");
+  const help = document.querySelector<HTMLElement>("#pwa-install-help");
+  if (teamName) teamName.textContent = state.teamName || "このチーム";
+  if (help) help.textContent = message || installHelpMessage();
+  if (dialog?.showModal) dialog.showModal();
+  else alert(message || installHelpMessage());
+}
+
+async function requestTeamPwaInstall() {
+  syncTeamPwaIdentity();
+  if (isStandalonePwa()) {
+    showTeamPwaInstallDialog("このチームはすでにホーム画面から起動できる状態です。");
+    return;
+  }
+  if (deferredTeamInstallPrompt) {
+    const promptEvent = deferredTeamInstallPrompt;
+    deferredTeamInstallPrompt = null;
+    await promptEvent.prompt();
+    const choice = await promptEvent.userChoice.catch(() => ({ outcome: "dismissed" }));
+    if (choice.outcome === "accepted") return;
+  }
+  showTeamPwaInstallDialog();
+}
+
+function registerTeamPwa() {
+  ensureTeamManifestLink();
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((error) => {
+      console.warn("[SIGN TRAINER] PWA service worker registration failed", error);
+    });
+  }
+}
+
+window.addEventListener("beforeinstallprompt", (event: Event) => {
+  event.preventDefault();
+  deferredTeamInstallPrompt = event as TeamInstallPromptEvent;
+});
+window.addEventListener("appinstalled", () => { deferredTeamInstallPrompt = null; });
+
 function activeTeamPath() {
   return `/t/${activeTeamId}`;
 }
@@ -33,6 +125,7 @@ const app = document.querySelector("#app");
 const confirmDialog = document.querySelector("#confirm-dialog");
 const logoutDialog = document.querySelector("#logout-dialog");
 const shareDialog = document.querySelector("#share-dialog");
+const pwaInstallDialog = document.querySelector<HTMLDialogElement>("#pwa-install-dialog");
 
 const premiumModulePromises = new Map<string, Promise<any>>();
 
@@ -516,6 +609,7 @@ document.addEventListener("click", (event) => {
     else if (action === "history") navigate(`${activeTeamPath()}?view=history`);
     else if (action === "analytics") navigate(`${activeTeamPath()}?view=analytics`);
     else if (action === "share") { initShareDialog(); void openShareDialog("team"); }
+    else if (action === "install") { void requestTeamPwaInstall(); }
     else if (action === "logout") confirmLogout();
     return;
   }
@@ -557,6 +651,7 @@ async function route() {
       state.results = [];
       state.teamName = "サイン練習チーム";
     }
+    ensureTeamManifestLink();
     renderLoading("チームを確認しています…", "初回だけ合言葉の確認があります。");
     const session = await getSession();
     if (session.error === "team_not_found") {
@@ -569,10 +664,12 @@ async function route() {
     }
     if (session.error === "session_secret_not_configured" || session.error === "server_not_configured") {
       state.teamName = session.teamName || state.teamName;
+      syncTeamPwaIdentity();
       renderAuth({ error: session.message || "サーバーの認証設定を確認してください。", configError: true });
       return;
     }
     state.teamName = session.teamName || state.teamName;
+    syncTeamPwaIdentity();
     if (session.authenticated) {
       const loaded = await loadSigns();
       if (loaded) {
@@ -598,6 +695,7 @@ function appTopbar(action = "") {
     brandHtml: brand(),
     actionHtml: action,
     teamName: state.teamName || "サイン練習チーム",
+    adminUrl: activeTeamAdminPath(),
     activeView: menuView,
     analyticsBadgeHtml: analyticsBadge,
     icons: {
@@ -607,6 +705,8 @@ function appTopbar(action = "") {
       clock: icons.clock,
       chart: icons.chart,
       share: icons.share,
+      phone: icons.phone,
+      users: icons.users,
       logout: icons.logout
     }
   });
@@ -617,7 +717,8 @@ function practiceTeamIdentity() {
 }
 
 function renderAuth({ error = "", value = "", configError = false } = {}) {
-  document.title = "合言葉を入力 | SIGN TRAINER";
+  syncTeamPwaIdentity();
+  document.title = `合言葉を入力 | ${state.teamName} | SIGN TRAINER`;
   app.innerHTML = `<div class="app-bg auth-bg">
     ${appTopbar()}
     <main class="auth-main">
@@ -645,6 +746,23 @@ function renderAuth({ error = "", value = "", configError = false } = {}) {
             ${error ? `<div class="form-error" role="alert"><span class="form-error-mark">!</span><span>${escapeHtml(error)}${configError ? "" : "<br>もう一度確認して入力してください。"}</span></div>` : ""}
             <button class="button button-primary button-full" id="auth-submit" type="submit">練習をはじめる</button>
           </form>
+          <section class="team-pwa-login-guide" aria-labelledby="team-pwa-login-guide-title">
+            <div class="team-pwa-login-guide-head">
+              <span>${icons.phone}</span>
+              <div><small>次回からもっと簡単に</small><h2 id="team-pwa-login-guide-title">このチームをホーム画面に追加</h2></div>
+            </div>
+            <p>SIGN TRAINER本体ではなく、<strong>${escapeHtml(state.teamName)}</strong> のチームページをホーム画面へ追加します。</p>
+            <ol class="team-pwa-login-steps">
+              <li><span>1</span><div><b>合言葉でチームを確認</b><small>この画面から一度だけ練習ページへ入ります。</small></div></li>
+              <li><span>2</span><div><b>「このチームをホーム画面に追加」</b><small>iPhoneは共有 → ホーム画面に追加。Androidは表示されるインストール案内から進めます。</small></div></li>
+              <li><span>3</span><div><b>次回から「${escapeHtml(state.teamName)}」をタップ</b><small>選手の個別ログインなしで、このチームの練習ページを直接開けます。</small></div></li>
+            </ol>
+            <p class="team-pwa-login-multi">複数チームに所属していても、チームごとに追加でき、ホーム画面のチーム名で見分けられます。</p>
+          </section>
+          <div class="team-entry-tools" aria-label="このチームの便利な入口">
+            <button class="button button-secondary button-full" id="auth-install-pwa" type="button">${icons.phone} このチームをホーム画面に追加</button>
+            <a class="button button-secondary button-full team-admin-login-button" href="${activeTeamAdminPath()}">${icons.users} チーム管理者ログイン</a>
+          </div>
           <p class="form-help">合言葉は監督・コーチに確認してください。</p>
           <div class="trust-note">${icons.check}<span>この端末では認証後、約30日間は合言葉の再入力を省略します。</span></div>
           <div class="back-link"><a href="/" data-nav>トップページに戻る</a></div>
@@ -658,6 +776,7 @@ function renderAuth({ error = "", value = "", configError = false } = {}) {
   const submit = document.querySelector("#auth-submit");
   let isComposing = false;
 
+  document.querySelector("#auth-install-pwa")?.addEventListener("click", () => { void requestTeamPwaInstall(); });
   input.addEventListener("compositionstart", () => { isComposing = true; });
   input.addEventListener("compositionend", () => { isComposing = false; });
 
@@ -694,6 +813,7 @@ function renderAuth({ error = "", value = "", configError = false } = {}) {
         return;
       }
       state.teamName = data.teamName || state.teamName;
+      syncTeamPwaIdentity();
       renderLoading("練習を準備しています…", "サインデータを安全に読み込んでいます。");
       if (await loadSigns()) renderPracticeSetup();
     } catch {
@@ -725,6 +845,7 @@ async function loadSigns() {
     state.signs = Array.isArray(data.signs) ? data.signs : [];
     state.groups = Array.isArray(data.groups) ? data.groups : [];
     state.teamName = data.team?.name || state.teamName;
+    syncTeamPwaIdentity();
     state.plan = data.plan?.plan || null;
     state.entitlements = data.plan?.entitlements || {};
     if (!state.groups.length) {
@@ -841,7 +962,8 @@ function openGroupReview(group) {
 }
 
 function renderPracticeSetup() {
-  document.title = "サイン練習 | SIGN TRAINER";
+  syncTeamPwaIdentity();
+  document.title = `${state.teamName} | SIGN TRAINER`;
   const history = getPracticeHistory();
   const latest = history[0];
   const historySub = latest
@@ -886,6 +1008,10 @@ function renderPracticeSetup() {
           <span class="share-entry-copy"><strong>チームメンバーに共有</strong><span>参加リンク・QRコード・LINEでこの練習ページを共有</span></span>
           <span class="history-entry-arrow">›</span>
         </button>
+        <div class="practice-team-tools">
+          <button class="button button-secondary" id="setup-install-pwa" type="button">${icons.phone} ホーム画面に追加</button>
+          <a class="button button-secondary team-admin-login-button" href="${activeTeamAdminPath()}">${icons.users} チーム管理者ログイン</a>
+        </div>
         <div class="practice-points" aria-label="練習のポイント">
           <div class="practice-point">${icons.check}<span>今日使うグループを選ぶ</span></div>
           <div class="practice-point">${icons.check}<span>説明を確認してから動画クイズへ</span></div>
@@ -922,6 +1048,7 @@ function renderPracticeSetup() {
   document.querySelector("#open-history")?.addEventListener("click", () => navigate(`${activeTeamPath()}?view=history`));
   initShareDialog();
   document.querySelector("#open-team-share")?.addEventListener("click", () => { void openShareDialog("team"); });
+  document.querySelector("#setup-install-pwa")?.addEventListener("click", () => { void requestTeamPwaInstall(); });
   document.querySelector("#logout")?.addEventListener("click", confirmLogout);
 }
 
@@ -1895,4 +2022,7 @@ function renderClientNotFound() {
   app.innerHTML = `<div class="app-bg">${appTopbar()}<main class="app-main"><section class="app-panel error-panel"><div class="error-symbol">?</div><h2>ページが見つかりません</h2><p>URLが正しいか確認してください。</p><div class="result-actions"><a class="button button-primary button-full" href="/" data-nav>トップページへ</a></div></section></main></div>`;
 }
 
+pwaInstallDialog?.querySelector("[data-pwa-install-close]")?.addEventListener("click", () => pwaInstallDialog.close());
+
+registerTeamPwa();
 route();

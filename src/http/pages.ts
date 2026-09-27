@@ -20,6 +20,22 @@ export function pageAssetForPath(pathname) {
   return null;
 }
 
+export function teamManifestUrlForPath(pathname: string) {
+  const clean = String(pathname || "").replace(/\/$/, "");
+  const match = clean.match(/^\/t\/([A-Za-z0-9_-]+)$/);
+  return match ? `/pwa/team/${encodeURIComponent(match[1])}/manifest.webmanifest` : "";
+}
+
+export function applyTeamManifestLink(html: string, pathname: string) {
+  const manifestUrl = teamManifestUrlForPath(pathname);
+  if (!manifestUrl) return html;
+  const manifestTag = `<link rel="manifest" href="${manifestUrl}" />`;
+  if (/<link\s+rel=["']manifest["'][^>]*>/i.test(html)) {
+    return html.replace(/<link\s+rel=["']manifest["'][^>]*>/i, manifestTag);
+  }
+  return html.replace("</head>", `  ${manifestTag}\n  </head>`);
+}
+
 export async function serveHtmlPage(request, env, url, assetPath) {
   const assetUrl = new URL(assetPath, url.origin);
   const assetRequest = new Request(assetUrl, { method: "GET", headers: request.headers });
@@ -41,7 +57,7 @@ export async function serveHtmlPage(request, env, url, assetPath) {
   headers.delete("content-length");
   headers.delete("etag");
   headers.delete("last-modified");
-  const html = applyAssetVersion(await assetResponse.text(), env);
+  const html = applyTeamManifestLink(applyAssetVersion(await assetResponse.text(), env), url.pathname);
   return withHeaders(new Response(html, { status: 200, headers }), {
     noIndex: !["/", "/index.html", "/plans", "/plans.html", "/install", "/install.html"].includes(url.pathname),
     noCache: true

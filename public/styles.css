@@ -5104,3 +5104,35 @@ body.practice-menu-open { overflow: hidden; }
 @media (max-width:520px) {
   .reference-footer.lp-footer .footer-nav { grid-template-columns:1fr; }
 }
+
+/* Team-specific PWA entry points */
+.team-entry-tools { display:grid; gap:8px; margin-top:12px; }
+.team-entry-tools .button svg,
+.practice-team-tools .button svg,
+.team-admin-login-button svg { width:18px; height:18px; flex:0 0 auto; }
+.team-admin-login-button { text-decoration:none; }
+.practice-team-tools { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin-top:10px; }
+.practice-team-tools .button { min-height:44px; gap:8px; }
+.practice-header-menu-link[href] { text-decoration:none; }
+.pwa-install-dialog-card { max-width:500px; }
+.pwa-install-team-label { margin:4px 0 3px; color:#6a7f8d; font-size:11px; font-weight:850; }
+.pwa-install-team-name { display:block; margin:0 0 12px; color:#082844; font-size:20px; line-height:1.35; }
+.pwa-install-note { padding:10px 12px; border-radius:10px; background:#f0f8f4; color:#3f5b50; font-size:11px; line-height:1.65; }
+@media (max-width:640px) {
+  .practice-team-tools { grid-template-columns:1fr; }
+}
+
+/* v1.5.37 UI fix32: team PWA flow on the player passphrase screen */
+.team-pwa-login-guide { margin-top:16px; padding:15px; border:1px solid #d5e7df; border-radius:14px; background:#f6fbf8; text-align:left; }
+.team-pwa-login-guide-head { display:grid; grid-template-columns:34px 1fr; gap:10px; align-items:center; }
+.team-pwa-login-guide-head > span { width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:#e7f8ef; color:#078a4f; }
+.team-pwa-login-guide-head svg { width:18px; height:18px; }
+.team-pwa-login-guide-head small { display:block; color:#6c8178; font-size:9px; font-weight:900; letter-spacing:.08em; }
+.team-pwa-login-guide-head h2 { margin:2px 0 0; color:#082844; font-size:15px; line-height:1.3; }
+.team-pwa-login-guide > p { margin:10px 0 0; color:#526d61; font-size:10px; line-height:1.65; }
+.team-pwa-login-steps { list-style:none; margin:11px 0 0; padding:0; display:grid; gap:7px; }
+.team-pwa-login-steps li { display:grid; grid-template-columns:25px 1fr; gap:8px; align-items:start; }
+.team-pwa-login-steps li > span { width:25px; height:25px; display:grid; place-items:center; border-radius:50%; background:#0db963; color:#fff; font-size:10px; font-weight:950; }
+.team-pwa-login-steps b { display:block; color:#153d2e; font-size:10px; line-height:1.45; }
+.team-pwa-login-steps small { display:block; margin-top:1px; color:#688078; font-size:9px; line-height:1.45; }
+.team-pwa-login-guide .team-pwa-login-multi { margin-top:10px; padding-top:9px; border-top:1px solid #dceae3; font-weight:800; }

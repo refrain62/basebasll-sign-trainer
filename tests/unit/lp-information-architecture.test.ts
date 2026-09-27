@@ -22,6 +22,9 @@ describe("LP information architecture regression", () => {
     expect(index).toContain("もっと野球を楽しみたい");
     expect(index).toContain('href="/plans"');
     expect(index).toContain('href="/install"');
+    expect(index).toContain("共有されたチームページを、そのままホーム画面へ");
+    expect(install).toContain("SIGN TRAINER本体を1つ入れるのではなく");
+    expect(install).toContain("ホーム画面にはチーム名で表示");
     expect(index).toContain('href="/support"');
     expect(index).not.toContain('id="faq"');
     expect(index).not.toContain('id="operation"');

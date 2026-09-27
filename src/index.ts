@@ -11,6 +11,7 @@ import { publicRoutes } from "./routes/public.ts";
 import { accountRoutes } from "./routes/account.ts";
 import { systemRoutes } from "./routes/system.ts";
 import { teamAdminRoutes } from "./routes/team-admin.ts";
+import { teamPwaManifest } from "./controllers/pwa-controller.ts";
 
 const app = new Hono<AppEnv>();
 
@@ -23,6 +24,8 @@ app.route("/api/account", accountRoutes);
 app.route("/api/team-admin", teamAdminRoutes);
 app.route("/api/system", systemRoutes);
 app.all("/api/*", () => apiJson({ error: "not_found" }, 404));
+
+app.get("/pwa/team/:teamId/manifest.webmanifest", (c) => teamPwaManifest(c.req.raw, c.env, c.req.param("teamId")));
 
 app.all("*", async (c) => {
   const url = new URL(c.req.url);

@@ -518,3 +518,27 @@
     height:6px;
   }
 }
+
+/* v1.5.37 UI fix32: explain team-specific PWA installation */
+.install-team-pwa-summary {
+  margin: 18px 0 22px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(0,.9fr) minmax(0,1.4fr);
+  gap: 20px;
+  border: 1px solid #cfe4da;
+  border-radius: 18px;
+  background: linear-gradient(135deg,#f4fbf7,#fff);
+}
+.install-team-pwa-kicker { color:#0a9b59; font-size:10px; font-weight:950; letter-spacing:.14em; }
+.install-team-pwa-copy h3 { margin:6px 0 7px; color:#082844; font-size:21px; line-height:1.25; }
+.install-team-pwa-copy p { margin:0; color:#536b79; font-size:12px; line-height:1.75; font-weight:700; }
+.install-team-pwa-steps { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+.install-team-pwa-steps li { display:grid; grid-template-columns:30px 1fr; gap:10px; align-items:start; padding:10px 12px; border:1px solid #e0ebe6; border-radius:12px; background:#fff; }
+.install-team-pwa-steps li > span { width:30px; height:30px; display:grid; place-items:center; border-radius:50%; background:#0db963; color:#fff; font-size:12px; font-weight:950; }
+.install-team-pwa-steps b { display:block; color:#0b304d; font-size:12px; }
+.install-team-pwa-steps small { display:block; margin-top:2px; color:#647986; font-size:10px; line-height:1.5; }
+@media (max-width:760px) {
+  .install-team-pwa-summary { grid-template-columns:1fr; padding:16px; gap:14px; }
+  .install-team-pwa-copy h3 { font-size:18px; }
+}

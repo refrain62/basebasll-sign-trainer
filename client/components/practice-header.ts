@@ -4,6 +4,7 @@ export type PracticeHeaderProps = {
   brandHtml: string;
   actionHtml?: string;
   teamName: string;
+  adminUrl: string;
   activeView: PracticeHeaderView;
   analyticsBadgeHtml?: string;
   icons: {
@@ -13,6 +14,8 @@ export type PracticeHeaderProps = {
     clock: string;
     chart: string;
     share: string;
+    phone: string;
+    users: string;
     logout: string;
   };
 };
@@ -30,6 +33,7 @@ export function practiceHeader({
   brandHtml,
   actionHtml = "",
   teamName,
+  adminUrl,
   activeView,
   analyticsBadgeHtml = "",
   icons
@@ -42,6 +46,10 @@ export function practiceHeader({
       <button class="practice-header-menu-link ${activeView === "analytics" ? "is-active" : ""}" type="button" data-practice-menu-action="analytics"><span class="practice-header-menu-icon">${icons.chart}</span><span>成績分析</span>${analyticsBadgeHtml}<span class="practice-header-menu-arrow">›</span></button>
       <button class="practice-header-menu-link" type="button" data-practice-menu-action="share"><span class="practice-header-menu-icon">${icons.share}</span><span>チームに共有</span><span class="practice-header-menu-arrow">›</span></button>
     </div>
-    <div class="practice-header-menu-footer"><button class="practice-header-menu-link practice-header-menu-link--danger" type="button" data-practice-menu-action="logout"><span class="practice-header-menu-icon">${icons.logout}</span><span>この端末の認証を解除</span><span class="practice-header-menu-arrow">›</span></button></div>
+    <div class="practice-header-menu-footer">
+      <button class="practice-header-menu-link" type="button" data-practice-menu-action="install"><span class="practice-header-menu-icon">${icons.phone}</span><span>ホーム画面に追加</span><span class="practice-header-menu-arrow">›</span></button>
+      <a class="practice-header-menu-link" href="${escapeHtml(adminUrl)}"><span class="practice-header-menu-icon">${icons.users}</span><span>チーム管理者ログイン</span><span class="practice-header-menu-arrow">›</span></a>
+      <button class="practice-header-menu-link practice-header-menu-link--danger" type="button" data-practice-menu-action="logout"><span class="practice-header-menu-icon">${icons.logout}</span><span>この端末の認証を解除</span><span class="practice-header-menu-arrow">›</span></button>
+    </div>
   </nav>`;
 }
