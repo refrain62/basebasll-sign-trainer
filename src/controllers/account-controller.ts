@@ -9,9 +9,9 @@ import { enforceRateLimit } from "../security/rate-limit.ts";
 import { constantTimeEqual } from "../security/encoding.ts";
 import { cookieValue, createSessionToken, isFreshAccountSession, nowSeconds, readRoleSession, sessionSecretConfigError, verifySessionToken } from "../security/session.ts";
 import { createServices } from "../services/service-factory.ts";
-import { normalizeTeamId, positiveNumber } from "../validation/common.ts";
+import { cleanName, normalizeTeamId, positiveNumber } from "../validation/common.ts";
 import { parseJsonBody } from "../validation/request.ts";
-import { accountCreateTeamBodySchema, accountDeleteBodySchema } from "../validation/schemas.ts";
+import { accountCreateTeamBodySchema, accountDeleteBodySchema, accountUpdateProfileBodySchema } from "../validation/schemas.ts";
 import { FEATURE_KEYS } from "../config/features.ts";
 
 const OAUTH_TTL_SECONDS = 10 * 60;
@@ -54,7 +54,7 @@ async function userSessionCookie(env, url, user, provider) {
 }
 
 export async function accountProviders(_request, env) {
-  return apiJson({ providers: providerStatus(env) });
+  return apiJson({ providers: providerStatus(env), environment: String(env.ENVIRONMENT || "production") });
 }
 
 export async function accountSession(request, env) {
@@ -87,6 +87,7 @@ export async function accountOAuthStart(request, env, url, provider) {
   const teamId = normalizeTeamId(url.searchParams.get("teamId"));
   const inviteToken = String(url.searchParams.get("invite") || "").trim();
   const returnTo = safeReturnTo(url.searchParams.get("returnTo"));
+  const preferredName = cleanName(url.searchParams.get("handle") || "", 40);
   const legalConsent = legalConsentMatches({
     termsVersion: url.searchParams.get("terms"),
     privacyVersion: url.searchParams.get("privacy")
@@ -134,6 +135,7 @@ export async function accountOAuthStart(request, env, url, provider) {
     teamId: teamId || "",
     inviteToken: inviteToken || "",
     returnTo,
+    preferredName,
     termsVersion: legalConsent ? TERMS_VERSION : "",
     privacyVersion: legalConsent ? PRIVACY_VERSION : "",
     exp: nowSeconds() + OAUTH_TTL_SECONDS
@@ -188,7 +190,13 @@ export async function accountOAuthCallback(request, env, url, provider) {
     const legalConsent = oauthSession.termsVersion && oauthSession.privacyVersion
       ? { termsVersion: oauthSession.termsVersion, privacyVersion: oauthSession.privacyVersion }
       : null;
-    const publicUser = await services.account.upsertOAuthUser(profile, legalConsent);
+    const preferredName = cleanName(String(oauthSession.preferredName || ""), 40);
+    let publicUser = await services.account.upsertOAuthUser({ ...profile, displayName: preferredName || profile.displayName }, legalConsent);
+    // When a handle name was explicitly entered before OAuth, honor it even if the
+    // provider identity already belonged to an existing SIGN TRAINER account.
+    if (preferredName && publicUser.displayName !== preferredName) {
+      publicUser = await services.account.updateDisplayName(publicUser.id, preferredName);
+    }
     await services.repositories.auditRepository.record(
       "account",
       oauthSession.teamId || null,
@@ -222,6 +230,19 @@ export async function accountOAuthCallback(request, env, url, provider) {
   } catch (error) {
     console.error("OAuth callback failed", provider, error?.message || error);
     return redirectResponse(errorRedirect(url, "oauth_callback_failed"), [clearOauth]);
+  }
+}
+
+export async function accountUpdateProfile(request, env) {
+  const session = await requireUser(request, env);
+  if (!session) return apiJson({ error: "unauthorized" }, 401);
+  const parsed = await parseJsonBody(request, accountUpdateProfileBodySchema);
+  if (parsed.response) return parsed.response;
+  try {
+    const user = await createServices(env.DB, env).account.updateDisplayName(session.userId, parsed.data.displayName);
+    return apiJson({ ok: true, user });
+  } catch (error) {
+    return serviceErrorResponse(error);
   }
 }
 

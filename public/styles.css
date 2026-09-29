@@ -5105,7 +5105,7 @@ body.practice-menu-open { overflow: hidden; }
   .reference-footer.lp-footer .footer-nav { grid-template-columns:1fr; }
 }
 
-/* Team-specific PWA entry points */
+/* Team-specific ホーム画面アプリ entry points */
 .team-entry-tools { display:grid; gap:8px; margin-top:12px; }
 .team-entry-tools .button svg,
 .practice-team-tools .button svg,
@@ -5122,7 +5122,7 @@ body.practice-menu-open { overflow: hidden; }
   .practice-team-tools { grid-template-columns:1fr; }
 }
 
-/* v1.5.37 UI fix32: team PWA flow on the player passphrase screen */
+/* v1.5.37 UI fix32: team ホーム画面アプリ flow on the player passphrase screen */
 .team-pwa-login-guide { margin-top:16px; padding:15px; border:1px solid #d5e7df; border-radius:14px; background:#f6fbf8; text-align:left; }
 .team-pwa-login-guide-head { display:grid; grid-template-columns:34px 1fr; gap:10px; align-items:center; }
 .team-pwa-login-guide-head > span { width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:#e7f8ef; color:#078a4f; }
@@ -5138,7 +5138,7 @@ body.practice-menu-open { overflow: hidden; }
 .team-pwa-login-guide .team-pwa-login-multi { margin-top:10px; padding-top:9px; border-top:1px solid #dceae3; font-weight:800; }
 
 
-/* v1.5.37 UI fix36: text-first, visual-aid PWA install dialog */
+/* v1.5.37 UI fix36: text-first, visual-aid ホーム画面アプリ install dialog */
 .pwa-install-dialog {
   width: min(calc(100% - 22px), 720px);
   max-height: 94vh;
@@ -5320,7 +5320,7 @@ body.practice-menu-open { overflow: hidden; }
   }
 }
 
-/* v1.5.37 UI fix36: text-first PWA instructions on the team passphrase screen */
+/* v1.5.37 UI fix36: text-first ホーム画面アプリ instructions on the team passphrase screen */
 .team-pwa-login-guide .pwa-platform-guides-inline {
   grid-template-columns: 1fr;
   gap: 10px;
@@ -5459,4 +5459,177 @@ body.practice-menu-open { overflow: hidden; }
   .team-pwa-login-guide-summary { padding: 11px 12px; }
   .team-pwa-login-guide-content { padding: 0 11px 11px; }
   .team-pwa-login-guide-summary-copy strong { font-size: 11.5px; }
+}
+
+/* auth provider branding + lightweight environment badges */
+.account-provider-mark img { width: 20px; height: 20px; display:block; object-fit:contain; margin:auto; }
+.account-provider-button--line .account-provider-mark {
+  min-height:38px;
+  align-self:center;
+  border-right:1px solid rgba(0,0,0,.08);
+}
+.account-provider-button--line .account-provider-mark img { width:26px; height:26px; }
+.oauth-brand-icon,.button-brand-icon,.mini-brand-icon { width:18px; height:18px; object-fit:contain; vertical-align:middle; flex:0 0 auto; }
+.oauth-brand-icon--line,.mini-brand-icon--line { background:transparent; border-radius:0; padding:0; }
+.button-brand-icon { background:#fff; border-radius:4px; padding:1px; }
+.admin-oauth-button,.line-share-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.lp-login-mini b { display:flex; align-items:center; justify-content:center; gap:7px; }
+.auth-handle-label { display:grid; gap:6px; margin:12px 0; color:#173b52; font-size:12px; font-weight:850; }
+.auth-handle-label small { color:#72848e; font-size:10px; font-weight:600; line-height:1.5; }
+.environment-badge { display:flex; align-items:center; gap:10px; margin:0 0 12px; padding:9px 12px; border-radius:10px; font-size:10px; line-height:1.45; }
+.environment-badge strong { white-space:nowrap; font-size:10px; letter-spacing:.04em; }
+.environment-badge--staging { background:#fff4dd; border:1px solid #f0c971; color:#77520c; }
+.environment-badge--dev { background:#eaf3ff; border:1px solid #a8c9f2; color:#174e84; }
+.environment-badge--local { background:#eef2f5; border:1px solid #c9d3db; color:#405767; }
+.account-player-note { margin:16px 0; padding:14px; border-radius:14px; background:#eef7ff; border:1px solid #cfe3f4; color:#35566d; }
+.account-player-note strong { display:block; color:#0b4771; margin-bottom:4px; }
+.account-player-note p { margin:0; font-size:11px; line-height:1.65; }
+.account-profile-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+.account-provider-button--google { background:#fff; border-color:#747775; color:#1f1f1f; }
+.account-provider-button--google .account-provider-mark { background:#fff; }
+
+/* OAuth provider badges: use brand marks instead of plain provider text only. */
+.account-login-provider,
+.account-provider-badges span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.account-provider-badge-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex: 0 0 16px;
+}
+.account-login-provider--line .account-provider-badge-icon,
+.account-provider-badges span .account-provider-badge-icon[src*="line-brand"] {
+  border-radius: 4px;
+}
+
+/* Non-production environment context: intentionally small so the fix40 design stays intact. */
+.environment-context-badge {
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 10050;
+  display: grid;
+  gap: 2px;
+  min-width: 198px;
+  max-width: min(330px, calc(100vw - 24px));
+  padding: 11px 38px 11px 14px;
+  border: 1px solid rgba(255,255,255,.42);
+  border-radius: 13px;
+  box-shadow: 0 12px 34px rgba(5,25,42,.24);
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: opacity .16s ease, transform .16s ease;
+}
+.environment-context-badge strong { font-size: 12px; font-weight: 950; letter-spacing: .06em; }
+.environment-context-badge span { font-size: 10px; font-weight: 800; opacity: .94; }
+.environment-context-badge small { margin-top: 3px; font-size: 9px; font-weight: 750; opacity: .82; }
+.environment-context-close { position: absolute; top: 8px; right: 10px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: rgba(255,255,255,.15); font-size: 15px; font-weight: 900; line-height: 1; }
+.environment-context-badge--local { background: #3f5264; }
+.environment-context-badge--dev { background: #1269aa; }
+.environment-context-badge--staging { background: #b45b08; }
+.environment-context-badge.is-dismissing { opacity: 0; transform: translateY(7px); pointer-events: none; }
+@media (max-width: 640px) {
+  .environment-context-badge { min-width: 170px; padding: 9px 34px 9px 11px; }
+  .environment-context-badge strong { font-size: 11px; }
+  .environment-context-badge span { font-size: 9px; }
+}
+
+/* Account-wide self-service team creation limit. */
+.account-team-create-limit { display:grid; gap:2px; margin:12px 0 16px; padding:11px 13px; border-radius:13px; background:#eef7f2; color:#305b45; }
+.account-team-create-limit strong { font-size:12px; }
+.account-team-create-limit span { font-size:10px; line-height:1.5; }
+.account-team-create-limit.is-full { background:#fff4e7; color:#805418; }
+
+/* fix46: OAuth provider logo alignment. Keep the fix40 layout; only normalize the brand slot. */
+.account-provider-button {
+  position: relative;
+  overflow: hidden;
+  grid-template-columns: 56px minmax(0, 1fr) 56px;
+}
+.account-provider-button .account-provider-mark {
+  width: 56px;
+  min-width: 56px;
+  min-height: 54px;
+  margin: 0;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+}
+.account-provider-button--google {
+  background: #fff;
+  border-color: #747775;
+  color: #1f1f1f;
+}
+.account-provider-button--google .account-provider-mark {
+  background: transparent;
+  border-right: 0;
+}
+.account-provider-button--google .account-provider-mark img {
+  width: 20px;
+  height: 20px;
+}
+.account-provider-button--line {
+  background: #06C755;
+  border-color: #06C755;
+  color: #fff;
+}
+.account-provider-button--line .account-provider-mark {
+  min-height: 54px;
+  background: transparent;
+  border-right: 1px solid rgba(0, 0, 0, .08);
+}
+.account-provider-button--line .account-provider-mark img {
+  width: 28px;
+  height: 28px;
+}
+.account-provider-button--line:not(.is-disabled):hover {
+  background: linear-gradient(rgba(0,0,0,.10), rgba(0,0,0,.10)), #06C755;
+  border-color: #06C755;
+}
+.account-provider-button--line:not(.is-disabled):active {
+  background: linear-gradient(rgba(0,0,0,.30), rgba(0,0,0,.30)), #06C755;
+}
+
+/* Smaller OAuth buttons used in admin re-auth/invite flows. */
+.admin-oauth-button[data-oauth-provider="google"] {
+  background: #fff;
+  border: 1px solid #747775;
+  color: #1f1f1f;
+  box-shadow: none;
+}
+.admin-oauth-button[data-oauth-provider="google"] .oauth-brand-icon {
+  width: 20px;
+  height: 20px;
+}
+.admin-oauth-button--line {
+  background: #06C755;
+  border-color: #06C755;
+  color: #fff;
+}
+.admin-oauth-button--line .oauth-brand-icon--line {
+  width: 24px;
+  height: 24px;
+}
+.admin-oauth-button--line:hover {
+  background: linear-gradient(rgba(0,0,0,.10), rgba(0,0,0,.10)), #06C755;
+  border-color: #06C755;
+  filter: none;
+}
+.admin-oauth-button--line:active {
+  background: linear-gradient(rgba(0,0,0,.30), rgba(0,0,0,.30)), #06C755;
+}
+
+/* LP preview uses the same authentication marks without changing its card layout. */
+.lp-login-mini .mini-brand-icon {
+  width: 18px;
+  height: 18px;
+}
+.lp-login-mini .line .mini-brand-icon--line {
+  width: 22px;
+  height: 22px;
 }

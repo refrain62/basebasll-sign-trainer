@@ -3,7 +3,7 @@ import { apiJson } from "../http/response.ts";
 import { createSystemNoticeRepository } from "../repositories/system-notice-repository.ts";
 
 export function publicLegal(_request, env) {
-  return apiJson(publicLegalConfig(env));
+  return apiJson({ ...publicLegalConfig(env), environment: String(env.ENVIRONMENT || "production") });
 }
 
 export async function publicSystemNotices(_request, env) {

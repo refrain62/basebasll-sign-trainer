@@ -12,7 +12,7 @@ npm run test:coverage
 
 ### Plan / Entitlement
 - Free: 複数グループ不可、複数動画不可、サブ管理者不可、分析不可、監査表示不可
-- Plus: 複数グループ・複数動画・動画開始位置・サブ管理者可、分析・監査は不可
+- Plus: サイン最大20個・グループ最大3つ・複数動画・動画開始位置・サブ管理者可、分析・監査は不可
 - Pro: Plus機能 + 分析・監査可
 - Plus: `result_text_share`可、`result_image_share`不可
 - Pro: `result_text_share` / `result_image_share`可

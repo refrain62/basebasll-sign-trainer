@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS team_usage (
 -- non-purchasable placeholders so feature policy can be developed independently
 -- of the eventual price / Stripe product IDs.
 INSERT OR IGNORE INTO plans(code,name,description,monthly_price_yen,available_for_purchase,active,sort_order) VALUES
-  ('free','Free','サイン登録・グループ・YouTube動画・クイズ・共有・PWAなどの基本機能',0,0,1,10),
+  ('free','Free','サイン登録・グループ・YouTube動画・クイズ・共有・ホーム画面への追加などの基本機能',0,0,1,10),
   ('team_plus','Team Plus','画像の直接保存など、クラウド保存を使う追加機能向けの将来プラン',NULL,0,1,20),
   ('team_pro','Team Pro','動画の直接保存など、より大きな保存容量を使う将来プラン',NULL,0,1,30);
 

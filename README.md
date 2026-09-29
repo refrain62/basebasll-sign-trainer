@@ -52,8 +52,8 @@
 
 - プランを **Free / Plus / Pro** の3段階に整理しました。
   - Free: 基本練習、1サイングループ、1サイン1動画、メイン管理者1名、Google / LINE OAuth。
-  - Plus: Free + 複数サイングループ、1サイン複数動画、動画プレビュー開始位置、サブ管理者最大5名、練習結果の文章共有。
-  - Pro: Plus + 正答率・苦手分析、グループ／サイン／動画別分析、最近のアクティビティ／監査ログ、練習結果・成績分析の画像カード共有。
+  - Plus: Free + サイン最大20個、サイングループ最大3つ、1サイン複数動画、動画プレビュー開始位置、サブ管理者最大5名、練習結果の文章共有。
+  - Pro: サイン登録・サイングループ無制限 + Plusの全機能 + 正答率・苦手分析、グループ／サイン／動画別分析、最近のアクティビティ／監査ログ、練習結果・成績分析の画像カード共有。
 - Plus / Pro は現在、SYSTEM管理者が特定チームへ手動付与する限定提供です。一般申し込み・オンライン課金はありません。
 - SYSTEM管理のプラン変更、LP、チーム管理・練習画面の機能ロック表示を3段階の権限へ同期しました。
 - サイングループ登録モーダルに、実際の野球運用を想定した使用例を追加しました。例を選ぶとグループ名と説明へ反映できます。
@@ -126,7 +126,7 @@ production bdd534e9-1c42-4db7-adbe-c62e35e123b5
 
 ## ローカル開発
 
-`.dev.vars.example` をコピーして `.dev.vars.dev` を作り、**32文字以上**の `SESSION_SECRET` と **12文字以上で英字・数字を含む** `SYSTEM_ADMIN_SECRET` を設定します。
+`.dev.vars.example` をコピーして `.dev.vars.dev` を作ります。ローカルdevでも、基本5 Secretに加えて **Google OAuth と LINE Login のクライアント情報を必須**とします。
 
 ```powershell
 Copy-Item .dev.vars.example .dev.vars.dev
@@ -136,8 +136,15 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 例:
 
 ```env
-SESSION_SECRET=<32bytes以上のランダム値>
+SESSION_SECRET=<32文字以上のランダム値>
 SYSTEM_ADMIN_SECRET=<12文字以上・英字と数字を含む管理キー>
+PASSWORD_PEPPER=<32文字以上のランダム値>
+DATA_ENCRYPTION_KEY=<32文字以上のランダム値>
+DATA_LOOKUP_KEY=<32文字以上のランダム値>
+GOOGLE_CLIENT_ID=<Google OAuth WebクライアントID>
+GOOGLE_CLIENT_SECRET=<Google OAuth WebクライアントSecret>
+LINE_CHANNEL_ID=<LINE LoginチャネルID>
+LINE_CHANNEL_SECRET=<LINE LoginチャネルSecret>
 ```
 
 migration:
@@ -189,6 +196,10 @@ npm run db:migrate:prod
 - `0015_video_plan_features.sql` — 1サイン複数動画・動画プレビュー開始位置のプラン制御
 - `0016_plan_tiers.sql` — Free / Plus / Proの役割を確定（Plus=運用強化、Pro=分析・監査）
 - `0017_result_sharing.sql` — Plusの文章共有、Proの画像カード共有Entitlement
+- `0018_sample_team_groups.sql` — サンプルチームのグループ構成
+- `0019_sample_batting_group_video.sql` — サンプルのバッティンググループ説明動画
+- `0020_plan_limit_refresh.sql` — Proのサブ管理者上限などプラン上限の更新
+- `0021_plan_content_limits.sql` — Free/Plus/Proのサイン登録数・サイングループ上限を適用
 
 サンプルチーム:
 
@@ -208,6 +219,10 @@ npx wrangler secret put SYSTEM_ADMIN_SECRET --env dev
 npx wrangler secret put PASSWORD_PEPPER --env dev
 npx wrangler secret put DATA_ENCRYPTION_KEY --env dev
 npx wrangler secret put DATA_LOOKUP_KEY --env dev
+npx wrangler secret put GOOGLE_CLIENT_ID --env dev
+npx wrangler secret put GOOGLE_CLIENT_SECRET --env dev
+npx wrangler secret put LINE_CHANNEL_ID --env dev
+npx wrangler secret put LINE_CHANNEL_SECRET --env dev
 
 # staging
 npx wrangler secret put SESSION_SECRET --env staging
@@ -215,6 +230,10 @@ npx wrangler secret put SYSTEM_ADMIN_SECRET --env staging
 npx wrangler secret put PASSWORD_PEPPER --env staging
 npx wrangler secret put DATA_ENCRYPTION_KEY --env staging
 npx wrangler secret put DATA_LOOKUP_KEY --env staging
+npx wrangler secret put GOOGLE_CLIENT_ID --env staging
+npx wrangler secret put GOOGLE_CLIENT_SECRET --env staging
+npx wrangler secret put LINE_CHANNEL_ID --env staging
+npx wrangler secret put LINE_CHANNEL_SECRET --env staging
 
 # production
 npx wrangler secret put SESSION_SECRET
@@ -222,9 +241,13 @@ npx wrangler secret put SYSTEM_ADMIN_SECRET
 npx wrangler secret put PASSWORD_PEPPER
 npx wrangler secret put DATA_ENCRYPTION_KEY
 npx wrangler secret put DATA_LOOKUP_KEY
+npx wrangler secret put GOOGLE_CLIENT_ID
+npx wrangler secret put GOOGLE_CLIENT_SECRET
+npx wrangler secret put LINE_CHANNEL_ID
+npx wrangler secret put LINE_CHANNEL_SECRET
 ```
 
-`SESSION_SECRET` は32文字以上、`SYSTEM_ADMIN_SECRET` は12文字以上かつ英字・数字をそれぞれ1文字以上含む値を必須としています。`PASSWORD_PEPPER` / `DATA_ENCRYPTION_KEY` / `DATA_LOOKUP_KEY` は各32文字以上のランダムな値を環境ごとに別々に設定します。`npm run security:generate-secrets` で候補値を生成できます。
+`SESSION_SECRET` は32文字以上、`SYSTEM_ADMIN_SECRET` は12文字以上かつ英字・数字をそれぞれ1文字以上含む値を必須としています。`PASSWORD_PEPPER` / `DATA_ENCRYPTION_KEY` / `DATA_LOOKUP_KEY` は各32文字以上のランダムな値を環境ごとに別々に設定します。さらに Google OAuth の `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` と LINE Login の `LINE_CHANNEL_ID` / `LINE_CHANNEL_SECRET` を全環境で必須設定とします。`npm run security:generate-secrets` で基本Secretの候補値を生成できます。
 
 ## Cloudflare Access（必須）
 
@@ -540,10 +563,11 @@ LPの「チームを登録する」からGoogleまたはLINEで管理者登録�
 - 招待URLからOAuth認証しただけでは権限を付与せず、認証後の確認画面で「招待を承認する」を押した時点で参加・オーナー交代を確定します。
 - 登録済み管理者への直接オーナー交代は、交代先が処理直前まで管理者であることをD1更新条件でも再確認し、競合時にオーナー不在にならないよう防御しています。
 - 新規チーム作成APIはアカウント＋クライアント単位で24時間10回までに制限しています。
+- 1つのOAuth管理者アカウントから新規作成できるチームは最大3チームです（`ACCOUNT_TEAM_CREATE_LIMIT=3`）。招待でサブ管理者として参加するチームはこの上限に含みません。
 
-### Google OAuth設定
+### Google OAuth設定（必須）
 
-Google Cloud Consoleで OAuth 2.0 Client の種類を **Web application** として作成し、利用する環境ごとに正確なredirect URIを登録してください。
+Googleを管理者の標準認証として使用するため、Google OAuthはlocal / dev / staging / productionの全環境で必須です。Google Cloud Consoleで OAuth 2.0 Client の種類を **Web application** として作成し、利用する環境ごとに正確なredirect URIを登録してください。
 
 production:
 
@@ -575,7 +599,7 @@ npx wrangler secret put GOOGLE_CLIENT_ID
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 ```
 
-### LINE Login設定
+### LINE Login設定（必須）
 
 LINE Developers Consoleで **LINE Login v2.1** のチャネルを作り、各環境のcallback URLを登録します。productionは以下です。
 
@@ -923,3 +947,13 @@ build 93でモバイル時の3枚サマリーを1列化していましたが、�
 - Public LP navigation now uses 「はじめ方」 for `/install`.
 - System admin, team admin, and team practice headers are separate TypeScript components under `client/components/`.
 - The LP includes an actual training-flow section showing self-judgement, result review, and Plus/Pro result sharing.
+
+
+## build 101: plan limits / admin handles / provider branding
+
+- Freeはサイン最大10個・サイングループ1つ、Plusはサイン最大20個・サイングループ最大3つ、Proはサイン登録・サイングループ無制限です。D1 entitlementと作成APIの両方で上限を扱います。
+- LPと管理者ログイン導線は「チーム管理者ログイン」に統一し、選手には監督・コーチから共有されたチームページを利用する案内を表示します。
+- local / dev / staging のチーム登録画面には環境バッジを表示します。STAGING/DEVでは本番とは別データであることを明記します。
+- ユーザー向け画面では技術用語の「PWA」を使わず、「アプリをホームに追加」「ホーム画面に追加」と表現します。
+- Google / LINEの認証ボタンはブランドアイコンを表示します。Googleは公式Identity branding guideline準拠のGマーク、LINEはLINE Login向けの吹き出しマークを使います。
+- 管理者・サブ管理者はハンドルネームを利用でき、新規登録/招待のOAuth開始前に設定し、アカウント画面から後で変更できます。

@@ -8,7 +8,7 @@ SET available_for_purchase=0,
 WHERE code IN ('free','team_plus','team_pro');
 
 UPDATE plans
-SET description='基本的なサイン登録・YouTube動画・クイズ・共有・PWA・Google/LINE認証。規定の1サイングループとメイン管理者1名で利用できます。',
+SET description='基本的なサイン登録・YouTube動画・クイズ・共有・ホーム画面への追加・Google/LINE認証。規定の1サイングループとメイン管理者1名で利用できます。',
     updated_at=CURRENT_TIMESTAMP
 WHERE code='free';
 

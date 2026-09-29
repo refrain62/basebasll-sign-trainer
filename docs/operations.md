@@ -15,12 +15,14 @@
 1. `PUBLIC_OPERATOR_NAME` と `PUBLIC_SUPPORT_URL` を本番値へ設定する。
 2. Google / LINE OAuthの本番callback・規約URL・プライバシーURLを確認する。
 3. Cloudflare Accessで `/admin*` と `/api/system/*` を保護する。
-4. Secret（SESSION_SECRET / SYSTEM_ADMIN_SECRET / PASSWORD_PEPPER / DATA_ENCRYPTION_KEY / DATA_LOOKUP_KEY）を環境ごとに別値で設定する。
+4. Secret（SESSION_SECRET / SYSTEM_ADMIN_SECRET / PASSWORD_PEPPER / DATA_ENCRYPTION_KEY / DATA_LOOKUP_KEY / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / LINE_CHANNEL_ID / LINE_CHANNEL_SECRET）を環境ごとに設定する。Google / LINE OAuthは全環境で必須。
 5. **`0017_result_sharing.sql`まで全migrationを適用する。**
 6. `package-lock.json`をGit管理し、`npm ci --ignore-scripts`で再現可能にする。
 7. `npm run check`, `npm run security:preflight`, `npm run ops:preflight`を通す。
 
 ## プラン運用
+
+- `ACCOUNT_TEAM_CREATE_LIMIT=3` により、1管理者アカウントから新規作成できるチームは最大3チーム。招待参加はカウント外。
 
 - Freeは新規チームのデフォルト。
 - Plus / Proは現在、特定チーム限定。一般申し込み・オンライン課金はない。

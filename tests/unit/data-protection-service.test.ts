@@ -12,7 +12,7 @@ test("data protection service encrypts legacy sensitive fields and redacts audit
   const stored = { teams: [], users: [], identities: [], signs: [], groups: [], videos: [], audit: [] };
   let first = true;
   const repository = {
-    async listTeams() { if (!first) return []; return [{ id: "t1", name: "熊本ジュニア" }]; },
+    async listTeams() { if (!first) return []; return [{ id: "t1", name: "サンプルジュニア" }]; },
     async protectTeam(row) { stored.teams.push(row); },
     async listUsers() { if (!first) return []; return [{ id: "u1", display_name: "Coach", email: "coach@example.com", avatar_url: "https://example.com/a.png" }]; },
     async protectUser(row) { stored.users.push(row); },
@@ -33,7 +33,7 @@ test("data protection service encrypts legacy sensitive fields and redacts audit
   const result = await service.protectExisting({ batchSize: 20, maxBatches: 2 });
   assert.equal(result.complete, true);
   assert.match(stored.teams[0].name, /^enc:v1:/);
-  assert.equal(await protector.decrypt(stored.teams[0].name, "teams.name"), "熊本ジュニア");
+  assert.equal(await protector.decrypt(stored.teams[0].name, "teams.name"), "サンプルジュニア");
   assert.match(stored.users[0].email, /^enc:v1:/);
   assert.match(stored.identities[0].provider_subject, /^hmac:v1:/);
   assert.match(stored.identities[0].provider_subject_ciphertext, /^enc:v1:/);
@@ -108,15 +108,15 @@ test("new self-service teams are encrypted before D1 persistence", async () => {
     async batch(statements) { return statements; }
   };
   const repo = createAccountProvisioningRepository(db, protector);
-  await repo.createOwnedTeam({ teamId: "team123", name: "熊本ジュニア", passphraseHash: "hash1", adminHash: "hash2", userId: "u1" });
+  await repo.createOwnedTeam({ teamId: "team123", name: "サンプルジュニア", passphraseHash: "hash1", adminHash: "hash2", userId: "u1" });
   const teamInsert = bound.find((entry) => entry.sql.includes("INSERT INTO teams"));
   assert.ok(teamInsert);
   assert.match(teamInsert.params[1], /^enc:v1:/);
-  assert.equal(await protector.decrypt(teamInsert.params[1], "teams.name"), "熊本ジュニア");
+  assert.equal(await protector.decrypt(teamInsert.params[1], "teams.name"), "サンプルジュニア");
 });
 
 test("owned team names are decrypted at the repository boundary", async () => {
-  const encryptedName = await protector.encrypt("熊本ジュニア", "teams.name");
+  const encryptedName = await protector.encrypt("サンプルジュニア", "teams.name");
   const db = {
     prepare() {
       return { bind() { return { async all() { return { results: [{ id: "team123", name: encryptedName, status: "active" }] }; } }; } };
@@ -124,5 +124,5 @@ test("owned team names are decrypted at the repository boundary", async () => {
   };
   const repo = createAdminMembershipRepository(db, protector);
   const teams = await repo.ownedTeams("u1");
-  assert.equal(teams[0].name, "熊本ジュニア");
+  assert.equal(teams[0].name, "サンプルジュニア");
 });

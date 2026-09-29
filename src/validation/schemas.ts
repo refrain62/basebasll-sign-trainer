@@ -111,6 +111,10 @@ export const accountCreateTeamBodySchema = z.object({
   passphrase: z.string()
 }).strip();
 
+export const accountUpdateProfileBodySchema = z.object({
+  displayName: z.string().transform(nfcTrim).refine((value) => value.length > 0 && value.length <= 40)
+}).strip();
+
 export const accountDeleteBodySchema = z.object({
   confirm: z.string()
 }).strip();

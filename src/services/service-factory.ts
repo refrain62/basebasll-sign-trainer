@@ -47,7 +47,7 @@ export function createServices(db, env: Record<string, any> = {}) {
     videos: createVideoService({ signRepository, videoRepository, auditRepository }),
     team: createTeamService({ teamRepository, auditRepository, hashPassword: passwordHasher }),
     systemTeams: createSystemTeamService({ teamRepository, auditRepository, hashPassword: passwordHasher, entitlementService: entitlements }),
-    account: createAccountService({ userRepository, membershipRepository, teamRepository, provisioningRepository, auditRepository, hashPassword: passwordHasher, entitlementService: entitlements }),
+    account: createAccountService({ userRepository, membershipRepository, teamRepository, provisioningRepository, auditRepository, hashPassword: passwordHasher, entitlementService: entitlements, teamCreationLimit: Math.max(1, Math.min(20, Number(env.ACCOUNT_TEAM_CREATE_LIMIT || 3) || 3)) }),
     adminMembership: createAdminMembershipService({ membershipRepository, inviteRepository, transitionRepository, teamRepository, auditRepository, entitlementService: entitlements }),
     entitlements,
     dataProtection

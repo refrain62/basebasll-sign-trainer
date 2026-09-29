@@ -2,6 +2,7 @@
 import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils";
 import { practiceHeader } from "./components/practice-header";
 import { filterPracticeSigns, findPracticeGroup, getPracticeOptions } from "./practice-utils";
+import { initEnvironmentContextBadge } from "./environment-context";
 
 const APP_BUILD = __APP_VERSION__;
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
@@ -505,11 +506,11 @@ async function openShareDialog(target = "site") {
   if (target === "team") {
     if (nativeButton) nativeButton.textContent = "その他のアプリで共有";
     if (copyButton) copyButton.textContent = "参加リンクをコピー";
-    if (lineButton) lineButton.textContent = "LINEでメンバーに共有";
+    if (lineButton) lineButton.innerHTML = '<img class="button-brand-icon" src="/assets/line-brand-icon.svg" alt="">LINEでメンバーに共有';
   } else {
     if (nativeButton) nativeButton.textContent = "共有メニューを開く";
     if (copyButton) copyButton.textContent = "リンクをコピー";
-    if (lineButton) lineButton.textContent = "LINEで共有";
+    if (lineButton) lineButton.innerHTML = '<img class="button-brand-icon" src="/assets/line-brand-icon.svg" alt="">LINEで共有';
   }
   if (qrStatus) qrStatus.textContent = "QRコードを準備しています…";
   if (qr) {
@@ -583,7 +584,7 @@ document.addEventListener("click", (event) => {
   if (menuButton) {
     const menu = document.querySelector<HTMLElement>("#practice-header-menu");
     if (menu) {
-      const opening = menu.hidden;
+      const opening = Boolean(menu.hidden);
       menu.hidden = !opening;
       menuButton.setAttribute("aria-expanded", opening ? "true" : "false");
       document.body.classList.toggle("practice-menu-open", opening);
@@ -2064,5 +2065,6 @@ function renderClientNotFound() {
 
 pwaInstallDialog?.querySelector("[data-pwa-install-close]")?.addEventListener("click", () => pwaInstallDialog.close());
 
+initEnvironmentContextBadge();
 registerTeamPwa();
 route();

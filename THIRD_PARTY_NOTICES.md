@@ -50,3 +50,18 @@ The LP and install guide use the “QRコードの無料アイコン8” artwork
 - Catalog page: https://iconbox.fun/qr%E3%82%B3%E3%83%BC%E3%83%89%E3%81%AE%E7%84%A1%E6%96%99%E3%82%A2%E3%82%A4%E3%82%B3%E3%83%B38/
 - Provider description: commercial-use-free icon material; see the provider license page for the current terms.
 - Runtime note: the icon is bundled locally as `public/assets/qr-code-icon.svg`; no runtime request to ICON BOX is required.
+
+## Google Sign-In brand mark
+
+The Google authentication buttons use the standard multicolor Google "G" mark, bundled locally as `public/assets/google-g-logo.svg`.
+
+- Branding guidance: https://developers.google.com/identity/branding-guidelines?hl=ja
+- The mark is not recolored or distorted and is shown on a white background in the Google authentication button.
+
+## LINE Login brand mark
+
+LINE authentication and share affordances use the locally bundled LINE mark in `public/assets/line-brand-icon.svg`.
+
+- LINE Login button guidance: https://developers.line.biz/ja/docs/line-login/login-button/
+- Login button base color: `#06C755`.
+- The login mark is presented on the LINE green button without an extra white tile, so the icon treatment matches the current LINE Login guidance more closely.

@@ -10,6 +10,7 @@ export function createAccountService({
   auditRepository,
   hashPassword,
   entitlementService = null,
+  teamCreationLimit = 3,
   createUserId = () => `u_${randomId(18)}`,
   createTeamId = () => randomId(10)
 }) {
@@ -24,7 +25,7 @@ export function createAccountService({
           subject: profile.subject,
           email: profile.email,
           emailVerified: profile.emailVerified,
-          displayName: profile.displayName,
+          displayName: existing.display_name || profile.displayName,
           avatarUrl: profile.avatarUrl
         });
         if (legalConsent?.termsVersion && legalConsent?.privacyVersion) await userRepository.recordLegalConsent(existing.id, legalConsent.termsVersion, legalConsent.privacyVersion);
@@ -62,7 +63,7 @@ export function createAccountService({
           subject: profile.subject,
           email: profile.email,
           emailVerified: profile.emailVerified,
-          displayName: profile.displayName,
+          displayName: raced.display_name || profile.displayName,
           avatarUrl: profile.avatarUrl
         });
         if (legalConsent?.termsVersion && legalConsent?.privacyVersion) await userRepository.recordLegalConsent(raced.id, legalConsent.termsVersion, legalConsent.privacyVersion);
@@ -75,11 +76,14 @@ export function createAccountService({
       if (!row) throw new ServiceError("account_not_found", "アカウントが見つかりません。", 404);
       const teams = await membershipRepository.listForUser(userId);
       const plans = entitlementService ? await entitlementService.planSummaries(teams.map((team) => team.teamId)) : {};
+      const ownedTeamCount = teams.filter((team) => team.role === "owner").length;
+      const maxOwnedTeams = Math.max(1, Number(teamCreationLimit || 3));
       return {
         user: userRepository.publicUser(row),
         identities: await userRepository.listIdentities(userId),
         teams: teams.map((team) => ({ ...team, plan: plans[team.teamId] || null })),
-        loginHistory: auditRepository.listUserLogins ? await auditRepository.listUserLogins(userId, 20) : []
+        loginHistory: auditRepository.listUserLogins ? await auditRepository.listUserLogins(userId, 20) : [],
+        teamCreation: { ownedTeamCount, limit: maxOwnedTeams, remaining: Math.max(0, maxOwnedTeams - ownedTeamCount), canCreate: ownedTeamCount < maxOwnedTeams }
       };
     },
 
@@ -92,6 +96,14 @@ export function createAccountService({
       return true;
     },
 
+    async updateDisplayName(userId, value) {
+      const displayName = cleanName(value, 40);
+      if (!displayName) throw new ServiceError("invalid_display_name", "管理者名を入力してください。", 400);
+      await userRepository.updateDisplayName(userId, displayName);
+      await auditRepository.record("account", null, "account.display_name.update", "user", userId, { changed: true }, userId);
+      return userRepository.publicUser(await userRepository.findById(userId));
+    },
+
     async createTeam(userId, input) {
       const user = await userRepository.findById(userId);
       if (!user) throw new ServiceError("account_not_found", "アカウントが見つかりません。", 404);
@@ -99,6 +111,12 @@ export function createAccountService({
       const passphrase = normalizeSecret(input?.passphrase);
       if (!name || !passphrase) throw new ServiceError("invalid_request", "チーム名と選手用合言葉を入力してください。", 400);
       if (passphrase.length > 200) throw new ServiceError("secret_too_long", "合言葉は200文字以内にしてください。", 400);
+
+      const maxOwnedTeams = Math.max(1, Number(teamCreationLimit || 3));
+      const owned = await membershipRepository.ownedTeams(userId);
+      if (owned.length >= maxOwnedTeams) {
+        throw new ServiceError("team_create_limit_reached", `1つの管理者アカウントで新規作成できるチームは最大${maxOwnedTeams}チームです。招待で参加するサブ管理者チームはこの上限に含みません。`, 409, { limit: maxOwnedTeams, ownedTeamCount: owned.length });
+      }
 
       let teamId = "";
       for (let attempt = 0; attempt < 8; attempt += 1) {

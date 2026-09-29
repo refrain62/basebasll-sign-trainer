@@ -115,7 +115,7 @@ export function createUserRepository(db, protector = null) {
     async updateFromIdentity({ userId, provider, subject, email, emailVerified, displayName, avatarUrl }) {
       const current = await repo.findById(userId);
       if (!current) return null;
-      const nextName = displayName || current.display_name;
+      const nextName = current.display_name || displayName;
       const nextEmail = email || current.email || null;
       const nextAvatar = avatarUrl || current.avatar_url || null;
       const userValues = await protectedUserValues(protector, { displayName: nextName, email: nextEmail, avatarUrl: nextAvatar });
@@ -128,6 +128,12 @@ export function createUserRepository(db, protector = null) {
           .bind(identityValues.ciphertext, identityValues.email, emailVerified ? 1 : 0, identityValues.displayName, identityValues.avatarUrl, userId, provider, identityValues.lookup)
       ]);
       return repo.findById(userId);
+    },
+
+    async updateDisplayName(userId, displayName) {
+      const values = await protectedUserValues(protector, { displayName, email: null, avatarUrl: null });
+      return db.prepare("UPDATE app_users SET display_name=?,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL AND status='active'")
+        .bind(values.displayName, userId).run();
     },
 
     async recordLegalConsent(userId, termsVersion, privacyVersion) {

@@ -1,8 +1,11 @@
 // Source of truth: TypeScript. Vite generates content-hashed browser bundles under public/build/.
 import "vite/modulepreload-polyfill";
+import { initEnvironmentContextBadge } from "./environment-context";
 export {};
 const APP_BUILD = __APP_VERSION__;
 console.info(`[SIGN TRAINER] build ${APP_BUILD} admin`);
+
+initEnvironmentContextBadge();
 
 const { renderSystemAdmin, renderTeamAdmin } = await import("./admin");
 const path = location.pathname.replace(/\/$/, "") || "/";

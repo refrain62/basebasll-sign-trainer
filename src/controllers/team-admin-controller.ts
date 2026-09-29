@@ -1,5 +1,6 @@
 import { TEAM_ADMIN_COOKIE, USER_COOKIE } from "../config/constants.ts";
 import { FEATURE_KEYS } from "../config/features.ts";
+import { ServiceError } from "../services/errors.ts";
 import { serviceErrorResponse } from "../http/errors.ts";
 import { apiJson, withHeaders } from "../http/response.ts";
 import { createAuditRepository } from "../repositories/audit-repository.ts";
@@ -219,9 +220,13 @@ export async function teamAdminCreateGroup(request, env, url) {
   if (!teamId || !auth) return apiJson({ error: "unauthorized" }, 401);
   try {
     const services = createServices(env.DB, env);
-    const existingGroups = await services.repositories.teamRepository.getGroups(teamId, { onlyEnabled: false });
-    if (existingGroups.length >= 1) {
-      await services.entitlements.assertFeature(teamId, FEATURE_KEYS.MULTIPLE_SIGN_GROUPS, "複数のサイングループ作成は現在、Plus / Pro機能です。Freeでは1グループまで利用できます。");
+    const entitlementState = await services.entitlements.summary(teamId);
+    const groupEntitlement = entitlementState.entitlements?.[FEATURE_KEYS.MULTIPLE_SIGN_GROUPS];
+    const groupLimit = groupEntitlement?.limit == null ? null : Number(groupEntitlement.limit);
+    const groupCount = await services.repositories.groupRepository.count(teamId);
+    if (groupLimit != null && groupCount >= groupLimit) {
+      const planName = entitlementState.plan?.name || "現在のプラン";
+      throw new ServiceError("plan_limit_reached", `${planName}ではサイングループは最大${groupLimit}個までです。`, 403, { feature: FEATURE_KEYS.MULTIPLE_SIGN_GROUPS, limit: groupLimit });
     }
     const group = await services.groups.create(teamId, body, auditActorFromAuth(auth));
     return apiJson({ ok: true, group }, 201);
@@ -265,7 +270,16 @@ export async function teamAdminCreateSign(request, env, url) {
   const auth = teamId ? await requireTeamAdmin(request, env, teamId) : null;
   if (!teamId || !auth) return apiJson({ error: "unauthorized" }, 401);
   try {
-    const sign = await createServices(env.DB, env).signs.create(teamId, body, auditActorFromAuth(auth));
+    const services = createServices(env.DB, env);
+    const entitlementState = await services.entitlements.summary(teamId);
+    const signEntitlement = entitlementState.entitlements?.[FEATURE_KEYS.SIGN_COUNT];
+    const signLimit = signEntitlement?.limit == null ? null : Number(signEntitlement.limit);
+    const signCount = await services.repositories.signRepository.count(teamId);
+    if (signLimit != null && signCount >= signLimit) {
+      const planName = entitlementState.plan?.name || "現在のプラン";
+      throw new ServiceError("plan_limit_reached", `${planName}ではサイン登録は最大${signLimit}個までです。`, 403, { feature: FEATURE_KEYS.SIGN_COUNT, limit: signLimit });
+    }
+    const sign = await services.signs.create(teamId, body, auditActorFromAuth(auth));
     return apiJson({ ok: true, sign }, 201);
   } catch (error) {
     return serviceErrorResponse(error);

@@ -25,7 +25,11 @@
       "SYSTEM_ADMIN_SECRET",
       "PASSWORD_PEPPER",
       "DATA_ENCRYPTION_KEY",
-      "DATA_LOOKUP_KEY"
+      "DATA_LOOKUP_KEY",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "LINE_CHANNEL_ID",
+      "LINE_CHANNEL_SECRET"
     ]
   },
   "vars": {
@@ -39,7 +43,8 @@
     "ACCOUNT_SESSION_DAYS": "30",
     "LINE_REQUEST_EMAIL": "false",
     "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
-    "PUBLIC_SUPPORT_URL": ""
+    "PUBLIC_SUPPORT_URL": "",
+    "ACCOUNT_TEAM_CREATE_LIMIT": "3"
   },
   "env": {
     "dev": {
@@ -58,7 +63,11 @@
           "SYSTEM_ADMIN_SECRET",
           "PASSWORD_PEPPER",
           "DATA_ENCRYPTION_KEY",
-          "DATA_LOOKUP_KEY"
+          "DATA_LOOKUP_KEY",
+          "GOOGLE_CLIENT_ID",
+          "GOOGLE_CLIENT_SECRET",
+          "LINE_CHANNEL_ID",
+          "LINE_CHANNEL_SECRET"
         ]
       },
       "vars": {
@@ -72,7 +81,8 @@
         "CF_ACCESS_TEAM_DOMAIN": "",
         "CF_ACCESS_POLICY_AUD": "",
         "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
-        "PUBLIC_SUPPORT_URL": ""
+        "PUBLIC_SUPPORT_URL": "",
+        "ACCOUNT_TEAM_CREATE_LIMIT": "3"
       },
       "version_metadata": {
         "binding": "CF_VERSION_METADATA"
@@ -94,7 +104,11 @@
           "SYSTEM_ADMIN_SECRET",
           "PASSWORD_PEPPER",
           "DATA_ENCRYPTION_KEY",
-          "DATA_LOOKUP_KEY"
+          "DATA_LOOKUP_KEY",
+          "GOOGLE_CLIENT_ID",
+          "GOOGLE_CLIENT_SECRET",
+          "LINE_CHANNEL_ID",
+          "LINE_CHANNEL_SECRET"
         ]
       },
       "vars": {
@@ -108,7 +122,8 @@
         "CF_ACCESS_TEAM_DOMAIN": "",
         "CF_ACCESS_POLICY_AUD": "",
         "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
-        "PUBLIC_SUPPORT_URL": ""
+        "PUBLIC_SUPPORT_URL": "",
+        "ACCOUNT_TEAM_CREATE_LIMIT": "3"
       },
       "version_metadata": {
         "binding": "CF_VERSION_METADATA"

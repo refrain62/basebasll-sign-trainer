@@ -38,7 +38,18 @@ if (!fs.existsSync(path.join(root, "package-lock.json"))) {
 }
 
 const wrangler = JSON.parse(fs.readFileSync(path.join(root, "wrangler.jsonc"), "utf8")) as WranglerConfig;
-const requiredSecuritySecrets = ["SESSION_SECRET", "SYSTEM_ADMIN_SECRET", "PASSWORD_PEPPER", "DATA_ENCRYPTION_KEY", "DATA_LOOKUP_KEY"];
+const requiredSecuritySecrets = ["SESSION_SECRET", "SYSTEM_ADMIN_SECRET", "PASSWORD_PEPPER", "DATA_ENCRYPTION_KEY", "DATA_LOOKUP_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "LINE_CHANNEL_ID", "LINE_CHANNEL_SECRET"];
+
+const devVarsExamplePath = path.join(root, ".dev.vars.example");
+if (!fs.existsSync(devVarsExamplePath)) {
+  failures.push(".dev.vars.example is missing");
+} else {
+  const devVarsExample = fs.readFileSync(devVarsExamplePath, "utf8");
+  for (const name of requiredSecuritySecrets) {
+    if (!new RegExp(`^${name}=`, "m").test(devVarsExample)) failures.push(`.dev.vars.example required entry missing: ${name}`);
+  }
+}
+
 for (const name of requiredSecuritySecrets) {
   if (!(wrangler.secrets?.required || []).includes(name)) failures.push(`wrangler production required secret missing: ${name}`);
   for (const envName of ["dev", "staging"]) {

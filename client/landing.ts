@@ -1,6 +1,7 @@
 // Source of truth: TypeScript. Vite generates content-hashed browser bundles under public/build/.
 import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils";
 import { initSiteChrome } from "./site-chrome";
+import { initEnvironmentContextBadge } from "./environment-context";
 
 const APP_BUILD = __APP_VERSION__;
 const TERMS_VERSION = "2026-09-25";
@@ -15,16 +16,17 @@ const registerDialog = document.querySelector("#team-register-dialog");
 function updateRegistrationButtons() {
   if (!registerDialog) return;
   const consent = Boolean(registerDialog.querySelector("#register-legal-consent")?.checked);
+  const handle = String(registerDialog.querySelector<HTMLInputElement>("#register-handle-name")?.value || "").trim();
   for (const id of ["#register-google", "#register-line"]) {
     const link = registerDialog.querySelector(id);
     if (!link) continue;
-    const enabled = link.dataset.providerEnabled === "true" && consent;
+    const enabled = link.dataset.providerEnabled === "true" && consent && Boolean(handle);
     link.classList.toggle("is-disabled", !enabled);
     link.setAttribute("aria-disabled", enabled ? "false" : "true");
     if (enabled) {
       const base = link.dataset.oauthBase || "";
       const separator = base.includes("?") ? "&" : "?";
-      link.href = `${base}${separator}terms=${encodeURIComponent(TERMS_VERSION)}&privacy=${encodeURIComponent(PRIVACY_VERSION)}`;
+      link.href = `${base}${separator}terms=${encodeURIComponent(TERMS_VERSION)}&privacy=${encodeURIComponent(PRIVACY_VERSION)}&handle=${encodeURIComponent(handle)}`;
     } else {
       link.removeAttribute("href");
     }
@@ -82,6 +84,7 @@ function initRegistrationDialog() {
     openRegistrationDialog();
   }));
   registerDialog?.querySelector("#register-legal-consent")?.addEventListener("change", updateRegistrationButtons);
+  registerDialog?.querySelector("#register-handle-name")?.addEventListener("input", updateRegistrationButtons);
   registerDialog?.querySelector("#team-register-close")?.addEventListener("click", () => registerDialog.close?.());
   registerDialog?.addEventListener("click", (event) => {
     if (event.target === registerDialog) registerDialog.close?.();
@@ -203,6 +206,7 @@ function initInstallTabs() {
 }
 
 
+initEnvironmentContextBadge();
 initShareDialog();
 initRegistrationDialog();
 initInstallTabs();

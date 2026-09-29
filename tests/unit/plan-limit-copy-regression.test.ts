@@ -14,7 +14,11 @@ describe("plan comparison copy regression", () => {
     expect(plans).toContain('<span class="plan-limited">△</span><small>1本</small>');
   });
 
-  it("shows Pro sub admin capacity as 10", () => {
+  it("shows content limits and Pro sub admin capacity", () => {
+    expect(plans).toContain("最大10個");
+    expect(plans).toContain("最大20個");
+    expect(plans).toContain("最大3グループ");
+    expect(plans).toContain("無制限");
     expect(plans).toContain("最大10名");
     expect(support).toContain("Proでは最大10名まで追加できます");
   });

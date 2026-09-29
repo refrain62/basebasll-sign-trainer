@@ -15,7 +15,7 @@ ON CONFLICT(plan_code,feature_key) DO UPDATE SET
   updated_at=CURRENT_TIMESTAMP;
 
 UPDATE plans
-SET description='基本的なサイン登録・1サイン1動画・クイズ・共有・PWA・Google/LINE認証。規定の1サイングループとメイン管理者1名で利用できます。',
+SET description='基本的なサイン登録・1サイン1動画・クイズ・共有・ホーム画面への追加・Google/LINE認証。規定の1サイングループとメイン管理者1名で利用できます。',
     updated_at=CURRENT_TIMESTAMP
 WHERE code='free';
 

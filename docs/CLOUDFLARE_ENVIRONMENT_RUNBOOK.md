@@ -79,6 +79,10 @@ SYSTEM_ADMIN_SECRET
 PASSWORD_PEPPER
 DATA_ENCRYPTION_KEY
 DATA_LOOKUP_KEY
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+LINE_CHANNEL_ID
+LINE_CHANNEL_SECRET
 ```
 
 候補値は以下で生成できます。
@@ -124,6 +128,10 @@ npx wrangler secret put DATA_LOOKUP_KEY
 - `PASSWORD_PEPPER`: 32文字以上の十分ランダムな値
 - `DATA_ENCRYPTION_KEY`: 32文字以上の十分ランダムな値
 - `DATA_LOOKUP_KEY`: 32文字以上の十分ランダムな値
+- `GOOGLE_CLIENT_ID`: Google OAuth WebクライアントID（必須）
+- `GOOGLE_CLIENT_SECRET`: Google OAuth WebクライアントSecret（必須）
+- `LINE_CHANNEL_ID`: LINE LoginチャネルID（必須）
+- `LINE_CHANNEL_SECRET`: LINE LoginチャネルSecret（必須）
 
 ---
 
