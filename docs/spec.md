@@ -1,6 +1,6 @@
 # SIGN TRAINER 仕様書 — v1.5.34 / build 102
 
-最終更新: 2026-09-26
+最終更新: 2026-09-29
 
 ## 1. 目的
 
@@ -120,7 +120,7 @@ SYSTEM管理で登録した公開中かつ掲載期間内のお知らせをチ�
 - 管理OAuthのaccess token / refresh tokenは保存しない
 - 管理CookieはHttpOnly / SameSite、remote本番ではSecure
 - 管理系状態変更APIはOrigin / Fetch MetadataでCSRF防御
-- SYSTEM管理remote環境はCloudflare Access必須
+- remoteのDev / StagingはWorker全体でCloudflare Access必須。Productionは一般公開だがSYSTEM管理はCloudflare Access必須
 - 秘密値・合言葉・パスワードを監査ログへ保存しない
 
 ## 12. データ保存
@@ -131,7 +131,7 @@ D1: チーム、サイン、動画、グループ、管理者、プラン、Enti
 
 ## 13. 最新migration
 
-`0017_result_sharing.sql`まで適用する。
+`0021_plan_content_limits.sql`まで適用する。
 
 
 ## v1.5.30 UI / 操作仕様

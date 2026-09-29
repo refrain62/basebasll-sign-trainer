@@ -10,6 +10,7 @@ import {
   systemSession,
   validateCloudflareAccess,
   validateMutationRequest,
+  requiresEnvironmentAccess,
   verifyCloudflareAccessJwt,
   verifyPasswordDetailed,
   verifySessionToken,
@@ -85,6 +86,16 @@ async function makeAccessJwt({ email = "coach@example.com", aud = "aud-123", iss
   return { token: `${input}.${Buffer.from(signature).toString("base64url")}`, jwk };
 }
 
+
+test("remote dev and staging require environment-wide Cloudflare Access while local and production stay available", () => {
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "dev", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "true" } as any, "basebasll-sign-trainer-dev.example.workers.dev"), true);
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "staging", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "true" } as any, "basebasll-sign-trainer-staging.example.workers.dev"), true);
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "dev", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "true" } as any, "localhost"), false);
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "dev", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "true" } as any, "127.0.0.1"), false);
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "production", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "false" } as any, "basebasll-sign-trainer.example.workers.dev"), false);
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "production", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "true" } as any, "basebasll-sign-trainer.example.workers.dev"), false);
+});
+
 test("Cloudflare Access gate verifies RS256 signature, issuer, audience and verified email allowlist", async () => {
   const url = "https://example.com/admin";
   assert.equal((await validateCloudflareAccess(new Request(url), {})).status, 403);
@@ -93,6 +104,7 @@ test("Cloudflare Access gate verifies RS256 signature, issuer, audience and veri
   const env = { CF_ACCESS_TEAM_DOMAIN: "https://team.cloudflareaccess.com", CF_ACCESS_POLICY_AUD: "aud-123", SYSTEM_ADMIN_ALLOWED_EMAILS: "coach@example.com" };
   const headers = { "cf-access-authenticated-user-email": "spoofed@example.com", "cf-access-jwt-assertion": token };
   assert.equal(await validateCloudflareAccess(new Request(url, { headers }), env, { fetcher, nowSeconds: 1500 }), null);
+  assert.equal(await validateCloudflareAccess(new Request(url, { headers }), { ...env, SYSTEM_ADMIN_ALLOWED_EMAILS: "other@example.com" }, { fetcher, nowSeconds: 1500, allowedEmails: "coach@example.com" }), null);
   assert.equal((await validateCloudflareAccess(new Request(url, { headers }), { ...env, SYSTEM_ADMIN_ALLOWED_EMAILS: "other@example.com" }, { fetcher, nowSeconds: 1500 })).status, 403);
   assert.equal((await validateCloudflareAccess(new Request(url, { headers }), { ...env, CF_ACCESS_POLICY_AUD: "wrong-aud" }, { fetcher, nowSeconds: 1500 })).status, 403);
 });

@@ -5,6 +5,7 @@ import { apiJson, withHeaders } from "./http/response.ts";
 import { pageAssetForPath, serveHtmlPage } from "./http/pages.ts";
 import { isVersionedTextAsset, serveVersionedTextAsset } from "./http/versioned-assets.ts";
 import { apiGuardMiddleware } from "./middleware/api-guard.ts";
+import { environmentAccessMiddleware } from "./middleware/environment-access.ts";
 import { systemAccessMiddleware } from "./middleware/system-access.ts";
 import { playerRoutes } from "./routes/player.ts";
 import { publicRoutes } from "./routes/public.ts";
@@ -15,6 +16,9 @@ import { teamPwaManifest } from "./controllers/pwa-controller.ts";
 
 const app = new Hono<AppEnv>();
 
+// Remote dev/staging are private environments. Validate Cloudflare Access
+// before serving any page, asset or API. Localhost remains available for local development.
+app.use("*", environmentAccessMiddleware);
 app.use("*", systemAccessMiddleware);
 app.use("/api/*", apiGuardMiddleware);
 

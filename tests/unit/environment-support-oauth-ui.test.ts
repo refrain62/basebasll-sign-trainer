@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 describe("environment, support and OAuth UI safeguards", () => {
   test("non-production pages receive a dismissible environment badge without replacing fix40 page design", () => {
     const pages = readFileSync("src/http/pages.ts", "utf8");
+    const badgeClient = readFileSync("client/environment-context.ts", "utf8");
     const css = readFileSync("public/styles.css", "utf8");
     const lp = readFileSync("pages/index.html", "utf8");
     expect(pages).toContain("data-environment-context-badge");
@@ -23,5 +24,7 @@ describe("environment, support and OAuth UI safeguards", () => {
     expect(wrangler.match(/LINE_CHANNEL_ID/g)?.length).toBeGreaterThanOrEqual(3);
     expect(wrangler.match(/LINE_CHANNEL_SECRET/g)?.length).toBeGreaterThanOrEqual(3);
     expect(wrangler.match(/ACCOUNT_TEAM_CREATE_LIMIT/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(wrangler.match(/REQUIRE_CF_ACCESS_FOR_ENVIRONMENT/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(wrangler.match(/ENVIRONMENT_ACCESS_ALLOWED_EMAILS/g)?.length).toBeGreaterThanOrEqual(3);
   });
 });

@@ -16,14 +16,14 @@
 - Tight CSP / frame-ancestors / X-Frame-Options / permissions policy
 - Team/sign/video soft delete
 - D1 audit log for admin mutations
-- Cloudflare Access gate required for remote system-admin routes
+- Cloudflare Access gate required for the entire remote dev/staging environment; production system-admin routes remain Access-protected
 - Dependabot + npm audit CI configuration
 
 ## Operational requirements
 
 1. Generate and commit `package-lock.json` from a trusted network before deployment.
 2. Use `npm ci --ignore-scripts`, not `npm install`, after the lockfile exists.
-3. Configure Cloudflare Access for `/admin*` and `/api/system/*` on dev/staging/production.
+3. Configure Cloudflare Access for the entire dev/staging Worker and for `/admin*` + `/api/system/*` on production.
 4. Use unique SESSION_SECRET and SYSTEM_ADMIN_SECRET values for every environment.
 5. Apply `0003_security_hardening.sql` to every environment before deploying build 58.
 
@@ -48,7 +48,7 @@ Operationally, OAuth client/channel secrets must be configured as Wrangler secre
 
 ## Build 71: public-deployment hardening
 
-- Cloudflare Access JWTs are cryptographically validated with Cloudflare JWKS (RS256), exact issuer, Access application audience, expiry, nbf/iat sanity and verified JWT email claim. Remote system-admin routes fail closed when Access configuration or token verification is invalid.
+- Cloudflare Access JWTs are cryptographically validated with Cloudflare JWKS (RS256), exact issuer, Access application audience, expiry, nbf/iat sanity and verified JWT email claim. Remote dev/staging environments fail closed for every route; production system-admin routes fail closed when Access configuration or token verification is invalid.
 - JWKS is cached for five minutes; a signing-key refresh is attempted on rotation and force-refresh is throttled to limit attacker-induced outbound fetches.
 - Critical administrator lifecycle operations require a Google / LINE OAuth authentication completed within the previous 10 minutes. Reauthentication is cryptographically bound to the currently signed-in SIGN TRAINER user and cannot switch accounts.
 - Claiming a legacy team now creates the owner and disables the shared legacy administrator password in the same D1 batch, incrementing admin_session_version to invalidate old legacy sessions.
@@ -60,6 +60,14 @@ Operationally, OAuth client/channel secrets must be configured as Wrangler secre
 Required remote Access configuration:
 
 ```text
+# dev / staging
+REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true
+ENVIRONMENT_ACCESS_ALLOWED_EMAILS=user1@example.com,user2@example.com  # optional extra allowlist
+
+# production
+REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=false
+
+# all remote environments
 CF_ACCESS_TEAM_DOMAIN=https://<your-team>.cloudflareaccess.com
 CF_ACCESS_POLICY_AUD=<Access Application AUD tag>
 ```

@@ -251,27 +251,48 @@ npx wrangler secret put LINE_CHANNEL_SECRET
 
 ## Cloudflare Access（必須）
 
-remote の dev / staging / production では `/admin*` と `/api/system/*` を Cloudflare Access で保護してください。`wrangler.jsonc` の `REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN` は3環境とも `true` です。
+公開方針は環境ごとに分けています。
 
-Cloudflare Zero Trust で各Workerに Self-hosted Application を作り、最低でも以下を保護します。
+- **dev / staging**: 一般公開しません。LP・チーム画面・管理画面・API・静的アセットを含むWorker全体をCloudflare Accessで保護します。
+- **production**: 一般公開します。ただし `/admin*` と `/api/system/*` はCloudflare Access必須です。
+- **local**: `localhost` / `127.0.0.1` は開発用に環境全体のAccess検証をスキップします。
+
+`wrangler.jsonc` ではdev / stagingに次を設定済みです。
 
 ```text
-/admin*
-/api/system/*
+REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true
 ```
 
-Access policyで許可するメール/IdPユーザーを限定してください。Worker側では `Cf-Access-Jwt-Assertion` を **RS256署名・issuer・audience・有効期限まで検証**し、検証済みJWTの `email` claimだけを使用します。その上で `SYSTEM_ADMIN_SECRET` も要求する二重防御です。
+Productionは公開サイトなので次のままです。
 
-必要なら `SYSTEM_ADMIN_ALLOWED_EMAILS` にカンマ区切りで許可メールを設定できます。空欄の場合はAccess policy側の許可設定を信頼します。
+```text
+REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=false
+```
+
+SYSTEM管理については3つのremote環境で引き続き次を有効にします。
+
+```text
+REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN=true
+```
+
+Dev / Stagingは環境ごとにWorker全体を対象とするAccess Applicationを1つ作り、そのAllow policyで接続可能なメール/IdPユーザーを限定してください。Worker側でも `Cf-Access-Jwt-Assertion` を **RS256署名・issuer・audience・有効期限まで検証**します。
 
 Access JWT検証には次の2つを各remote環境で設定してください。値自体はSecretではありません。
 
 ```text
 CF_ACCESS_TEAM_DOMAIN=https://<your-team>.cloudflareaccess.com
-CF_ACCESS_POLICY_AUD=<Access Application の AUD tag>
+CF_ACCESS_POLICY_AUD=<その環境のAccess Applicationの Application Audience (AUD) tag>
 ```
 
-`REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN=true` のremote環境では、これらが未設定またはJWT検証に失敗するとシステム管理画面を **fail closed (403)** します。ローカルホストだけは従来どおりAccess検証をスキップします。
+Dev / StagingでAccess policyに加えてWorker側でも利用者を絞る場合は、次をカンマ区切りで設定できます。
+
+```text
+ENVIRONMENT_ACCESS_ALLOWED_EMAILS=user1@example.com,user2@example.com
+```
+
+空欄の場合はAccess policy側の許可設定を信頼します。SYSTEM管理だけをさらに限定する場合は `SYSTEM_ADMIN_ALLOWED_EMAILS` を使用します。
+
+Dev / StagingではAccess tokenがない、Team Domain / AUDが未設定、不正JWT、許可外メールのいずれも**Worker全体をfail closed (403)**します。Productionの一般公開ページには環境全体Accessを掛けません。
 
 ## デプロイ
 

@@ -44,7 +44,9 @@
     "LINE_REQUEST_EMAIL": "false",
     "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
     "PUBLIC_SUPPORT_URL": "",
-    "ACCOUNT_TEAM_CREATE_LIMIT": "3"
+    "ACCOUNT_TEAM_CREATE_LIMIT": "3",
+    "REQUIRE_CF_ACCESS_FOR_ENVIRONMENT": "false",
+    "ENVIRONMENT_ACCESS_ALLOWED_EMAILS": ""
   },
   "env": {
     "dev": {
@@ -81,8 +83,10 @@
         "CF_ACCESS_TEAM_DOMAIN": "",
         "CF_ACCESS_POLICY_AUD": "",
         "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
-        "PUBLIC_SUPPORT_URL": "",
-        "ACCOUNT_TEAM_CREATE_LIMIT": "3"
+        "PUBLIC_SUPPORT_URL": "https://forms.gle/n9qume9WF3KNGkPP6",
+        "ACCOUNT_TEAM_CREATE_LIMIT": "3",
+        "REQUIRE_CF_ACCESS_FOR_ENVIRONMENT": "true",
+        "ENVIRONMENT_ACCESS_ALLOWED_EMAILS": ""
       },
       "version_metadata": {
         "binding": "CF_VERSION_METADATA"
@@ -119,11 +123,13 @@
         "SYSTEM_ADMIN_ALLOWED_EMAILS": "",
         "ACCOUNT_SESSION_DAYS": "30",
         "LINE_REQUEST_EMAIL": "false",
-        "CF_ACCESS_TEAM_DOMAIN": "",
-        "CF_ACCESS_POLICY_AUD": "",
+        "CF_ACCESS_TEAM_DOMAIN": "https://refrain62.cloudflareaccess.com",
+        "CF_ACCESS_POLICY_AUD": "a54593b99ae28951c7c1838ff099a8548c759944bcb5a14946d076322c8311a2",
         "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
-        "PUBLIC_SUPPORT_URL": "",
-        "ACCOUNT_TEAM_CREATE_LIMIT": "3"
+        "PUBLIC_SUPPORT_URL": "https://forms.gle/n9qume9WF3KNGkPP6",
+        "ACCOUNT_TEAM_CREATE_LIMIT": "3",
+        "REQUIRE_CF_ACCESS_FOR_ENVIRONMENT": "true",
+        "ENVIRONMENT_ACCESS_ALLOWED_EMAILS": ""
       },
       "version_metadata": {
         "binding": "CF_VERSION_METADATA"

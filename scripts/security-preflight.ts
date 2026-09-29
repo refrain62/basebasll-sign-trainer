@@ -9,11 +9,13 @@ interface PackageJson {
 interface WranglerEnvironment {
   secrets?: { required?: string[] };
   version_metadata?: { binding?: string };
+  vars?: Record<string, unknown>;
 }
 
 interface WranglerConfig {
   secrets?: { required?: string[] };
   version_metadata?: { binding?: string };
+  vars?: Record<string, unknown>;
   env?: Record<string, WranglerEnvironment>;
 }
 
@@ -54,6 +56,22 @@ for (const name of requiredSecuritySecrets) {
   if (!(wrangler.secrets?.required || []).includes(name)) failures.push(`wrangler production required secret missing: ${name}`);
   for (const envName of ["dev", "staging"]) {
     if (!(wrangler.env?.[envName]?.secrets?.required || []).includes(name)) failures.push(`wrangler ${envName} required secret missing: ${name}`);
+  }
+}
+
+if (String(wrangler.vars?.REQUIRE_CF_ACCESS_FOR_ENVIRONMENT || "false") !== "false") {
+  failures.push("wrangler production REQUIRE_CF_ACCESS_FOR_ENVIRONMENT must remain false so the public site stays public");
+}
+for (const envName of ["dev", "staging"]) {
+  const vars = wrangler.env?.[envName]?.vars || {};
+  if (String(vars.REQUIRE_CF_ACCESS_FOR_ENVIRONMENT || "false") !== "true") {
+    failures.push(`wrangler ${envName} REQUIRE_CF_ACCESS_FOR_ENVIRONMENT must be true`);
+  }
+  if (!("ENVIRONMENT_ACCESS_ALLOWED_EMAILS" in vars)) {
+    failures.push(`wrangler ${envName} ENVIRONMENT_ACCESS_ALLOWED_EMAILS entry is missing`);
+  }
+  if (!("CF_ACCESS_TEAM_DOMAIN" in vars) || !("CF_ACCESS_POLICY_AUD" in vars)) {
+    failures.push(`wrangler ${envName} Cloudflare Access configuration entries are missing`);
   }
 }
 
