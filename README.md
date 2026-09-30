@@ -74,8 +74,8 @@
 - GitHub Dependabot / `npm audit` ワークフローを追加
 - 配布ZIPから `.dev.vars*` を除外
 - QRコードを外部APIへ送らず、**ブラウザ内でローカル生成**
-- PBKDF2-SHA256 を新規ハッシュ **600,000 iterations** に強化
-- 旧120,000回ハッシュはログイン成功時に自動再ハッシュ
+- PBKDF2-SHA256 を新規ハッシュ **100,000 iterations** に強化
+- Cloudflare Workersで検証可能な旧salt-onlyハッシュはログイン成功時にpepper付き100,000回へ自動再ハッシュ。100,000回を超える旧ハッシュは管理画面から再設定が必要
 - 認証APIにD1ベースのレート制限を追加
 - POST/PUT/PATCH/DELETE に Origin / Fetch Metadata ベースのCSRF防御を追加
 - API JSON を64KBまでに制限
@@ -200,6 +200,7 @@ npm run db:migrate:prod
 - `0019_sample_batting_group_video.sql` — サンプルのバッティンググループ説明動画
 - `0020_plan_limit_refresh.sql` — Proのサブ管理者上限などプラン上限の更新
 - `0021_plan_content_limits.sql` — Free/Plus/Proのサイン登録数・サイングループ上限を適用
+- `0022_cloudflare_pbkdf2_compat.sql` — Cloudflare WorkersのPBKDF2上限に合わせ、未変更のサンプル合言葉ハッシュを100,000回へ修復
 
 サンプルチーム:
 
@@ -323,7 +324,7 @@ npm run deploy:prod
 
 旧チーム管理者パスワードは新規設定/変更時 **12文字以上＋英字1文字以上＋数字1文字以上**です。記号は必須ではありません。LPから新規登録したチームは共有管理者パスワードを作らず、最初に認証したアカウントがオーナーになります。
 
-合言葉・管理者パスワードはD1に平文保存しません。新規ハッシュは、16-byteランダムsalt + Cloudflare Secretの`PASSWORD_PEPPER`を使ったPBKDF2-SHA256（600,000 iterations）です。旧salt-onlyハッシュは正常ログイン時にpepper付き形式へ自動再ハッシュします。
+合言葉・管理者パスワードはD1に平文保存しません。新規ハッシュは、16-byteランダムsalt + Cloudflare Secretの`PASSWORD_PEPPER`を使ったPBKDF2-SHA256（100,000 iterations）です。Cloudflare Workersで検証可能な旧salt-onlyハッシュは正常ログイン時にpepper付き形式へ自動再ハッシュします。100,000回を超える旧ハッシュはWorkerでは検証できないため再設定が必要です。
 
 ## 認証レート制限
 

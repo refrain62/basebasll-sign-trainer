@@ -19,16 +19,16 @@ D1そのもののプラットフォーム保護に加え、DBダンプやD1読�
 新規形式:
 
 ```text
-pbkdf2-sha256-pepper-v1$600000$<salt-base64url>$<hash-base64url>
+pbkdf2-sha256-pepper-v1$100000$<salt-base64url>$<hash-base64url>
 ```
 
 1. 入力をNFC正規化・trimする。
 2. `PASSWORD_PEPPER`をHMAC-SHA256鍵としてパスワードを前処理する。
 3. 16-byte CSPRNG saltを生成する。
-4. PBKDF2-HMAC-SHA256 / 600,000 iterations / 256-bit outputを生成する。
+4. PBKDF2-HMAC-SHA256 / 100,000 iterations / 256-bit outputを生成する（Cloudflare Workers Web Cryptoの上限に合わせる）。
 5. saltとhashのみD1へ保存する。pepperはWrangler Secretのみ。
 
-旧 `pbkdf2-sha256$...` は検証可能なまま残し、ログイン成功時に新形式へ再ハッシュする。
+旧 `pbkdf2-sha256$...` は100,000 iterations以下であれば検証し、ログイン成功時に新形式へ再ハッシュする。100,000を超える旧ハッシュはCloudflare Workersでは検証できないため再設定する。
 
 ## AES-256-GCM
 

@@ -13,6 +13,7 @@ import {
   requiresEnvironmentAccess,
   verifyCloudflareAccessJwt,
   verifyPasswordDetailed,
+  isSupportedPasswordHash,
   verifySessionToken,
   withHeaders,
   isFreshAccountSession,
@@ -28,7 +29,7 @@ const DATA_LOOKUP_KEY = "SignTrainerUnitTestLookupKey2026";
 
 test("password hashing verifies the right value and rejects the wrong value", async () => {
   const hash = await hashPassword("Baseball2026", PASSWORD_PEPPER);
-  assert.match(hash, /^pbkdf2-sha256-pepper-v1\$600000\$/);
+  assert.match(hash, /^pbkdf2-sha256-pepper-v1\$100000\$/);
   assert.deepEqual(await verifyPasswordDetailed("Baseball2026", hash, PASSWORD_PEPPER), { valid: true, needsRehash: false });
   assert.deepEqual(await verifyPasswordDetailed("WrongPassword2026", hash, PASSWORD_PEPPER), { valid: false, needsRehash: false });
   assert.deepEqual(await verifyPasswordDetailed("Baseball2026", hash, "wrong-pepper-but-long-enough-123456"), { valid: false, needsRehash: false });
@@ -39,10 +40,19 @@ test("password hashing verifies the right value and rejects the wrong value", as
 test("legacy salt-only PBKDF2 hashes still verify and request peppered rehash", async () => {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode("Baseball2026"), "PBKDF2", false, ["deriveBits"]);
-  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 120000 }, key, 256));
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 100000 }, key, 256));
   const b64 = (bytes) => Buffer.from(bytes).toString("base64url");
-  const legacy = `pbkdf2-sha256$120000$${b64(salt)}$${b64(bits)}`;
+  const legacy = `pbkdf2-sha256$100000$${b64(salt)}$${b64(bits)}`;
   assert.deepEqual(await verifyPasswordDetailed("Baseball2026", legacy, PASSWORD_PEPPER), { valid: true, needsRehash: true });
+});
+
+
+test("PBKDF2 hashes above the Cloudflare Workers limit are rejected without throwing", async () => {
+  const salt = Buffer.alloc(16, 1).toString("base64url");
+  const hash = Buffer.alloc(32, 2).toString("base64url");
+  const unsupported = `pbkdf2-sha256-pepper-v1$600000$${salt}$${hash}`;
+  assert.equal(isSupportedPasswordHash(unsupported), false);
+  assert.deepEqual(await verifyPasswordDetailed("Baseball2026", unsupported, PASSWORD_PEPPER), { valid: false, needsRehash: false });
 });
 
 test("session token round-trips and rejects tampering", async () => {

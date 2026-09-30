@@ -7,7 +7,7 @@
 - Deploy preflight blocks deployment without `package-lock.json`
 - `.dev.vars*` excluded from source distribution
 - Local QR generation; no runtime QR API/CDN
-- PBKDF2-SHA256: 600,000 iterations for new hashes; transparent rehash on successful login
+- PBKDF2-SHA256: 100,000 iterations for new hashes (Cloudflare Workers Web Crypto upper limit); transparent rehash on successful login for supported legacy hashes
 - D1 auth rate limiting using HMAC-obscured client keys
 - Origin + Fetch Metadata CSRF protection
 - 64KB JSON request limit
@@ -74,7 +74,7 @@ CF_ACCESS_POLICY_AUD=<Access Application AUD tag>
 
 ## Build 75: application-level data protection
 
-- Added `PASSWORD_PEPPER` in Wrangler Secret. New password hashes use PBKDF2-SHA256 / 600,000 iterations / 16-byte random salt after HMAC-SHA256 pepper preprocessing. Legacy salt-only hashes are rehashed after successful authentication.
+- Added `PASSWORD_PEPPER` in Wrangler Secret. New password hashes use PBKDF2-SHA256 / 100,000 iterations / 16-byte random salt after HMAC-SHA256 pepper preprocessing. Legacy salt-only hashes at or below the Workers-supported iteration limit are rehashed after successful authentication; higher-iteration hashes must be reset.
 - Added AES-256-GCM field encryption with random 96-bit IV and field-bound AAD. Ciphertexts are versioned with `enc:v1:`.
 - Added keyed HMAC lookup for Google/LINE provider subjects (`hmac:v1:`) while preserving the original subject only as AES-GCM ciphertext.
 - New audit details are redacted before storage; legacy audit details can be rewritten through the system-admin data-protection maintenance action.
