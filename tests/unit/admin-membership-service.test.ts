@@ -15,7 +15,7 @@ function fixture() {
     async hasAny() { return members.size > 0; },
     async countByRole(_teamId, role) { return [...members.values()].filter((m) => m.role === role).length; },
     async add({ userId, role }) { members.set(userId, { team_id: "T1", user_id: userId, role }); },
-    async listForTeam() { return [...members.values()].map((m) => ({ userId: m.user_id, role: m.role, displayName: m.user_id })); },
+    async listForTeam() { return [...members.values()].map((m) => ({ userId: m.user_id, role: m.role, displayName: m.user_id, email: `${m.user_id}@example.com` })); },
     async remove(_teamId, userId) { calls.push(["remove", userId]); members.delete(userId); }
   };
   const inviteRepository = {
@@ -127,6 +127,17 @@ test("management exposes the five-person sub-admin capacity", async () => {
   assert.equal(result.pendingSubAdminInvites, 1);
   assert.equal(result.subAdminSlotsRemaining, 3);
   assert.equal(result.canInviteSubAdmin, true);
+});
+
+test("management only exposes the signed-in administrator's own email address", async () => {
+  const fx = fixture();
+  const ownerView = await fx.service.management("T1", "owner");
+  assert.equal(ownerView.members.find((member) => member.userId === "owner")?.email, "owner@example.com");
+  assert.equal(ownerView.members.find((member) => member.userId === "admin")?.email, "");
+
+  const adminView = await fx.service.management("T1", "admin");
+  assert.equal(adminView.members.find((member) => member.userId === "admin")?.email, "admin@example.com");
+  assert.equal(adminView.members.find((member) => member.userId === "owner")?.email, "");
 });
 
 test("owner transfer that keeps the previous owner refuses a sixth sub administrator", async () => {

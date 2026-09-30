@@ -26,12 +26,26 @@ describe("latest product rules regression", () => {
     expect(install).not.toContain(">PWA<");
   });
 
-  it("keeps non-production environment warnings and handle-name registration", () => {
+  it("keeps non-production environment warnings and prompts for a handle on OAuth entry points", () => {
     const account = read("client/account.ts");
+    const admin = read("client/admin.ts");
     const landing = read("client/landing.ts");
     expect(account).toContain("STAGING 環境");
-    expect(account).toContain("ハンドルネーム");
+    expect(account).toContain("const needsHandle = !invite?.error");
+    expect(account).toContain("管理者名（ハンドルネーム）");
+    expect(admin).toContain('id="team-admin-login-handle"');
+    expect(admin).toContain('id="team-admin-claim-handle"');
+    expect(admin).toContain("data-oauth-handle-input");
     expect(landing).toContain("ここで登録したチームは本番環境には作成されません。");
     expect(landing).toContain("register-handle-name");
+  });
+
+  it("does not expose other administrators' email addresses in team management", () => {
+    const service = read("src/services/admin-membership-service.ts");
+    const admin = read("client/admin.ts");
+    expect(service).toContain('String(member.userId || "") === String(userId || "")');
+    expect(service).toContain('email: String(member.userId || "") === String(userId || "") ? (member.email || "") : ""');
+    expect(admin).toContain("メールアドレス非公開");
+    expect(admin).toContain("自分だけに表示");
   });
 });

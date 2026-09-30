@@ -59,6 +59,13 @@ export function createAdminMembershipService({
       const team = await teamRepository.findById(teamId);
       if (!team) throw new ServiceError("team_not_found", "チームが見つかりません。", 404);
       const members = await membershipRepository.listForTeam(teamId);
+      // Admin email addresses are private to the account owner. The management API
+      // intentionally removes other administrators' email addresses before the data
+      // reaches the browser, so privacy does not depend on UI-only hiding.
+      const visibleMembers = members.map((member) => ({
+        ...member,
+        email: String(member.userId || "") === String(userId || "") ? (member.email || "") : ""
+      }));
       const pendingInvites = actor.role === "owner" ? await inviteRepository.listPending(teamId, now()) : [];
       const subAdminCountValue = members.filter((member) => member.role === "admin").length;
       const pendingSubAdminInvites = pendingInvites.filter((invite) => invite.kind === "admin").length;
@@ -66,7 +73,7 @@ export function createAdminMembershipService({
       const reservedSubAdminSlots = Math.min(maxSubAdmins, subAdminCountValue + pendingSubAdminInvites);
       return {
         currentRole: actor.role,
-        members,
+        members: visibleMembers,
         pendingInvites,
         legacyPasswordEnabled: Boolean(team.admin_password_enabled),
         maxSubAdmins,

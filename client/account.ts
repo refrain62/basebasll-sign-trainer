@@ -155,13 +155,16 @@ function renderUnauthenticated(providers, invite) {
       <dl><div><dt>招待した人</dt><dd>${esc(invite.creatorName || "チーム管理者")}</dd></div><div><dt>権限</dt><dd>${invite.kind === "transfer" ? "新しいメイン管理者" : "サブ管理者"}</dd></div></dl>
     </div>` : "";
   const intent = inviteToken ? "invite" : creating ? "register-team" : "login";
-  const needsHandle = creating || Boolean(inviteInfo);
+  // Ask for a team-facing handle before every normal OAuth login. This keeps
+  // provider profile names/emails out of team-facing identity and lets returning
+  // admins confirm or update the name other administrators will see.
+  const needsHandle = !invite?.error;
   app.innerHTML = `<div class="account-auth-layout">
     <section class="account-auth-card">
       ${inviteInfo || `<span class="account-eyebrow">TEAM ADMIN ACCOUNT</span><h1>${creating ? "チーム登録をはじめる" : "チーム管理者ログイン"}</h1><p>${creating ? "Google または LINEで管理者登録して、そのままチームを作成できます。" : "この画面は監督・コーチなど、チームを管理する方のログイン画面です。"}</p>`}
       ${error ? `<div class="notice notice-error">${esc(error)}</div>` : ""}
       ${invite?.error ? `<div class="notice notice-error">${esc(invite.error)}</div>` : ""}
-      ${needsHandle && !invite?.error ? `<label class="auth-handle-label">管理者名（ハンドルネーム）<input class="text-input" id="account-register-handle" maxlength="40" autocomplete="nickname" placeholder="例：コーチA" required><small>チーム内で表示する名前です。あとから変更できます。</small></label>` : ""}
+      ${needsHandle && !invite?.error ? `<label class="auth-handle-label">管理者名（ハンドルネーム）<input class="text-input" id="account-register-handle" maxlength="40" autocomplete="nickname" placeholder="例：コーチA" required><small>${creating ? "新しく作るチーム内で表示する名前です。" : inviteInfo ? "招待先のチーム内で表示する名前です。" : "チーム内で表示する名前です。既存アカウントでは、ここで入力した名前に更新されます。"} あとからマイアカウントでも変更できます。</small></label>` : ""}
       ${!invite?.error ? `<div class="account-provider-stack">${providerButtons(providers, { intent, invite: inviteToken })}</div><p class="account-provider-note">続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p>` : ""}
       ${inviteInfo ? `<p class="account-provider-note">本人確認のあと、権限の内容をもう一度確認してから「招待を承認する」を押すまで参加は確定しません。</p>` : ""}
       ${(!providers.google || !providers.line) ? `<p class="account-provider-note">利用できない認証方法は、運営側のOAuth設定完了後に有効になります。</p>` : ""}
@@ -175,7 +178,7 @@ function renderUnauthenticated(providers, invite) {
     document.querySelectorAll<HTMLAnchorElement>("[data-account-provider-link]").forEach((link) => {
       link.addEventListener("click", (event) => {
         const handle = String(input?.value || "").trim();
-        if (!handle) { event.preventDefault(); input?.focus(); return; }
+        if (!handle) { event.preventDefault(); input?.focus(); input?.reportValidity(); return; }
         if (link.href) { const next = new URL(link.href); next.searchParams.set("handle", handle); link.href = next.toString(); }
       });
     });
