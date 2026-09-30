@@ -155,34 +155,19 @@ function renderUnauthenticated(providers, invite) {
       <dl><div><dt>招待した人</dt><dd>${esc(invite.creatorName || "チーム管理者")}</dd></div><div><dt>権限</dt><dd>${invite.kind === "transfer" ? "新しいメイン管理者" : "サブ管理者"}</dd></div></dl>
     </div>` : "";
   const intent = inviteToken ? "invite" : creating ? "register-team" : "login";
-  // Ask for a team-facing handle before every normal OAuth login. This keeps
-  // provider profile names/emails out of team-facing identity and lets returning
-  // admins confirm or update the name other administrators will see.
-  const needsHandle = !invite?.error;
   app.innerHTML = `<div class="account-auth-layout">
     <section class="account-auth-card">
       ${inviteInfo || `<span class="account-eyebrow">TEAM ADMIN ACCOUNT</span><h1>${creating ? "チーム登録をはじめる" : "チーム管理者ログイン"}</h1><p>${creating ? "Google または LINEで管理者登録して、そのままチームを作成できます。" : "この画面は監督・コーチなど、チームを管理する方のログイン画面です。"}</p>`}
       ${error ? `<div class="notice notice-error">${esc(error)}</div>` : ""}
       ${invite?.error ? `<div class="notice notice-error">${esc(invite.error)}</div>` : ""}
-      ${needsHandle && !invite?.error ? `<label class="auth-handle-label">管理者名（ハンドルネーム）<input class="text-input" id="account-register-handle" maxlength="40" autocomplete="nickname" placeholder="例：コーチA" required><small>${creating ? "新しく作るチーム内で表示する名前です。" : inviteInfo ? "招待先のチーム内で表示する名前です。" : "チーム内で表示する名前です。既存アカウントでは、ここで入力した名前に更新されます。"} あとからマイアカウントでも変更できます。</small></label>` : ""}
-      ${!invite?.error ? `<div class="account-provider-stack">${providerButtons(providers, { intent, invite: inviteToken })}</div><p class="account-provider-note">続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p>` : ""}
-      ${inviteInfo ? `<p class="account-provider-note">本人確認のあと、権限の内容をもう一度確認してから「招待を承認する」を押すまで参加は確定しません。</p>` : ""}
+      ${!invite?.error ? `<div class="account-provider-stack">${providerButtons(providers, { intent, invite: inviteToken })}</div><p class="account-provider-note">ログイン後に、チーム内で表示する管理者名（ハンドルネーム）を確認・変更できます。続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p>` : ""}
+      ${inviteInfo ? `<p class="account-provider-note">本人確認のあと、ハンドルネームと権限内容を確認してから「招待を承認する」を押すまで参加は確定しません。</p>` : ""}
       ${(!providers.google || !providers.line) ? `<p class="account-provider-note">利用できない認証方法は、運営側のOAuth設定完了後に有効になります。</p>` : ""}
       <div class="account-player-note"><strong>選手のみなさんへ</strong><p>練習用のチームページは、監督・コーチ・チーム管理者から共有されたURLやQRコードから開いてください。チームページが分からない場合は、監督やコーチに確認してください。</p></div>
       <div class="account-security-note"><strong>パスワード共有は不要</strong><p>管理者ごとに自分のGoogle / LINEアカウントでログインします。選手用の合言葉とは別管理です。</p></div>
       <a class="button button-secondary button-full" href="/">トップページへ戻る</a>
     </section>
   </div>`;
-  if (needsHandle) {
-    const input = document.querySelector<HTMLInputElement>("#account-register-handle");
-    document.querySelectorAll<HTMLAnchorElement>("[data-account-provider-link]").forEach((link) => {
-      link.addEventListener("click", (event) => {
-        const handle = String(input?.value || "").trim();
-        if (!handle) { event.preventDefault(); input?.focus(); input?.reportValidity(); return; }
-        if (link.href) { const next = new URL(link.href); next.searchParams.set("handle", handle); link.href = next.toString(); }
-      });
-    });
-  }
 }
 
 function teamCard(team) {
@@ -238,24 +223,37 @@ function openDeleteDialog(dashboard) {
   });
 }
 
+function openDisplayNameDialog(dashboard, { review = false } = {}) {
+  const current = String(dashboard.user?.displayName || "");
+  const returnTo = String(params.get("returnTo") || "");
+  dialogBody.innerHTML = `<div class="account-dialog-card"><button class="account-dialog-close" type="button" data-close-dialog aria-label="閉じる">×</button><span class="account-eyebrow">ADMIN NAME</span><h2>${review ? "管理者名を確認してください" : "管理者名を変更"}</h2><p>${review ? "Google / LINEの名前ではなく、チーム内で分かりやすいハンドルネームをおすすめします。" : "チーム内にはこのハンドルネームが表示されます。"}</p><form id="display-name-form" class="account-form"><label>管理者名（ハンドルネーム）<input class="text-input" name="displayName" maxlength="40" autocomplete="nickname" value="${esc(current)}" required></label><p class="account-form-note">メールアドレスは本人以外の管理者には表示しません。</p><button class="button button-primary button-full" type="submit">${review ? "この名前で使う" : "変更する"}</button></form></div>`;
+  dialog.showModal();
+  const input = dialogBody.querySelector<HTMLInputElement>('input[name="displayName"]');
+  if (review) { input?.focus(); input?.select(); }
+  dialogBody.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => dialog.close()));
+  dialogBody.querySelector("#display-name-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget as HTMLFormElement;
+    const fd = new FormData(form);
+    const { response, data } = await requestJson("/api/account/profile", { method: "PATCH", body: JSON.stringify({ displayName: fd.get("displayName") }) });
+    if (!response.ok) return alert(data.message || "管理者名を変更できませんでした。");
+    if (returnTo.startsWith("/")) { location.href = returnTo; return; }
+    const next = new URL(location.href);
+    next.searchParams.delete("reviewName");
+    next.searchParams.delete("returnTo");
+    location.href = `${next.pathname}${next.search}`;
+  });
+}
+
 function wireDashboard(dashboard) {
   wireAccountTeamPager();
   const teamCreation = dashboard.teamCreation || { limit: 3, ownedTeamCount: dashboard.teams?.filter((team) => team.role === "owner").length || 0, canCreate: true };
   document.querySelector("#account-logout")?.addEventListener("click", async () => { await fetch("/api/account/logout", { method: "POST" }); location.href = "/account"; });
-  document.querySelector("#edit-display-name")?.addEventListener("click", () => {
-    const current = String(dashboard.user?.displayName || "");
-    dialogBody.innerHTML = `<div class="account-dialog-card"><button class="account-dialog-close" type="button" data-close-dialog aria-label="閉じる">×</button><span class="account-eyebrow">ADMIN NAME</span><h2>管理者名を変更</h2><p>チーム内にはこのハンドルネームが表示されます。</p><form id="display-name-form" class="account-form"><label>管理者名（ハンドルネーム）<input class="text-input" name="displayName" maxlength="40" autocomplete="nickname" value="${esc(current)}" required></label><button class="button button-primary button-full" type="submit">変更する</button></form></div>`;
-    dialog.showModal();
-    dialogBody.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => dialog.close()));
-    dialogBody.querySelector("#display-name-form")?.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const form = event.currentTarget as HTMLFormElement;
-      const fd = new FormData(form);
-      const { response, data } = await requestJson("/api/account/profile", { method: "PATCH", body: JSON.stringify({ displayName: fd.get("displayName") }) });
-      if (!response.ok) return alert(data.message || "管理者名を変更できませんでした。");
-      location.reload();
-    });
-  });
+  document.querySelector("#edit-display-name")?.addEventListener("click", () => openDisplayNameDialog(dashboard));
+  document.querySelector("#review-display-name")?.addEventListener("click", () => openDisplayNameDialog(dashboard, { review: true }));
+  if (dashboard.user?.needsDisplayNameReview && params.get("reviewName") === "1") {
+    queueMicrotask(() => openDisplayNameDialog(dashboard, { review: true }));
+  }
   document.querySelector("#open-create-team")?.addEventListener("click", () => { document.querySelector("#create-team-slot").innerHTML = createTeamPanel(teamCreation); wireCreateTeam(); document.querySelector("#create-team-panel")?.scrollIntoView({ behavior: "smooth", block: "start" }); });
   document.querySelector("#delete-account")?.addEventListener("click", () => openDeleteDialog(dashboard));
   if (params.get("create") === "1") { document.querySelector("#create-team-slot").innerHTML = createTeamPanel(teamCreation); wireCreateTeam(); }
@@ -290,6 +288,7 @@ function renderDashboard(dashboard) {
   const loginHistory = dashboard.loginHistory || [];
   const teamCreation = dashboard.teamCreation || { limit: 3, ownedTeamCount: teams.filter((team) => team.role === "owner").length, canCreate: true };
   app.innerHTML = `<div class="account-dashboard">
+    ${user.needsDisplayNameReview ? `<section class="account-name-review-callout"><div><span class="account-eyebrow">DISPLAY NAME</span><h2>管理者名を確認してください</h2><p>現在はGoogle / LINEのプロフィール名が入っている場合があります。チーム内で分かりやすいハンドルネームに変更できます。</p></div><button class="button button-primary" id="review-display-name" type="button">名前を確認・変更する</button></section>` : ""}
     <section class="account-profile-card">
       <div class="account-profile-main"><span class="account-avatar account-avatar--fallback">${esc((user.displayName || "管").slice(0,1))}</span><div><span class="account-eyebrow">ADMIN ACCOUNT</span><h1>${esc(user.displayName)}</h1><p>${esc(user.email || "メールアドレス未取得")}</p><div class="account-provider-badges">${identities.map((item) => `<span><img class="account-provider-badge-icon" src="${item.provider === "google" ? "/assets/google-g-logo.svg" : "/assets/line-brand-icon.svg"}" alt="">${item.provider === "google" ? "Google" : "LINE"}</span>`).join("")}</div></div></div>
       <div class="account-profile-actions"><button class="button button-secondary" id="edit-display-name" type="button">管理者名を変更</button><button class="button button-ghost" id="account-logout" type="button">ログアウト</button></div>
@@ -308,7 +307,7 @@ function renderDashboard(dashboard) {
 
 async function renderInviteForAuthenticated(dashboard, invite) {
   if (invite?.error) { app.innerHTML = `<section class="account-auth-card"><div class="notice notice-error">${esc(invite.error)}</div><a class="button button-primary button-full" href="/account">アカウントへ</a></section>`; return; }
-  app.innerHTML = `<div class="account-auth-layout"><section class="account-auth-card"><span class="account-eyebrow">ADMIN INVITATION</span><h1>${esc(invite.teamName)}</h1><p>${invite.kind === "transfer" ? "この招待を承認すると、あなたが新しいメイン管理者になります。" : "このチームのサブ管理者として参加します。"}</p><div class="account-current-user">${esc(dashboard.user.displayName)} として承認します</div><button class="button button-primary button-full" id="accept-invite" type="button">招待を承認する</button><a class="button button-secondary button-full" href="/account">キャンセル</a></section></div>`;
+  app.innerHTML = `<div class="account-auth-layout"><section class="account-auth-card"><span class="account-eyebrow">ADMIN INVITATION</span><h1>${esc(invite.teamName)}</h1><p>${invite.kind === "transfer" ? "この招待を承認すると、あなたが新しいメイン管理者になります。" : "このチームのサブ管理者として参加します。"}</p>${dashboard.user.needsDisplayNameReview ? `<div class="notice notice-info"><strong>先に管理者名を確認してください</strong><br>チーム内にはハンドルネームが表示されます。<br><a class="button button-primary button-full" href="/account?reviewName=1&returnTo=${encodeURIComponent(`/join-admin/${inviteToken}`)}">名前を確認・変更する</a></div>` : ""}<div class="account-current-user">${esc(dashboard.user.displayName)} として承認します</div><button class="button button-primary button-full" id="accept-invite" type="button" ${dashboard.user.needsDisplayNameReview ? "disabled" : ""}>招待を承認する</button><a class="button button-secondary button-full" href="/account">キャンセル</a></section></div>`;
   document.querySelector("#accept-invite")?.addEventListener("click", async (event) => {
     event.currentTarget.disabled = true; event.currentTarget.textContent = "承認しています…";
     const { response, data } = await requestJson(`/api/account/invites/${encodeURIComponent(inviteToken)}/accept`, { method: "POST" });

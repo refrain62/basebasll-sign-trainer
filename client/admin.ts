@@ -327,34 +327,13 @@ async function wireOAuthAvailability(root: ParentNode = document) {
       link.classList.toggle("is-disabled", !enabled);
       link.setAttribute("aria-disabled", enabled ? "false" : "true");
       if (!enabled) { link.dataset.oauthHref = link.getAttribute("href") || ""; link.removeAttribute("href"); }
-
-      const handleInputId = String(link.dataset.oauthHandleInput || "");
-      if (handleInputId && link.dataset.oauthHandleWired !== "true") {
-        link.dataset.oauthHandleWired = "true";
-        link.addEventListener("click", (event) => {
-          if (link.getAttribute("aria-disabled") === "true") return;
-          const input = document.getElementById(handleInputId) as HTMLInputElement | null;
-          const handle = String(input?.value || "").trim();
-          if (!handle) {
-            event.preventDefault();
-            input?.focus();
-            input?.reportValidity();
-            return;
-          }
-          const href = link.getAttribute("href");
-          if (!href) return;
-          const next = new URL(href, location.origin);
-          next.searchParams.set("handle", handle);
-          link.setAttribute("href", `${next.pathname}${next.search}`);
-        });
-      }
     }
   } catch {
     for (const link of links) link.classList.add("is-disabled");
   }
 }
 
-function adminOAuthButtons({ intent = "login", teamId = "", returnTo = "", handleInputId = "" } = {}) {
+function adminOAuthButtons({ intent = "login", teamId = "", returnTo = "" } = {}) {
   const query = new URLSearchParams({ intent });
   if (teamId) query.set("teamId", teamId);
   if (returnTo) query.set("returnTo", returnTo);
@@ -363,10 +342,9 @@ function adminOAuthButtons({ intent = "login", teamId = "", returnTo = "", handl
     query.set("privacy", PRIVACY_VERSION);
   }
   const suffix = intent === "reauth" ? "で本人確認" : "で続ける";
-  const handleAttr = handleInputId ? ` data-oauth-handle-input="${esc(handleInputId)}"` : "";
   return `<div class="admin-oauth-actions">
-    <a class="button button-secondary admin-oauth-button" data-oauth-provider="google"${handleAttr} href="/api/account/oauth/google/start?${query}"><img class="oauth-brand-icon" src="/assets/google-g-logo.svg" alt="">Google${suffix}</a>
-    <a class="button admin-oauth-button admin-oauth-button--line" data-oauth-provider="line"${handleAttr} href="/api/account/oauth/line/start?${query}"><img class="oauth-brand-icon oauth-brand-icon--line" src="/assets/line-login-icon.svg" alt="">LINE${suffix}</a>
+    <a class="button button-secondary admin-oauth-button" data-oauth-provider="google" href="/api/account/oauth/google/start?${query}"><img class="oauth-brand-icon" src="/assets/google-g-logo.svg" alt="">Google${suffix}</a>
+    <a class="button admin-oauth-button admin-oauth-button--line" data-oauth-provider="line" href="/api/account/oauth/line/start?${query}"><img class="oauth-brand-icon oauth-brand-icon--line" src="/assets/line-login-icon.svg" alt="">LINE${suffix}</a>
   </div>`;
 }
 
@@ -882,7 +860,7 @@ async function loadTeamAdminLoginNotices() {
 
 function renderTeamAdminLogin(teamId, { teamName = "", error = "", accountManaged = false, legacyPasswordEnabled = true } = {}) {
   const returnTo = teamAdminCurrentPath(teamId);
-  const oauth = accountManaged ? `<div class="admin-account-login"><h2>管理者アカウントでログイン</h2><p class="admin-help">登録済みのGoogle / LINEアカウントを使います。</p><label class="auth-handle-label">管理者名（ハンドルネーム）<input class="text-input" id="team-admin-login-handle" maxlength="40" autocomplete="nickname" placeholder="例：コーチA" required><small>チーム内で表示する名前です。既存アカウントでは、ここで入力した名前に更新されます。</small></label>${adminOAuthButtons({ intent: "login", returnTo, handleInputId: "team-admin-login-handle" })}<p class="admin-help">続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p></div>` : "";
+  const oauth = accountManaged ? `<div class="admin-account-login"><h2>管理者アカウントでログイン</h2><p class="admin-help">登録済みのGoogle / LINEアカウントを使います。ログイン後、チーム内で表示する管理者名を確認・変更できます。</p>${adminOAuthButtons({ intent: "login", returnTo })}<p class="admin-help">続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p></div>` : "";
   const passwordForm = legacyPasswordEnabled ? `<form id="team-admin-login-form" class="admin-form">
       <label>管理者パスワード<input class="text-input" id="team-admin-password" type="password" autocomplete="current-password" required></label>
       <p class="admin-help">${accountManaged ? "以前の共有パスワードでもログインできます。安全性のため、アカウント移行後は無効化を推奨します。" : "ログイン後にGoogle / LINEアカウントへ移行できます。"}</p>
@@ -913,7 +891,7 @@ function renderTeamAdminLogin(teamId, { teamName = "", error = "", accountManage
 function adminIdentitySection(teamId, team, auth, management) {
   if (auth?.type === "legacy-password") {
     return `<section class="admin-card admin-identity-card">
-      <div class="admin-migration-callout"><div><h2>管理者アカウントへ移行</h2><p>現在は共有パスワードで管理しています。Google / LINEを連携すると、管理者の追加・交代・退会をアカウント単位で安全に行えます。移行完了時に旧共有パスワードは自動で無効化され、既存のサインや動画はそのままです。</p></div><label class="auth-handle-label">管理者名（ハンドルネーム）<input class="text-input" id="team-admin-claim-handle" maxlength="40" autocomplete="nickname" placeholder="例：監督" required><small>ほかの管理者に表示する名前です。メールアドレスは本人以外には表示しません。</small></label>${adminOAuthButtons({ intent: "claim-team", teamId, returnTo: teamAdminCurrentPath(teamId), handleInputId: "team-admin-claim-handle" })}<p class="admin-help">移行を続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p></div>
+      <div class="admin-migration-callout"><div><h2>管理者アカウントへ移行</h2><p>現在は共有パスワードで管理しています。Google / LINEを連携すると、管理者の追加・交代・退会をアカウント単位で安全に行えます。移行完了時に旧共有パスワードは自動で無効化され、既存のサインや動画はそのままです。ログイン後に管理者名を確認・変更できます。</p></div>${adminOAuthButtons({ intent: "claim-team", teamId, returnTo: teamAdminCurrentPath(teamId) })}<p class="admin-help">移行を続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p></div>
     </section>`;
   }
   if (auth?.type !== "account" || !management) return "";
@@ -962,7 +940,7 @@ function showInviteResult(teamId, invite, label) {
 function openAdminInviteModal(teamId) {
   openAdminModal({
     title: "サブ管理者を招待",
-    body: `<div id="admin-modal-error"></div><p class="admin-modal-lead">招待する人だけにワンタイムリンクを送ります。相手はハンドルネームを設定してからGoogle / LINEで本人認証し、サブ管理者になります。メールアドレスは本人以外の管理者には表示しません。</p><form id="admin-invite-form" class="admin-form"><label>リンクの有効時間<select class="text-input" name="expiresHours"><option value="24">24時間</option><option value="48">48時間</option><option value="72">72時間</option></select></label><button class="button button-primary button-full" type="submit">招待リンクを発行</button></form>`,
+    body: `<div id="admin-modal-error"></div><p class="admin-modal-lead">招待する人だけにワンタイムリンクを送ります。相手はGoogle / LINEで本人認証したあと、ハンドルネームを確認してサブ管理者になります。メールアドレスは本人以外の管理者には表示しません。</p><form id="admin-invite-form" class="admin-form"><label>リンクの有効時間<select class="text-input" name="expiresHours"><option value="24">24時間</option><option value="48">48時間</option><option value="72">72時間</option></select></label><button class="button button-primary button-full" type="submit">招待リンクを発行</button></form>`,
     onOpen(layer) {
       layer.querySelector("#admin-invite-form")?.addEventListener("submit", async (event) => {
         event.preventDefault(); const fd = new FormData(event.currentTarget as HTMLFormElement); const submit = event.currentTarget.querySelector("button[type=submit]"); setButtonBusy(submit, true, "発行しています…");
@@ -1395,7 +1373,10 @@ async function renderTeamDashboard(teamId, { message = "", view = teamAdminViewF
   else if (view === "notices") viewContent = teamNoticesContent(notices);
   else if (view === "settings") viewContent = teamSettingsContent(team, auth, accountManaged);
   else viewContent = teamDashboardContent(teamId, team, groups, signs, totalVideos, plan, entitlements, notices, auth, adminManagement, activity);
-  const body = `${message ? notice(message, "success") : ""}${teamAdminFrame(teamId, team.name, view, viewContent, notices.length, entitlements, plan.name)}`;
+  const nameReview = auth?.user?.needsDisplayNameReview
+    ? `<div class="notice notice-info admin-name-review-notice"><strong>管理者名を確認してください</strong><br>現在はGoogle / LINEのプロフィール名が入っている場合があります。チーム内で分かりやすいハンドルネームに変更できます。<br><a class="button button-primary" href="/account?reviewName=1&returnTo=${encodeURIComponent(teamAdminCurrentPath(teamId))}">名前を確認・変更する</a></div>`
+    : "";
+  const body = `${message ? notice(message, "success") : ""}${nameReview}${teamAdminFrame(teamId, team.name, view, viewContent, notices.length, entitlements, plan.name)}`;
   shell("チーム管理", body, adminHeaderActions(adminHeaderMenuButton("team-admin-menu-open", "team-admin-mobile-menu-screen"), teamAdminHref(teamId, "notices"), notices.length));
   wireTeamDashboard(teamId, team, groups, signs, playerUrl, auth, adminManagement, entitlements);
   void wireTeamSupportLinks(teamId, team.name, plan.name);

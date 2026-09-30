@@ -70,7 +70,7 @@ export async function teamAdminSession(request, env, url) {
     status: team.status,
     authType: auth?.authType || "",
     role: auth?.teamRole || "",
-    user: auth?.authType === "account" ? { id: auth.user.id, displayName: auth.user.display_name, email: auth.user.email || "", avatarUrl: auth.user.avatar_url || "" } : null,
+    user: auth?.authType === "account" ? { id: auth.user.id, displayName: auth.user.display_name, email: auth.user.email || "", avatarUrl: auth.user.avatar_url || "", needsDisplayNameReview: !auth.user.display_name_reviewed_at } : null,
     legacyPasswordEnabled: Boolean(team.admin_password_enabled),
     accountManaged
   });
@@ -135,7 +135,7 @@ export async function teamAdminGetTeam(request, env, url) {
     auth: {
       type: auth.authType,
       role: auth.teamRole,
-      user: auth.authType === "account" ? { id: auth.user.id, displayName: auth.user.display_name, email: auth.user.email || "", avatarUrl: auth.user.avatar_url || "" } : null
+      user: auth.authType === "account" ? { id: auth.user.id, displayName: auth.user.display_name, email: auth.user.email || "", avatarUrl: auth.user.avatar_url || "", needsDisplayNameReview: !auth.user.display_name_reviewed_at } : null
     },
     adminManagement,
     accountManaged

@@ -226,6 +226,14 @@ export async function accountOAuthCallback(request, env, url, provider) {
       destination = new URL(`/join-admin/${encodeURIComponent(oauthSession.inviteToken)}`, url.origin);
       destination.searchParams.set("authenticated", "1");
     }
+    if (publicUser.needsDisplayNameReview && !["reauth", "delete-account"].includes(String(oauthSession.intent || ""))) {
+      const intended = `${destination.pathname}${destination.search}${destination.hash}`;
+      const review = new URL("/account", url.origin);
+      review.searchParams.set("reviewName", "1");
+      if (intended !== "/account") review.searchParams.set("returnTo", intended);
+      destination = review;
+    }
+
     return redirectResponse(destination.toString(), [clearOauth, loginCookie]);
   } catch (error) {
     console.error("OAuth callback failed", provider, error?.message || error);

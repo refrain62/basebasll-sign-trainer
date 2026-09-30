@@ -26,18 +26,18 @@ describe("latest product rules regression", () => {
     expect(install).not.toContain(">PWA<");
   });
 
-  it("keeps non-production environment warnings and prompts for a handle on OAuth entry points", () => {
+  it("keeps non-production environment warnings and prompts for the handle after OAuth login", () => {
     const account = read("client/account.ts");
     const admin = read("client/admin.ts");
-    const landing = read("client/landing.ts");
-    expect(account).toContain("STAGING 環境");
-    expect(account).toContain("const needsHandle = !invite?.error");
-    expect(account).toContain("管理者名（ハンドルネーム）");
-    expect(admin).toContain('id="team-admin-login-handle"');
-    expect(admin).toContain('id="team-admin-claim-handle"');
-    expect(admin).toContain("data-oauth-handle-input");
-    expect(landing).toContain("ここで登録したチームは本番環境には作成されません。");
-    expect(landing).toContain("register-handle-name");
+    const controller = read("src/controllers/account-controller.ts");
+    const migration = read("migrations/0023_display_name_review.sql");
+    expect(account).toContain("管理者名を確認してください");
+    expect(account).toContain("名前を確認・変更する");
+    expect(account).not.toContain('id="account-register-handle"');
+    expect(admin).not.toContain('id="team-admin-login-handle"');
+    expect(admin).not.toContain('id="team-admin-claim-handle"');
+    expect(controller).toContain('review.searchParams.set("reviewName", "1")');
+    expect(migration).toContain("display_name_reviewed_at");
   });
 
   it("does not expose other administrators' email addresses in team management", () => {

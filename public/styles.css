@@ -5633,3 +5633,12 @@ body.practice-menu-open { overflow: hidden; }
   width: 22px;
   height: 22px;
 }
+
+
+/* One-time post-login administrator name review. */
+.account-name-review-callout { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:18px 20px; border:1px solid #b9d8ed; border-radius:16px; background:#eef8ff; box-shadow:0 8px 24px rgba(23,73,108,.08); }
+.account-name-review-callout h2 { margin:2px 0 5px; font-size:18px; color:#173f5c; }
+.account-name-review-callout p { margin:0; color:#466579; font-size:13px; line-height:1.7; }
+.account-name-review-callout .button { flex:none; }
+.admin-name-review-notice .button { margin-top:10px; }
+@media (max-width: 640px) { .account-name-review-callout { align-items:stretch; flex-direction:column; padding:15px; } .account-name-review-callout .button { width:100%; } }
