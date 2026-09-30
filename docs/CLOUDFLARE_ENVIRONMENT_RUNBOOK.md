@@ -255,10 +255,10 @@ STAGING 環境
 
 Dev / Staging はLP、チーム画面、管理画面、API、静的アセットを含む**Worker全体**をCloudflare Accessで保護します。Worker側でも `Cf-Access-Jwt-Assertion` を検証するため、Cloudflare Accessの設定漏れや不正なJWTがある場合はfail closedで403になります。
 
-Productionは一般公開のままですが、SYSTEM管理画面だけは従来どおりCloudflare Accessを必須にします。
+Productionは一般公開のままです。SYSTEM管理画面にもCloudflare Accessは要求せず、SIGN TRAINER内の `SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで保護します。
 
 ```text
-REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN=true
+REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN=false
 ```
 
 ### 6-2. Dev / Staging のAccess Application
@@ -277,11 +277,11 @@ SIGN TRAINER STAGING
   Path: /*
 ```
 
-Dev / StagingではSYSTEM管理用に別のAccess Applicationを重ねず、環境全体のAccess Applicationをそのまま使用します。SYSTEM管理はさらに `SYSTEM_ADMIN_SECRET` で二重認証されます。
+Dev / StagingではSYSTEM管理用に別のAccess Applicationを重ねず、環境全体のAccess Applicationをそのまま使用します。環境全体Access通過後、SYSTEM管理はさらに `SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで認証されます。
 
 ### 6-3. Workerへ指定する値
 
-`CF_ACCESS_TEAM_DOMAIN` はZero Trust組織のTeam Domainです。通常はDev / Staging / Productionで共通です。
+`CF_ACCESS_TEAM_DOMAIN` はZero Trust組織のTeam Domainです。現在はDev / Stagingの環境全体Accessで使用します。ProductionのSYSTEM管理では使用しません。
 
 ```text
 CF_ACCESS_TEAM_DOMAIN=https://<your-team>.cloudflareaccess.com
@@ -297,7 +297,7 @@ CF_ACCESS_POLICY_AUD=<DEV Worker全体を保護するAccess ApplicationのAUD>
 CF_ACCESS_POLICY_AUD=<STAGING Worker全体を保護するAccess ApplicationのAUD>
 
 # production
-CF_ACCESS_POLICY_AUD=<SYSTEM管理を保護するProduction Access ApplicationのAUD>
+# SYSTEM管理ではCloudflare Accessを使わないためAUDは不要
 ```
 
 Account ID / Application ID / Policy IDではなく、必ず **Application Audience (AUD) tag** を指定します。
@@ -312,11 +312,7 @@ ENVIRONMENT_ACCESS_ALLOWED_EMAILS=user1@example.com,user2@example.com
 
 空欄の場合はCloudflare Access Policy側の許可設定を信頼します。安全上、Dev / StagingではAccess Policy側で必ず対象ユーザーを限定してください。
 
-SYSTEM管理をさらに特定の管理者だけに絞る場合は、別途以下を設定できます。
-
-```text
-SYSTEM_ADMIN_ALLOWED_EMAILS=admin1@example.com,admin2@example.com
-```
+`SYSTEM_ADMIN_ALLOWED_EMAILS` はSYSTEM管理専用のCloudflare Accessゲートを無効化している現在の構成では使用しません。
 
 ### 6-5. fail closedの確認
 
@@ -506,7 +502,7 @@ npm run deploy:prod
 4. サンプルまたは確認用チームページ `/t/{teamId}` が表示される
 5. 合言葉認証が動作する
 6. `/t/{teamId}/admin` が表示される
-7. `/admin` がCloudflare Accessで保護されている
+7. `/admin` が `SYSTEM_ADMIN_SECRET` でログインでき、未認証状態ではSYSTEM管理APIが拒否される
 8. チーム専用manifestが正しいチーム名・`start_url`を返す
 9. 練習開始 → 回答 → 履歴保存まで動く
 10. APIで500系エラーが増えていない

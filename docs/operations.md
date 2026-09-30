@@ -14,7 +14,7 @@
 
 1. `PUBLIC_OPERATOR_NAME` と `PUBLIC_SUPPORT_URL` を本番値へ設定する。
 2. Google / LINE OAuthの本番callback・規約URL・プライバシーURLを確認する。
-3. Dev / StagingはWorker全体をCloudflare Accessで保護し、Productionは `/admin*` と `/api/system/*` を保護する。
+3. Dev / StagingはWorker全体をCloudflare Accessで保護する。ProductionのSYSTEM管理はCloudflare Accessを使わず、`SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで保護する。
 4. Secret（SESSION_SECRET / SYSTEM_ADMIN_SECRET / PASSWORD_PEPPER / DATA_ENCRYPTION_KEY / DATA_LOOKUP_KEY / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / LINE_CHANNEL_ID / LINE_CHANNEL_SECRET）を環境ごとに設定する。Google / LINE OAuthは全環境で必須。
 5. **`0021_plan_content_limits.sql`まで全migrationを適用する。**
 6. `package-lock.json`をGit管理し、`npm ci --ignore-scripts`で再現可能にする。

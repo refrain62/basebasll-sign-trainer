@@ -27,4 +27,14 @@ describe("environment, support and OAuth UI safeguards", () => {
     expect(wrangler.match(/REQUIRE_CF_ACCESS_FOR_ENVIRONMENT/g)?.length).toBeGreaterThanOrEqual(3);
     expect(wrangler.match(/ENVIRONMENT_ACCESS_ALLOWED_EMAILS/g)?.length).toBeGreaterThanOrEqual(3);
   });
+  test("system admin uses app authentication instead of a dedicated Cloudflare Access gate", () => {
+    const wrangler = JSON.parse(readFileSync("wrangler.jsonc", "utf8"));
+    expect(wrangler.vars.REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN).toBe("false");
+    expect(wrangler.env.dev.vars.REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN).toBe("false");
+    expect(wrangler.env.staging.vars.REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN).toBe("false");
+    expect(wrangler.vars.REQUIRE_CF_ACCESS_FOR_ENVIRONMENT).toBe("false");
+    expect(wrangler.env.dev.vars.REQUIRE_CF_ACCESS_FOR_ENVIRONMENT).toBe("true");
+    expect(wrangler.env.staging.vars.REQUIRE_CF_ACCESS_FOR_ENVIRONMENT).toBe("true");
+  });
+
 });

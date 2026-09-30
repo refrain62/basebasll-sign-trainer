@@ -62,10 +62,16 @@ for (const name of requiredSecuritySecrets) {
 if (String(wrangler.vars?.REQUIRE_CF_ACCESS_FOR_ENVIRONMENT || "false") !== "false") {
   failures.push("wrangler production REQUIRE_CF_ACCESS_FOR_ENVIRONMENT must remain false so the public site stays public");
 }
+if (String(wrangler.vars?.REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN || "false") !== "false") {
+  failures.push("wrangler production REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN must remain false; SYSTEM admin uses SYSTEM_ADMIN_SECRET + application session");
+}
 for (const envName of ["dev", "staging"]) {
   const vars = wrangler.env?.[envName]?.vars || {};
   if (String(vars.REQUIRE_CF_ACCESS_FOR_ENVIRONMENT || "false") !== "true") {
     failures.push(`wrangler ${envName} REQUIRE_CF_ACCESS_FOR_ENVIRONMENT must be true`);
+  }
+  if (String(vars.REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN || "false") !== "false") {
+    failures.push(`wrangler ${envName} REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN must be false; environment-wide Access already protects this environment`);
   }
   if (!("ENVIRONMENT_ACCESS_ALLOWED_EMAILS" in vars)) {
     failures.push(`wrangler ${envName} ENVIRONMENT_ACCESS_ALLOWED_EMAILS entry is missing`);

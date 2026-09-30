@@ -85,7 +85,7 @@
 - CSPを縮小し、外部QR画像・外部スクリプト依存を廃止
 - チーム/サイン/動画削除をsoft delete化
 - 管理操作の `audit_log` をD1へ記録
-- production / dev / staging の `/admin` と `/api/system/*` は Cloudflare Access 必須
+- dev / staging はWorker全体でCloudflare Access必須。productionの `/admin` / `/api/system/*` は `SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで保護
 
 ## 重要: package-lock.json
 
@@ -251,12 +251,12 @@ npx wrangler secret put LINE_CHANNEL_SECRET
 
 `SESSION_SECRET` は32文字以上、`SYSTEM_ADMIN_SECRET` は12文字以上かつ英字・数字をそれぞれ1文字以上含む値を必須としています。`PASSWORD_PEPPER` / `DATA_ENCRYPTION_KEY` / `DATA_LOOKUP_KEY` は各32文字以上のランダムな値を環境ごとに別々に設定します。さらに Google OAuth の `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` と LINE Login の `LINE_CHANNEL_ID` / `LINE_CHANNEL_SECRET` を全環境で必須設定とします。`npm run security:generate-secrets` で基本Secretの候補値を生成できます。
 
-## Cloudflare Access（必須）
+## Cloudflare Access（Dev / Stagingのみ）
 
 公開方針は環境ごとに分けています。
 
 - **dev / staging**: 一般公開しません。LP・チーム画面・管理画面・API・静的アセットを含むWorker全体をCloudflare Accessで保護します。
-- **production**: 一般公開します。ただし `/admin*` と `/api/system/*` はCloudflare Access必須です。
+- **production**: 一般公開します。SYSTEM管理 (`/admin*` / `/api/system/*`) もCloudflare Accessは要求せず、`SYSTEM_ADMIN_SECRET` + SIGN TRAINERのSYSTEM管理セッションで認証します。
 - **local**: `localhost` / `127.0.0.1` は開発用に環境全体のAccess検証をスキップします。
 
 `wrangler.jsonc` ではdev / stagingに次を設定済みです。
@@ -271,15 +271,15 @@ Productionは公開サイトなので次のままです。
 REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=false
 ```
 
-SYSTEM管理については3つのremote環境で引き続き次を有効にします。
+SYSTEM管理専用のCloudflare Accessゲートは使用しません。3環境とも次を設定します。
 
 ```text
-REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN=true
+REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN=false
 ```
 
-Dev / Stagingは環境ごとにWorker全体を対象とするAccess Applicationを1つ作り、そのAllow policyで接続可能なメール/IdPユーザーを限定してください。Worker側でも `Cf-Access-Jwt-Assertion` を **RS256署名・issuer・audience・有効期限まで検証**します。
+ProductionのSYSTEM管理は `SYSTEM_ADMIN_SECRET` + HttpOnlyのSYSTEM管理セッションで保護します。Dev / Stagingは環境ごとにWorker全体を対象とするAccess Applicationを1つ作り、そのAllow policyで接続可能なメール/IdPユーザーを限定してください。Worker側でも環境全体の `Cf-Access-Jwt-Assertion` を **RS256署名・issuer・audience・有効期限まで検証**します。
 
-Access JWT検証には次の2つを各remote環境で設定してください。値自体はSecretではありません。
+Access JWT検証には次の2つを **Dev / Staging** で設定してください。値自体はSecretではありません。ProductionのSYSTEM管理では使用しません。
 
 ```text
 CF_ACCESS_TEAM_DOMAIN=https://<your-team>.cloudflareaccess.com
@@ -292,7 +292,7 @@ Dev / StagingでAccess policyに加えてWorker側でも利用者を絞る場合
 ENVIRONMENT_ACCESS_ALLOWED_EMAILS=user1@example.com,user2@example.com
 ```
 
-空欄の場合はAccess policy側の許可設定を信頼します。SYSTEM管理だけをさらに限定する場合は `SYSTEM_ADMIN_ALLOWED_EMAILS` を使用します。
+空欄の場合はAccess policy側の許可設定を信頼します。`SYSTEM_ADMIN_ALLOWED_EMAILS` はSYSTEM管理専用Accessゲートを無効化している現在の構成では使用しません。
 
 Dev / StagingではAccess tokenがない、Team Domain / AUDが未設定、不正JWT、許可外メールのいずれも**Worker全体をfail closed (403)**します。Productionの一般公開ページには環境全体Accessを掛けません。
 
@@ -321,7 +321,7 @@ npm run deploy:prod
 1. 選手用合言葉 — `/t/{teamId}`
 2. 管理者アカウント — Google / LINE OAuth + SIGN TRAINER account session — `/account`
 3. 既存チーム用の旧管理者パスワード — `/t/{teamId}/admin`（移行互換。任意で無効化可能）
-4. システム管理者 — Cloudflare Access + `SYSTEM_ADMIN_SECRET` — `/admin`
+4. システム管理者 — `SYSTEM_ADMIN_SECRET` + SYSTEM管理セッション — `/admin`
 
 旧チーム管理者パスワードは新規設定/変更時 **12文字以上＋英字1文字以上＋数字1文字以上**です。記号は必須ではありません。LPから新規登録したチームは共有管理者パスワードを作らず、最初に認証したアカウントがオーナーになります。
 
@@ -945,7 +945,7 @@ build 93でモバイル時の3枚サマリーを1列化していましたが、�
 
 ## build 96: システム管理画面も目的別ページへ分割
 
-チーム管理画面で行った情報設計の見直しをシステム管理側にも適用しました。`/admin` は登録チーム数・利用中チーム数・登録サイン数と主要機能への入口だけを表示するダッシュボードにし、`/admin/teams` へチーム登録・編集・停止/再開、`/admin/security` へ既存データ保護、`/admin/notices` へ更新・運用上のお知らせを分離しています。PCは左メニュー、スマホはハンバーガーから全画面メニューを開きます。従来の `/register` は互換性のためチーム管理を開いて登録モーダルを表示します。Cloudflare Accessの保護対象にも `/admin/*` を含めています。
+チーム管理画面で行った情報設計の見直しをシステム管理側にも適用しました。`/admin` は登録チーム数・利用中チーム数・登録サイン数と主要機能への入口だけを表示するダッシュボードにし、`/admin/teams` へチーム登録・編集・停止/再開、`/admin/security` へ既存データ保護、`/admin/notices` へ更新・運用上のお知らせを分離しています。PCは左メニュー、スマホはハンバーガーから全画面メニューを開きます。従来の `/register` は互換性のためチーム管理を開いて登録モーダルを表示します。ProductionのSYSTEM管理は `SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで保護します。Dev / Stagingでは環境全体のCloudflare Accessを通過したうえで利用します。
 
 ## v1.5.24: 動画サムネイル・限定機能整理・成績分析導線
 
