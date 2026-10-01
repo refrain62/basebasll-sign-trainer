@@ -1095,6 +1095,9 @@ function teamNoticeList(notices, { limit = 0 } = {}) {
 function auditActionLabel(item) {
   const labels = {
     "auth.success": "共有管理者パスワードでログイン",
+    "auth.account.success": "管理者アカウントでログイン",
+    "team.create": "チームを作成",
+    "team.self_register": "チームを作成",
     "team.update": "チーム設定を変更",
     "group.create": "サイングループを追加",
     "group.update": "サイングループを編集",
@@ -1105,20 +1108,39 @@ function auditActionLabel(item) {
     "video.create": "サイン動画を追加",
     "video.update": "サイン動画を編集",
     "video.soft_delete": "サイン動画を削除",
-    "admin.invite.create": "サブ管理者の招待を作成",
-    "admin.invite.revoke": "管理者招待を取り消し",
-    "admin.invite.accept": "サブ管理者の招待を承認",
+    "admin.display_name.update": "このチームでの管理者名を変更",
+    "account.create": "管理者アカウントを作成",
+    "account.display_name.update": "基本の管理者名を変更",
+    "account.delete": "管理者アカウントを削除",
+    "admin.invite.create": "サブ管理者を招待",
+    "admin.invite.revoke": "サブ管理者の招待を取り消し",
+    "admin.invite.accept": "サブ管理者として参加",
     "admin.remove": "サブ管理者を解除",
     "admin.leave": "チーム管理者から退会",
-    "owner.transfer": "メイン管理者を交代",
-    "owner.transfer.accept": "メイン管理者の交代を承認",
+    "owner.transfer": "メイン管理者の交代を開始",
+    "owner.transfer.accept": "メイン管理者の交代を完了",
     "legacy_admin_password.disable": "旧管理者パスワードを無効化",
     "team.claim": "管理者アカウントへ移行",
     "team.withdraw": "チームを退会",
     "team.restore": "退会済みチームを復活",
-    "plan.change": "チームプランを変更"
+    "plan.change": "チームプランを変更",
+    "notice.create": "お知らせを作成",
+    "notice.update": "お知らせを変更",
+    "notice.delete": "お知らせを削除",
+    "data_protection.migrate": "保存データの保護処理を実行"
   };
-  return labels[item?.action] || String(item?.action || "操作を実行");
+  const action = String(item?.action || "");
+  if (labels[action]) return labels[action];
+  if (action.includes("display_name")) return "管理者名を変更";
+  if (action.startsWith("admin.invite.")) return "管理者の招待を変更";
+  if (action.startsWith("owner.transfer")) return "メイン管理者の交代を変更";
+  if (action.startsWith("group.")) return "サイングループを変更";
+  if (action.startsWith("sign.")) return "サインを変更";
+  if (action.startsWith("video.")) return "サイン動画を変更";
+  if (action.startsWith("team.")) return "チーム設定を変更";
+  if (action.startsWith("plan.")) return "チームプランを変更";
+  if (action.startsWith("auth.")) return "管理画面にログイン";
+  return "管理設定を変更";
 }
 
 function activityTargetLabel(item, signs = [], groups = []) {
@@ -1128,6 +1150,9 @@ function activityTargetLabel(item, signs = [], groups = []) {
   if (item?.targetType === "video") return id ? `動画 #${id}` : "動画";
   if (item?.targetType === "team") return "チーム";
   if (item?.targetType === "user") return "管理者アカウント";
+  if (item?.targetType === "admin-invite") return "管理者招待";
+  if (item?.targetType === "system_notice") return "運営からのお知らせ";
+  if (item?.targetType === "system") return "システム設定";
   return "";
 }
 
