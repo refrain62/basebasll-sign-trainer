@@ -37,7 +37,7 @@
     "tooling:check": "node --experimental-strip-types scripts/client-source-check.ts && node --experimental-strip-types scripts/check-js.ts && node --experimental-strip-types scripts/image-budget-check.ts && node --experimental-strip-types scripts/route-parity-check.ts && node --experimental-strip-types scripts/architecture-check.ts"
   },
   "devDependencies": {
-    "wrangler": "4.141.0",
+    "wrangler": "4.143.0",
     "typescript": "7.0.2",
     "@types/node": "24.10.15",
     "vite": "8.3.1",
