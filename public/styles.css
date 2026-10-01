@@ -2256,6 +2256,14 @@ svg { display: block; }
 .account-team-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 14px; padding: 16px; border: 1px solid #e0e9e5; border-radius: 17px; background: #fcfefd; }
 .account-team-card h3 { margin: 7px 0 2px; color: #0b304d; font-size: 18px; }
 .account-team-card p { margin: 0; color: #82919a; font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.account-team-card .account-team-admin-name { margin-top: 10px; display: flex; align-items: center; gap: 12px; width: fit-content; max-width: 100%; padding: 9px 10px 9px 12px; border: 1px solid #d8e7df; border-radius: 12px; background: #f5faf7; font-family: inherit; }
+.account-team-admin-name-main { min-width: 0; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.account-team-admin-name-label { color: #617985; font-size: 11px; font-weight: 850; }
+.account-team-admin-name strong { color: #173e55; font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
+.account-team-admin-name-scope { display: inline-flex; align-items: center; min-height: 22px; padding: 2px 7px; border-radius: 999px; background: #e7f5ed; color: #13734d; font-size: 9px; font-weight: 900; white-space: nowrap; }
+.account-inline-edit { min-height: 38px; min-width: 82px; padding: 7px 12px; border: 1px solid #9bcab3; border-radius: 10px; background: #fff; color: #08794b; font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 8px rgba(8,121,75,.06); white-space: nowrap; }
+.account-inline-edit:hover { background: #eaf7f0; border-color: #72b493; }
+.account-inline-edit:focus-visible { outline: 3px solid rgba(8,121,75,.18); outline-offset: 2px; }
 .account-role { padding: 4px 8px; border-radius: 999px; background: #eef2f4; color: #56707e; font-size: 10px; font-weight: 900; }
 .account-role.is-owner { background: #e7f7ee; color: #087549; }
 .account-team-actions { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
@@ -2319,6 +2327,9 @@ svg { display: block; }
   .account-section-heading { display: grid; }
   .account-section-heading > .button { width: 100%; min-height: 50px; }
   .account-team-card { grid-template-columns: 1fr; }
+  .account-team-card .account-team-admin-name { width: 100%; justify-content: space-between; }
+  .account-team-admin-name-main { flex: 1; }
+  .account-inline-edit { min-height: 42px; min-width: 96px; }
   .account-team-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .account-team-actions .button { width: 100%; }
   .account-danger-panel { display: grid; }

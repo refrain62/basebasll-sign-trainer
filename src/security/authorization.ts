@@ -40,7 +40,7 @@ export async function requireTeamAdmin(request, env, teamId) {
     const membership = await createAdminMembershipRepository(env.DB, createDataProtectorFromEnv(env)).find(teamId, account.userId);
     if (membership) {
       if (membership.role === "admin" && !(await teamFeatureEnabled(env, teamId, FEATURE_KEYS.SUB_ADMIN_MANAGEMENT))) return null;
-      return { ...account, authType: "account", teamId, teamRole: membership.role };
+      return { ...account, authType: "account", teamId, teamRole: membership.role, teamDisplayName: membership.display_name || account.user.display_name };
     }
   }
 
@@ -52,7 +52,7 @@ export async function requireTeamOwner(request, env, teamId) {
   if (!account) return null;
   const membership = await createAdminMembershipRepository(env.DB, createDataProtectorFromEnv(env)).find(teamId, account.userId);
   if (!membership || membership.role !== "owner") return null;
-  return { ...account, authType: "account", teamId, teamRole: "owner" };
+  return { ...account, authType: "account", teamId, teamRole: "owner", teamDisplayName: membership.display_name || account.user.display_name };
 }
 
 export async function requireSystem(request, env) {

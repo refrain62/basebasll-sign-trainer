@@ -45,6 +45,7 @@ enc:v1:<12-byte-iv-base64url>:<ciphertext+tag-base64url>
 - `teams.name`
 - `app_users.display_name / email / avatar_url`
 - `user_identities.provider_email / display_name / avatar_url`
+- `team_admin_memberships.display_name` — チームごとの管理者名（例: 「太郎 父」）
 - `user_identities.provider_subject` の原値（`provider_subject_ciphertext`）
 - `signs.name`
 - `sign_groups.name / description / explanation_youtube_url / explanation_youtube_video_id`

@@ -15,7 +15,8 @@ function fixture() {
     async hasAny() { return members.size > 0; },
     async countByRole(_teamId, role) { return [...members.values()].filter((m) => m.role === role).length; },
     async add({ userId, role }) { members.set(userId, { team_id: "T1", user_id: userId, role }); },
-    async listForTeam() { return [...members.values()].map((m) => ({ userId: m.user_id, role: m.role, displayName: m.user_id, email: `${m.user_id}@example.com` })); },
+    async listForTeam() { return [...members.values()].map((m) => ({ userId: m.user_id, role: m.role, displayName: m.display_name || m.user_id, usesTeamDisplayName: Boolean(m.display_name), email: `${m.user_id}@example.com` })); },
+    async updateDisplayName(_teamId, userId, displayName) { const current = members.get(userId); if (current) current.display_name = displayName; calls.push(["displayName", userId, displayName]); },
     async remove(_teamId, userId) { calls.push(["remove", userId]); members.delete(userId); }
   };
   const inviteRepository = {
@@ -138,6 +139,15 @@ test("management only exposes the signed-in administrator's own email address", 
   const adminView = await fx.service.management("T1", "admin");
   assert.equal(adminView.members.find((member) => member.userId === "admin")?.email, "admin@example.com");
   assert.equal(adminView.members.find((member) => member.userId === "owner")?.email, "");
+});
+
+test("an administrator can set a team-specific display name without changing another membership", async () => {
+  const fx = fixture();
+  const result = await fx.service.updateOwnDisplayName("T1", "owner", "太郎・花子 父");
+  assert.deepEqual(result, { displayName: "太郎・花子 父" });
+  assert.equal(fx.members.get("owner")?.display_name, "太郎・花子 父");
+  assert.equal(fx.members.get("admin")?.display_name, undefined);
+  assert.ok(fx.calls.some(([name, userId, displayName]) => name === "displayName" && userId === "owner" && displayName === "太郎・花子 父"));
 });
 
 test("owner transfer that keeps the previous owner refuses a sixth sub administrator", async () => {

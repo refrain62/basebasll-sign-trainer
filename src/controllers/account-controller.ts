@@ -254,6 +254,21 @@ export async function accountUpdateProfile(request, env) {
   }
 }
 
+export async function accountUpdateTeamDisplayName(request, env, rawTeamId) {
+  const session = await requireUser(request, env);
+  if (!session) return apiJson({ error: "unauthorized" }, 401);
+  const teamId = normalizeTeamId(rawTeamId);
+  if (!teamId) return apiJson({ error: "invalid_team_id", message: "チームが見つかりません。" }, 404);
+  const parsed = await parseJsonBody(request, accountUpdateProfileBodySchema);
+  if (parsed.response) return parsed.response;
+  try {
+    const result = await createServices(env.DB, env).adminMembership.updateOwnDisplayName(teamId, session.userId, parsed.data.displayName);
+    return apiJson({ ok: true, teamId, ...result });
+  } catch (error) {
+    return serviceErrorResponse(error);
+  }
+}
+
 export async function accountCreateTeam(request, env) {
   const session = await requireUser(request, env);
   if (!session) return apiJson({ error: "unauthorized" }, 401);

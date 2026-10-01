@@ -1,4 +1,4 @@
-import { randomId } from "../validation/common.ts";
+import { cleanName, randomId } from "../validation/common.ts";
 import { randomToken, sha256Token } from "../security/tokens.ts";
 import { ServiceError } from "./errors.ts";
 import { MAX_SUB_ADMINS } from "../config/constants.ts";
@@ -97,6 +97,17 @@ export function createAdminMembershipService({
       if (!claimed) throw new ServiceError("team_already_claimed", "このチームにはすでにアカウント管理者が設定されています。", 409);
       await auditRepository.record("account-owner", teamId, "team.claim", "team", teamId, { userId, legacyPasswordDisabled: true }, userId);
       return membershipRepository.find(teamId, userId);
+    },
+
+
+    async updateOwnDisplayName(teamId, userId, value) {
+      const current = await membership(teamId, userId);
+      if (!current) throw new ServiceError("membership_not_found", "このチームの管理者ではありません。", 404);
+      const displayName = cleanName(value, 40);
+      if (!displayName) throw new ServiceError("invalid_display_name", "このチームで表示する管理者名を入力してください。", 400);
+      await membershipRepository.updateDisplayName(teamId, userId, displayName);
+      await auditRepository.record("account", teamId, "admin.display_name.update", "user", userId, { changed: true }, userId);
+      return { displayName };
     },
 
     async createInvite(teamId, userId, input) {

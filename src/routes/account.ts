@@ -11,7 +11,8 @@ import {
   accountOAuthStart,
   accountProviders,
   accountSession,
-  accountUpdateProfile
+  accountUpdateProfile,
+  accountUpdateTeamDisplayName
 } from "../controllers/account-controller.ts";
 
 const accountRoutes = new Hono<AppEnv>();
@@ -29,6 +30,7 @@ accountRoutes.get("/providers", (c) => accountProviders(c.req.raw, c.env));
 accountRoutes.get("/session", (c) => accountSession(c.req.raw, c.env));
 accountRoutes.post("/logout", (c) => accountLogout(c.req.raw, c.env, requestUrl(c)));
 accountRoutes.post("/teams", (c) => accountCreateTeam(c.req.raw, c.env));
+accountRoutes.patch("/teams/:teamId/display-name", (c) => accountUpdateTeamDisplayName(c.req.raw, c.env, c.req.param("teamId")));
 accountRoutes.patch("/profile", (c) => accountUpdateProfile(c.req.raw, c.env));
 accountRoutes.delete("/account", (c) => accountDelete(c.req.raw, c.env, requestUrl(c)));
 

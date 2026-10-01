@@ -13,7 +13,7 @@ import { cookieValue, createSessionToken, isFreshAccountSession, nowSeconds, rea
 import { createServices } from "../services/service-factory.ts";
 import { normalizeTeamId, positiveNumber } from "../validation/common.ts";
 import { parseJsonBody } from "../validation/request.ts";
-import { adminInviteBodySchema, groupCreateBodySchema, groupUpdateBodySchema, ownerTransferBodySchema, signCreateBodySchema, signUpdateBodySchema, teamAdminAuthBodySchema, teamAdminDeleteTeamBodySchema, teamAdminUpdateTeamBodySchema, videoCreateBodySchema, videoUpdateBodySchema } from "../validation/schemas.ts";
+import { adminInviteBodySchema, groupCreateBodySchema, groupUpdateBodySchema, ownerTransferBodySchema, signCreateBodySchema, signUpdateBodySchema, teamAdminAuthBodySchema, teamAdminDeleteTeamBodySchema, teamAdminDisplayNameBodySchema, teamAdminUpdateTeamBodySchema, videoCreateBodySchema, videoUpdateBodySchema } from "../validation/schemas.ts";
 
 function requestTeamId(body, url) {
   return normalizeTeamId(body?.teamId || url.searchParams.get("teamId"));
@@ -23,6 +23,18 @@ async function authorizedTeamId(request, env, body, url) {
   const teamId = requestTeamId(body, url);
   if (!teamId || !(await requireTeamAdmin(request, env, teamId))) return "";
   return teamId;
+}
+
+
+function teamAccountUser(auth) {
+  if (!auth || auth.authType !== "account") return null;
+  return {
+    id: auth.user.id,
+    displayName: auth.teamDisplayName || auth.user.display_name,
+    email: auth.user.email || "",
+    avatarUrl: auth.user.avatar_url || "",
+    needsDisplayNameReview: !auth.user.display_name_reviewed_at
+  };
 }
 
 function auditActorFromAuth(auth) {
@@ -70,7 +82,7 @@ export async function teamAdminSession(request, env, url) {
     status: team.status,
     authType: auth?.authType || "",
     role: auth?.teamRole || "",
-    user: auth?.authType === "account" ? { id: auth.user.id, displayName: auth.user.display_name, email: auth.user.email || "", avatarUrl: auth.user.avatar_url || "", needsDisplayNameReview: !auth.user.display_name_reviewed_at } : null,
+    user: teamAccountUser(auth),
     legacyPasswordEnabled: Boolean(team.admin_password_enabled),
     accountManaged
   });
@@ -135,7 +147,7 @@ export async function teamAdminGetTeam(request, env, url) {
     auth: {
       type: auth.authType,
       role: auth.teamRole,
-      user: auth.authType === "account" ? { id: auth.user.id, displayName: auth.user.display_name, email: auth.user.email || "", avatarUrl: auth.user.avatar_url || "", needsDisplayNameReview: !auth.user.display_name_reviewed_at } : null
+      user: teamAccountUser(auth)
     },
     adminManagement,
     accountManaged
@@ -150,8 +162,9 @@ export async function teamAdminActivity(request, env, url) {
     const services = createServices(env.DB, env);
     await services.entitlements.assertFeature(teamId, FEATURE_KEYS.ACTIVITY_LOG, "最近のアクティビティはPro機能です。");
     const rows = await services.repositories.auditRepository.listTeam(teamId, 150);
-    const names = new Map();
+    const names = new Map((await services.repositories.membershipRepository.listForTeam(teamId)).map((member) => [member.userId, member.displayName]));
     for (const userId of [...new Set(rows.map((row) => row.actorUserId).filter(Boolean))]) {
+      if (names.has(userId)) continue;
       const user = await services.repositories.userRepository.findById(userId);
       names.set(userId, user?.display_name || "退会済み管理者");
     }
@@ -413,6 +426,17 @@ export async function teamAdminTransferOwner(request, env, url) {
   if (!isFreshAccountSession(owner)) return freshAuthRequired(owner, teamId);
   try {
     return apiJson(await createServices(env.DB, env).adminMembership.transferToExisting(teamId, owner.userId, String(body?.nextOwnerUserId || ""), Boolean(body?.currentOwnerExit)));
+  } catch (error) { return serviceErrorResponse(error); }
+}
+
+export async function teamAdminUpdateDisplayName(request, env, url) {
+  const parsed = await parseJsonBody(request, teamAdminDisplayNameBodySchema);
+  if (parsed.response) return parsed.response;
+  const teamId = requestTeamId(parsed.data, url);
+  const auth = teamId ? await requireTeamAdmin(request, env, teamId) : null;
+  if (!teamId || !auth || auth.authType !== "account") return apiJson({ error: "account_required", message: "アカウント管理者のみ管理者名を変更できます。" }, 403);
+  try {
+    return apiJson(await createServices(env.DB, env).adminMembership.updateOwnDisplayName(teamId, auth.userId, parsed.data.displayName));
   } catch (error) { return serviceErrorResponse(error); }
 }
 

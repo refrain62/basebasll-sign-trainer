@@ -903,19 +903,22 @@ function adminIdentitySection(teamId, team, auth, management) {
   const subAdminSlotsRemaining = Number.isFinite(Number(management.subAdminSlotsRemaining)) ? Number(management.subAdminSlotsRemaining) : Math.max(0, maxSubAdmins - admins.length - pendingSubAdminInvites);
   const canInviteSubAdmin = management.canInviteSubAdmin !== false && subAdminSlotsRemaining > 0;
   const currentUserId = String(auth?.user?.id || "");
+  const currentMember = members.find((member) => String(member.userId || "") === currentUserId) || null;
   const memberRows = members.map((member) => {
     const isSelf = String(member.userId || "") === currentUserId;
     const privateContact = isSelf
       ? `<small>${esc(member.email || "メールアドレス未取得")}（自分だけに表示）</small>`
       : `<small>メールアドレス非公開</small>`;
+    const teamNameState = isSelf ? `<small>${member.usesTeamDisplayName ? "このチーム専用の管理者名" : "基本の管理者名を使用中"}</small>` : "";
     return `<div class="admin-identity-row">
-      <div class="admin-identity-person"><span class="admin-identity-avatar">${esc((member.displayName || "管").slice(0,1))}</span><div><strong>${esc(member.displayName || "管理者")}${isSelf ? `（自分）` : ""}</strong>${privateContact}</div></div>
-      <div class="admin-card-actions"><span class="${member.role === "owner" ? "admin-owner-badge" : "admin-admin-badge"}">${member.role === "owner" ? "メイン管理者" : "サブ管理者"}</span>${owner && member.role === "admin" ? `<button class="button button-ghost" data-remove-admin="${esc(member.userId)}" type="button">サブ管理者から外す</button>` : ""}</div>
+      <div class="admin-identity-person"><span class="admin-identity-avatar">${esc((member.displayName || "管").slice(0,1))}</span><div><strong>${esc(member.displayName || "管理者")}${isSelf ? `（自分）` : ""}</strong>${privateContact}${teamNameState}</div></div>
+      <div class="admin-card-actions"><span class="${member.role === "owner" ? "admin-owner-badge" : "admin-admin-badge"}">${member.role === "owner" ? "メイン管理者" : "サブ管理者"}</span>${isSelf ? `<button class="button button-ghost" data-edit-team-admin-name="${esc(member.displayName || "")}" type="button">このチームでの名前を変更</button>` : ""}${owner && member.role === "admin" ? `<button class="button button-ghost" data-remove-admin="${esc(member.userId)}" type="button">サブ管理者から外す</button>` : ""}</div>
     </div>`;
   }).join("");
   const pending = (management.pendingInvites || []).map((invite) => `<div class="admin-identity-row"><div><strong>${invite.kind === "transfer" ? "メイン管理者交代" : "サブ管理者招待"}</strong><small>有効期限 ${esc(formatDate(new Date(Number(invite.expires_at) * 1000).toISOString()))}</small></div><button class="button button-ghost" data-revoke-invite="${esc(invite.id)}" type="button">取り消す</button></div>`).join("");
   return `<section class="admin-card admin-identity-card">
-    <div class="admin-identity-header"><div><h2>管理者と権限</h2><p class="admin-section-caption">メイン管理者は1名、サブ管理者は最大${maxSubAdmins}名。管理者ごとにGoogle / LINEで本人認証します。</p></div><a class="button button-secondary" href="/account">マイアカウント</a></div>
+    <div class="admin-identity-header"><div><h2>管理者と権限</h2><p class="admin-section-caption">メイン管理者は1名、サブ管理者は最大${maxSubAdmins}名。管理者名はチームごとに変えられます。</p></div><a class="button button-secondary" href="/account">マイアカウント</a></div>
+    ${currentMember ? `<div class="notice notice-info"><strong>このチーム専用の管理者名を設定できます</strong><br>兄弟で別チームに参加している場合は「太郎 父」「花子 父」、同じチームなら「太郎・花子 父」のように分けられます。</div>` : ""}
     <div class="admin-admin-capacity"><strong>サブ管理者 ${admins.length} / ${maxSubAdmins}</strong><span>${pendingSubAdminInvites ? `承認待ち ${pendingSubAdminInvites}名 · ` : ""}追加可能 ${subAdminSlotsRemaining}名</span></div>
     <div class="admin-identity-list">${memberRows}</div>
     ${pending ? `<div class="admin-section-subtitle"><strong>承認待ちの招待</strong></div><div class="admin-identity-list">${pending}</div>` : ""}
@@ -923,6 +926,28 @@ function adminIdentitySection(teamId, team, auth, management) {
     ${owner && !canInviteSubAdmin ? `<p class="admin-help">サブ管理者は最大${maxSubAdmins}名です。承認待ちの招待を取り消すか、既存のサブ管理者を外すと新しく招待できます。</p>` : ""}
     ${owner && management.legacyPasswordEnabled ? `<p class="admin-help">アカウント移行が確認できたら旧管理者パスワードを無効化すると、共有パスワードを知る人からのアクセスを止められます。</p>` : ""}
   </section>`;
+}
+
+function openTeamAdminDisplayNameModal(teamId, currentName = "") {
+  openAdminModal({
+    title: "このチームでの管理者名",
+    body: `<div id="admin-modal-error"></div><p class="admin-modal-lead">この名前は、このチームの管理画面・管理者一覧・招待表示・アクティビティ表示で使います。ほかのチームの名前は変わりません。</p><form id="team-admin-display-name-form" class="admin-form"><label>管理者名（ハンドルネーム）<input class="text-input" name="displayName" maxlength="40" autocomplete="nickname" value="${esc(currentName)}" placeholder="例：太郎 父 / 太郎・花子 父" required></label><p class="admin-help">子どもごとにチームが違う場合でも、チームごとに別の名前を設定できます。</p><button class="button button-primary button-full" type="submit">このチームの名前を保存</button></form>`,
+    onOpen(layer) {
+      const input = layer.querySelector<HTMLInputElement>('input[name="displayName"]');
+      input?.focus(); input?.select();
+      layer.querySelector("#team-admin-display-name-form")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget as HTMLFormElement;
+        const fd = new FormData(form);
+        const submit = form.querySelector("button[type=submit]");
+        setButtonBusy(submit, true, "保存しています…");
+        const { response, data } = await requestJson("/api/team-admin/membership/display-name", { method: "PATCH", body: JSON.stringify({ teamId, displayName: fd.get("displayName") }) });
+        if (!response.ok) { setButtonBusy(submit, false); return modalError(data.message || "管理者名を変更できませんでした。"); }
+        closeAdminModal();
+        renderTeamDashboard(teamId, { message: "このチームでの管理者名を変更しました。", view: "admins" });
+      });
+    }
+  });
 }
 
 function showInviteResult(teamId, invite, label) {
@@ -1577,6 +1602,7 @@ function wireTeamDashboard(teamId, team, groups, signs, playerUrl, auth = {}, ad
   document.querySelectorAll<HTMLElement>("[data-premium-feature]").forEach((button) => button.addEventListener("click", () => { window.open(premiumPlanUrl(button.dataset.premiumFeature || "限定機能"), "_blank", "noopener,noreferrer"); }));
   document.querySelector("#open-admin-invite")?.addEventListener("click", () => openAdminInviteModal(teamId));
   document.querySelector("#open-owner-transfer")?.addEventListener("click", () => openOwnerTransferModal(teamId, adminManagement || { members: [] }));
+  document.querySelectorAll("[data-edit-team-admin-name]").forEach((button) => button.addEventListener("click", () => openTeamAdminDisplayNameModal(teamId, button.dataset.editTeamAdminName || "")));
   document.querySelector("#disable-legacy-password")?.addEventListener("click", async () => {
     if (!confirm("旧管理者パスワードでのログインを無効化します。Google / LINEアカウントでログインできることを確認済みですか？")) return;
     const { response, data } = await requestJson(`/api/team-admin/legacy-password/disable?teamId=${encodeURIComponent(teamId)}`, { method: "POST" });

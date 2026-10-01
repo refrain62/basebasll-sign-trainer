@@ -31,8 +31,8 @@ describe("latest product rules regression", () => {
     const admin = read("client/admin.ts");
     const controller = read("src/controllers/account-controller.ts");
     const migration = read("migrations/0023_display_name_review.sql");
-    expect(account).toContain("管理者名を確認してください");
-    expect(account).toContain("名前を確認・変更する");
+    expect(account).toContain("基本の管理者名を確認してください");
+    expect(account).toContain("基本名を確認・変更する");
     expect(account).not.toContain('id="account-register-handle"');
     expect(admin).not.toContain('id="team-admin-login-handle"');
     expect(admin).not.toContain('id="team-admin-claim-handle"');
@@ -48,4 +48,28 @@ describe("latest product rules regression", () => {
     expect(admin).toContain("メールアドレス非公開");
     expect(admin).toContain("自分だけに表示");
   });
+
+  it("supports a different administrator display name for each team", () => {
+    const migration = read("migrations/0024_team_admin_display_name.sql");
+    const repository = read("src/repositories/admin-membership-repository.ts");
+    const service = read("src/services/admin-membership-service.ts");
+    const admin = read("client/admin.ts");
+    expect(migration).toContain("ALTER TABLE team_admin_memberships ADD COLUMN display_name TEXT");
+    expect(repository).toContain("team_admin_memberships.display_name");
+    expect(repository).toContain("adminDisplayName");
+    expect(service).toContain("updateOwnDisplayName");
+    expect(admin).toContain("このチームでの名前を変更");
+    expect(admin).toContain("太郎・花子 父");
+  });
+
+  it("keeps team-specific admin name controls readable and easy to operate", () => {
+    const account = read("client/account.ts");
+    const styles = read("public/styles.css");
+    expect(account).toContain("account-team-admin-name-label");
+    expect(account).toContain("account-team-admin-name-scope");
+    expect(account).toContain("名前を変更");
+    expect(styles).toContain(".account-inline-edit { min-height: 38px; min-width: 82px;");
+    expect(styles).toContain(".account-team-admin-name strong { color: #173e55; font-size: 14px;");
+  });
+
 });

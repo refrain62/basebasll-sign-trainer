@@ -11,6 +11,7 @@ import {
   teamAdminRevokeInvite,
   teamAdminRemoveAdmin,
   teamAdminTransferOwner,
+  teamAdminUpdateDisplayName,
   teamAdminLeave,
   teamAdminDisableLegacyPassword,
   teamAdminDeleteGroup,
@@ -64,6 +65,7 @@ teamAdminRoutes.delete("/admins/:userId", (c) => {
   return teamAdminRemoveAdmin(c.req.raw, c.env, requestUrl(c), userId);
 });
 teamAdminRoutes.post("/admins/transfer", (c) => teamAdminTransferOwner(c.req.raw, c.env, requestUrl(c)));
+teamAdminRoutes.patch("/membership/display-name", (c) => teamAdminUpdateDisplayName(c.req.raw, c.env, requestUrl(c)));
 teamAdminRoutes.delete("/membership", (c) => teamAdminLeave(c.req.raw, c.env, requestUrl(c)));
 teamAdminRoutes.post("/legacy-password/disable", (c) => teamAdminDisableLegacyPassword(c.req.raw, c.env, requestUrl(c)));
 
