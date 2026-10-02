@@ -3,6 +3,7 @@ export const FEATURE_KEYS = Object.freeze({
   DIRECT_VIDEO_UPLOAD: "direct_video_upload",
   CLOUD_STORAGE: "cloud_storage",
   MULTIPLE_SIGN_GROUPS: "multiple_sign_groups",
+  SIGN_COUNT: "sign_count",
   SUB_ADMIN_MANAGEMENT: "sub_admin_management",
   ACTIVITY_LOG: "activity_log",
   PRACTICE_ANALYTICS: "practice_analytics",

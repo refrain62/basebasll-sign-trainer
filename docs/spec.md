@@ -1,6 +1,6 @@
 # SIGN TRAINER 仕様書 — v1.5.34 / build 102
 
-最終更新: 2026-09-26
+最終更新: 2026-09-29
 
 ## 1. 目的
 
@@ -25,7 +25,7 @@
 
 ### SYSTEM管理者
 - `/admin`
-- Cloudflare Access + `SYSTEM_ADMIN_SECRET`の二重認証
+- `SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで認証（ProductionではSYSTEM管理専用Cloudflare Accessを使用しない）
 - チーム登録・編集・利用停止・退会済み化・復活
 - Free / Plus / Proの手動変更
 - SYSTEMお知らせの登録・編集・公開
@@ -61,7 +61,7 @@ Plus / Proは現在、特定チームへの限定提供。一般申し込み・�
   - 守備サイン（2塁ランナーあり）
   - ピッチングサイン
   - 走塁サイン
-- Freeは1グループ、Plus / Proは複数グループ
+- Freeは1グループ、Plusは最大3グループ、Proは無制限
 
 ## 5. サイン・動画
 
@@ -120,7 +120,7 @@ SYSTEM管理で登録した公開中かつ掲載期間内のお知らせをチ�
 - 管理OAuthのaccess token / refresh tokenは保存しない
 - 管理CookieはHttpOnly / SameSite、remote本番ではSecure
 - 管理系状態変更APIはOrigin / Fetch MetadataでCSRF防御
-- SYSTEM管理remote環境はCloudflare Access必須
+- remoteのDev / StagingはWorker全体でCloudflare Access必須。Productionは一般公開で、SYSTEM管理は `SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで保護
 - 秘密値・合言葉・パスワードを監査ログへ保存しない
 
 ## 12. データ保存
@@ -131,7 +131,7 @@ D1: チーム、サイン、動画、グループ、管理者、プラン、Enti
 
 ## 13. 最新migration
 
-`0017_result_sharing.sql`まで適用する。
+`0021_plan_content_limits.sql`まで適用する。
 
 
 ## v1.5.30 UI / 操作仕様

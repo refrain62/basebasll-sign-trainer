@@ -29,9 +29,12 @@ export interface WorkerBindings {
   GOOGLE_CLIENT_SECRET?: string;
   LINE_CHANNEL_ID?: string;
   LINE_CHANNEL_SECRET?: string;
+  ACCOUNT_TEAM_CREATE_LIMIT?: string | number;
   PUBLIC_OPERATOR_NAME?: string;
   PUBLIC_SUPPORT_URL?: string;
   REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN?: string | boolean;
+  REQUIRE_CF_ACCESS_FOR_ENVIRONMENT?: string | boolean;
+  ENVIRONMENT_ACCESS_ALLOWED_EMAILS?: string;
   CF_ACCESS_TEAM_DOMAIN?: string;
   CF_ACCESS_POLICY_AUD?: string;
   SYSTEM_ADMIN_ALLOWED_EMAILS?: string;

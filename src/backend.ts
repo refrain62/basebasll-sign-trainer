@@ -32,6 +32,7 @@ export {
   verifySessionToken
 } from "./security/session.ts";
 export { isSystemAdminPath, validateCloudflareAccess, validateMutationRequest } from "./security/request-guards.ts";
+export { requiresEnvironmentAccess } from "./middleware/environment-access.ts";
 export { verifyCloudflareAccessJwt } from "./security/cloudflare-access.ts";
 export { requireLegacyTeamAdmin, requireSystem, requireTeamAdmin, requireTeamOwner, requireUser } from "./security/authorization.ts";
 export { auditEvent, createAuditRepository, sanitizeAuditDetail } from "./repositories/audit-repository.ts";

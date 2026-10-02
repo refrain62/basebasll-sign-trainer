@@ -39,6 +39,16 @@ export function createDataProtectionRepository(db) {
         .bind(row.provider_subject, row.provider_subject_ciphertext, row.provider_email, row.display_name, row.avatar_url, row.id).run();
     },
 
+    async listAdminMemberships(limit) {
+      const result = await db.prepare(`SELECT team_id,user_id,display_name FROM team_admin_memberships
+        WHERE display_name IS NOT NULL AND display_name <> '' AND display_name NOT LIKE 'enc:v1:%' LIMIT ?`).bind(limit).all();
+      return result.results || [];
+    },
+    async protectAdminMembership(row) {
+      return db.prepare("UPDATE team_admin_memberships SET display_name=?,updated_at=CURRENT_TIMESTAMP WHERE team_id=? AND user_id=?")
+        .bind(row.display_name, row.team_id, row.user_id).run();
+    },
+
     async listSigns(limit) {
       const result = await db.prepare(`SELECT id,name FROM signs
         WHERE name IS NOT NULL AND name <> '' AND name NOT LIKE 'enc:v1:%' LIMIT ?`).bind(limit).all();
@@ -88,6 +98,7 @@ export function createDataProtectionRepository(db) {
         ["teams", `SELECT COUNT(*) AS n FROM teams WHERE deleted_at IS NULL AND name IS NOT NULL AND name <> '' AND name NOT LIKE 'enc:v1:%'`],
         ["users", `SELECT COUNT(*) AS n FROM app_users WHERE (display_name IS NOT NULL AND display_name <> '' AND display_name NOT LIKE 'enc:v1:%') OR (email IS NOT NULL AND email <> '' AND email NOT LIKE 'enc:v1:%') OR (avatar_url IS NOT NULL AND avatar_url <> '' AND avatar_url NOT LIKE 'enc:v1:%')`],
         ["identities", `SELECT COUNT(*) AS n FROM user_identities WHERE provider_subject NOT LIKE 'hmac:v1:%' OR (provider_email IS NOT NULL AND provider_email <> '' AND provider_email NOT LIKE 'enc:v1:%') OR (display_name IS NOT NULL AND display_name <> '' AND display_name NOT LIKE 'enc:v1:%') OR (avatar_url IS NOT NULL AND avatar_url <> '' AND avatar_url NOT LIKE 'enc:v1:%')`],
+        ["adminMemberships", `SELECT COUNT(*) AS n FROM team_admin_memberships WHERE display_name IS NOT NULL AND display_name <> '' AND display_name NOT LIKE 'enc:v1:%'`],
         ["signs", `SELECT COUNT(*) AS n FROM signs WHERE name IS NOT NULL AND name <> '' AND name NOT LIKE 'enc:v1:%'`],
         ["groups", `SELECT COUNT(*) AS n FROM sign_groups WHERE (name IS NOT NULL AND name <> '' AND name NOT LIKE 'enc:v1:%') OR (description IS NOT NULL AND description <> '' AND description NOT LIKE 'enc:v1:%') OR (explanation_youtube_url IS NOT NULL AND explanation_youtube_url <> '' AND explanation_youtube_url NOT LIKE 'enc:v1:%') OR (explanation_youtube_video_id IS NOT NULL AND explanation_youtube_video_id <> '' AND explanation_youtube_video_id NOT LIKE 'enc:v1:%')`],
         ["videos", `SELECT COUNT(*) AS n FROM sign_videos WHERE (youtube_url IS NOT NULL AND youtube_url <> '' AND youtube_url NOT LIKE 'enc:v1:%') OR (youtube_video_id IS NOT NULL AND youtube_video_id <> '' AND youtube_video_id NOT LIKE 'enc:v1:%') OR (comment IS NOT NULL AND comment <> '' AND comment NOT LIKE 'enc:v1:%')`],

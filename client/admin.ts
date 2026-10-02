@@ -25,6 +25,13 @@ function featureEnabled(entitlements, key) {
   return Boolean(entitlements?.[key]?.enabled);
 }
 
+function featureLimit(entitlements, key) {
+  const value = entitlements?.[key]?.limit;
+  if (value == null || value === "") return null;
+  const limit = Number(value);
+  return Number.isFinite(limit) && limit >= 0 ? limit : null;
+}
+
 function paidFeatureBadge(label = "限定") {
   return `<span class="paid-feature-badge">${esc(label)}</span>`;
 }
@@ -93,7 +100,8 @@ function adminNavIcon(name: string, className = "admin-nav-svg") {
     settings: `<svg ${common}><path d="M4 6h7M15 6h5M4 12h3M11 12h9M4 18h9M17 18h3"/><circle cx="13" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="15" cy="18" r="2"/></svg>`,
     teams: `<svg ${common}><path d="M4 20v-1.6a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4V20"/><circle cx="9.5" cy="7.7" r="3.1"/><path d="M16.8 10.8a3 3 0 0 1 3.7 2.9V20"/></svg>`,
     security: `<svg ${common}><path d="M12 3.2 19.5 6v5.4c0 4.7-3 7.9-7.5 9.4-4.5-1.5-7.5-4.7-7.5-9.4V6L12 3.2Z"/><path d="m8.8 12 2 2 4.5-4.5"/></svg>`,
-    notices: `<svg ${common}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 8.5h18C21 15 18 15 18 8Z"/><path d="M9.5 20h5"/></svg>`
+    notices: `<svg ${common}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 8.5h18C21 15 18 15 18 8Z"/><path d="M9.5 20h5"/></svg>`,
+    support: `<svg ${common}><path d="M4.5 5.5h15v11h-8l-4.5 3v-3H4.5z"/><path d="M8 9h8M8 12h5"/></svg>`
   };
   return icons[name] || icons.dashboard;
 }
@@ -309,13 +317,13 @@ function adminCredentialMessage() {
 }
 
 async function wireOAuthAvailability(root: ParentNode = document) {
-  const links = [...root.querySelectorAll("[data-oauth-provider]")];
+  const links = [...root.querySelectorAll<HTMLAnchorElement>("[data-oauth-provider]")];
   if (!links.length) return;
   try {
     const { data } = await requestJson("/api/account/providers");
     const providers = data.providers || {};
     for (const link of links) {
-      const enabled = Boolean(providers[link.dataset.oauthProvider]);
+      const enabled = Boolean(providers[link.dataset.oauthProvider || ""]);
       link.classList.toggle("is-disabled", !enabled);
       link.setAttribute("aria-disabled", enabled ? "false" : "true");
       if (!enabled) { link.dataset.oauthHref = link.getAttribute("href") || ""; link.removeAttribute("href"); }
@@ -335,8 +343,8 @@ function adminOAuthButtons({ intent = "login", teamId = "", returnTo = "" } = {}
   }
   const suffix = intent === "reauth" ? "で本人確認" : "で続ける";
   return `<div class="admin-oauth-actions">
-    <a class="button button-secondary admin-oauth-button" data-oauth-provider="google" href="/api/account/oauth/google/start?${query}">Google${suffix}</a>
-    <a class="button admin-oauth-button admin-oauth-button--line" data-oauth-provider="line" href="/api/account/oauth/line/start?${query}">LINE${suffix}</a>
+    <a class="button button-secondary admin-oauth-button" data-oauth-provider="google" href="/api/account/oauth/google/start?${query}"><img class="oauth-brand-icon" src="/assets/google-g-logo.svg" alt="">Google${suffix}</a>
+    <a class="button admin-oauth-button admin-oauth-button--line" data-oauth-provider="line" href="/api/account/oauth/line/start?${query}"><img class="oauth-brand-icon oauth-brand-icon--line" src="/assets/line-login-icon.svg" alt="">LINE${suffix}</a>
   </div>`;
 }
 
@@ -588,7 +596,7 @@ function systemTeamCard(team) {
     : `<a class="button button-primary" href="/t/${encodeURIComponent(team.id)}/admin"${relatedPageLinkAttrs()}>チーム管理画面を開く</a>
       <button class="button button-secondary" data-system-edit="${esc(team.id)}" type="button">設定を編集</button>
       <button class="button button-ghost" data-system-status="${esc(team.id)}" data-next-status="${team.status === "active" ? "suspended" : "active"}" type="button">${team.status === "active" ? "利用停止" : "利用再開"}</button>`;
-  const planSummary = planCode === "free" ? "基本のサイン練習・共有" : planCode === "team_plus" ? "複数グループ・サブ管理者などチーム運用強化" : "Plus機能＋分析・監査・高度な共有";
+  const planSummary = planCode === "free" ? "基本のサイン練習・共有" : planCode === "team_plus" ? "サイン最大20個・グループ最大3つ・サブ管理者などチーム運用強化" : "Plus機能＋分析・監査・高度な共有";
   const planIcon = planCode === "free" ? "✓" : planCode === "team_plus" ? "↗" : "▥";
   return `<article class="admin-team-card ${isDeleted ? "admin-team-card--deleted" : ""}" data-team-id="${esc(team.id)}" data-team-status="${esc(team.status)}" data-team-plan="${esc(planCode)}" data-team-search="${esc([team.name, team.id, plan.name, planCode].join(" ").toLocaleLowerCase("ja-JP"))}" data-page-item>
     <div class="system-team-plan-badge system-team-plan-badge--${esc(planCode)}"><span class="system-team-plan-icon" aria-hidden="true">${planIcon}</span><span class="system-team-plan-copy"><small>現在のプラン</small><strong>${esc(plan.name || "Free")}</strong><em>${esc(planSummary)}</em></span></div>
@@ -694,7 +702,7 @@ function wireSystemDashboard(teams, plans = []) {
     openAdminModal({
       title: "新しいチームを登録",
       body: `<div id="admin-modal-error"></div><form id="create-team-form" class="admin-form">
-        <label>チーム名<input class="text-input" name="name" type="text" maxlength="80" placeholder="例：熊本○○ジュニア" required></label>
+        <label>チーム名<input class="text-input" name="name" type="text" maxlength="80" placeholder="例：○○ジュニア" required></label>
         <label>選手用合言葉<input class="text-input" name="passphrase" type="text" maxlength="100" autocomplete="off" required></label>
         <label>チーム管理者パスワード<input class="text-input" name="adminPassword" type="password" minlength="12" maxlength="200" autocomplete="new-password" required></label>
         <p class="admin-help">管理者パスワードは12文字以上で、英字と数字をそれぞれ1文字以上含めてください。記号は必須ではありません。合言葉は参加URLとは別にメンバーへ伝えます。</p>
@@ -733,7 +741,7 @@ function wireSystemDashboard(teams, plans = []) {
         <label>選手用合言葉を変更 <span class="admin-optional">変更時のみ</span><input class="text-input" name="passphrase" type="text" autocomplete="off"></label>
         <label>管理者パスワードを変更 <span class="admin-optional">変更時のみ・12文字以上＋英字＋数字</span><input class="text-input" name="adminPassword" type="password" minlength="12" autocomplete="new-password"></label>
         <label>チームプラン<select class="text-input" name="planCode">${(plans.length ? plans : [{code:"free",name:"Free"},{code:"team_plus",name:"Plus"},{code:"team_pro",name:"Pro"}]).map((plan) => `<option value="${esc(plan.code)}" ${String(team.plan?.code || "free") === String(plan.code) ? "selected" : ""}>${esc(plan.name)}${plan.code === "free" ? "" : "（限定提供）"}</option>`).join("")}</select></label>
-        <div class="notice notice-info"><strong>Plus / Proは限定提供中です</strong><br><b>Plus</b>＝複数グループ・複数動画・サブ管理者などのチーム運用強化。<br><b>Pro</b>＝Plusの全機能＋成績分析・最近のアクティビティ／監査ログ。<br>一般のお申し込み・オンライン課金はできません。SYSTEM管理者が対象チームへ手動でプランを付与します。</div>
+        <div class="notice notice-info"><strong>Plus / Proは限定提供中です</strong><br><b>Plus</b>＝サイン最大20個・グループ最大3つ・複数動画・サブ管理者などのチーム運用強化。<br><b>Pro</b>＝Plusの全機能＋成績分析・最近のアクティビティ／監査ログ。<br>一般のお申し込み・オンライン課金はできません。SYSTEM管理者が対象チームへ手動でプランを付与します。</div>
         <div class="admin-modal-actions"><button class="button button-primary" type="submit">保存する</button><button class="button button-danger" id="system-team-delete" type="button">退会済みにする</button></div>
       </form>`,
       onOpen(layer) {
@@ -852,7 +860,7 @@ async function loadTeamAdminLoginNotices() {
 
 function renderTeamAdminLogin(teamId, { teamName = "", error = "", accountManaged = false, legacyPasswordEnabled = true } = {}) {
   const returnTo = teamAdminCurrentPath(teamId);
-  const oauth = accountManaged ? `<div class="admin-account-login"><h2>管理者アカウントでログイン</h2><p class="admin-help">登録済みのGoogle / LINEアカウントを使います。</p>${adminOAuthButtons({ intent: "login", returnTo })}<p class="admin-help">続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p></div>` : "";
+  const oauth = accountManaged ? `<div class="admin-account-login"><h2>管理者アカウントでログイン</h2><p class="admin-help">登録済みのGoogle / LINEアカウントを使います。ログイン後、チーム内で表示する管理者名を確認・変更できます。</p>${adminOAuthButtons({ intent: "login", returnTo })}<p class="admin-help">続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p></div>` : "";
   const passwordForm = legacyPasswordEnabled ? `<form id="team-admin-login-form" class="admin-form">
       <label>管理者パスワード<input class="text-input" id="team-admin-password" type="password" autocomplete="current-password" required></label>
       <p class="admin-help">${accountManaged ? "以前の共有パスワードでもログインできます。安全性のため、アカウント移行後は無効化を推奨します。" : "ログイン後にGoogle / LINEアカウントへ移行できます。"}</p>
@@ -883,7 +891,7 @@ function renderTeamAdminLogin(teamId, { teamName = "", error = "", accountManage
 function adminIdentitySection(teamId, team, auth, management) {
   if (auth?.type === "legacy-password") {
     return `<section class="admin-card admin-identity-card">
-      <div class="admin-migration-callout"><div><h2>管理者アカウントへ移行</h2><p>現在は共有パスワードで管理しています。Google / LINEを連携すると、管理者の追加・交代・退会をアカウント単位で安全に行えます。移行完了時に旧共有パスワードは自動で無効化され、既存のサインや動画はそのままです。</p></div>${adminOAuthButtons({ intent: "claim-team", teamId, returnTo: teamAdminCurrentPath(teamId) })}<p class="admin-help">移行を続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p></div>
+      <div class="admin-migration-callout"><div><h2>管理者アカウントへ移行</h2><p>現在は共有パスワードで管理しています。Google / LINEを連携すると、管理者の追加・交代・退会をアカウント単位で安全に行えます。移行完了時に旧共有パスワードは自動で無効化され、既存のサインや動画はそのままです。ログイン後に管理者名を確認・変更できます。</p></div>${adminOAuthButtons({ intent: "claim-team", teamId, returnTo: teamAdminCurrentPath(teamId) })}<p class="admin-help">移行を続けることで、<a href="/terms" target="_blank" rel="noopener">利用規約</a>と<a href="/privacy" target="_blank" rel="noopener">プライバシーポリシー</a>を確認し同意したものとして扱います。</p></div>
     </section>`;
   }
   if (auth?.type !== "account" || !management) return "";
@@ -894,13 +902,23 @@ function adminIdentitySection(teamId, team, auth, management) {
   const pendingSubAdminInvites = Number(management.pendingSubAdminInvites || 0);
   const subAdminSlotsRemaining = Number.isFinite(Number(management.subAdminSlotsRemaining)) ? Number(management.subAdminSlotsRemaining) : Math.max(0, maxSubAdmins - admins.length - pendingSubAdminInvites);
   const canInviteSubAdmin = management.canInviteSubAdmin !== false && subAdminSlotsRemaining > 0;
-  const memberRows = members.map((member) => `<div class="admin-identity-row">
-    <div class="admin-identity-person"><span class="admin-identity-avatar">${esc((member.displayName || "管").slice(0,1))}</span><div><strong>${esc(member.displayName || "管理者")}</strong><small>${esc(member.email || "メールアドレス未取得")}</small></div></div>
-    <div class="admin-card-actions"><span class="${member.role === "owner" ? "admin-owner-badge" : "admin-admin-badge"}">${member.role === "owner" ? "メイン管理者" : "サブ管理者"}</span>${owner && member.role === "admin" ? `<button class="button button-ghost" data-remove-admin="${esc(member.userId)}" type="button">サブ管理者から外す</button>` : ""}</div>
-  </div>`).join("");
+  const currentUserId = String(auth?.user?.id || "");
+  const currentMember = members.find((member) => String(member.userId || "") === currentUserId) || null;
+  const memberRows = members.map((member) => {
+    const isSelf = String(member.userId || "") === currentUserId;
+    const privateContact = isSelf
+      ? `<small>${esc(member.email || "メールアドレス未取得")}（自分だけに表示）</small>`
+      : `<small>メールアドレス非公開</small>`;
+    const teamNameState = isSelf ? `<small>${member.usesTeamDisplayName ? "このチーム専用の管理者名" : "基本の管理者名を使用中"}</small>` : "";
+    return `<div class="admin-identity-row">
+      <div class="admin-identity-person"><span class="admin-identity-avatar">${esc((member.displayName || "管").slice(0,1))}</span><div><strong>${esc(member.displayName || "管理者")}${isSelf ? `（自分）` : ""}</strong>${privateContact}${teamNameState}</div></div>
+      <div class="admin-card-actions"><span class="${member.role === "owner" ? "admin-owner-badge" : "admin-admin-badge"}">${member.role === "owner" ? "メイン管理者" : "サブ管理者"}</span>${isSelf ? `<button class="button button-ghost" data-edit-team-admin-name="${esc(member.displayName || "")}" type="button">このチームでの名前を変更</button>` : ""}${owner && member.role === "admin" ? `<button class="button button-ghost" data-remove-admin="${esc(member.userId)}" type="button">サブ管理者から外す</button>` : ""}</div>
+    </div>`;
+  }).join("");
   const pending = (management.pendingInvites || []).map((invite) => `<div class="admin-identity-row"><div><strong>${invite.kind === "transfer" ? "メイン管理者交代" : "サブ管理者招待"}</strong><small>有効期限 ${esc(formatDate(new Date(Number(invite.expires_at) * 1000).toISOString()))}</small></div><button class="button button-ghost" data-revoke-invite="${esc(invite.id)}" type="button">取り消す</button></div>`).join("");
   return `<section class="admin-card admin-identity-card">
-    <div class="admin-identity-header"><div><h2>管理者と権限</h2><p class="admin-section-caption">メイン管理者は1名、サブ管理者は最大${maxSubAdmins}名。管理者ごとにGoogle / LINEで本人認証します。</p></div><a class="button button-secondary" href="/account">マイアカウント</a></div>
+    <div class="admin-identity-header"><div><h2>管理者と権限</h2><p class="admin-section-caption">メイン管理者は1名、サブ管理者は最大${maxSubAdmins}名。管理者名はチームごとに変えられます。</p></div><a class="button button-secondary" href="/account">マイアカウント</a></div>
+    ${currentMember ? `<div class="notice notice-info"><strong>このチーム専用の管理者名を設定できます</strong><br>兄弟で別チームに参加している場合は「太郎 父」「花子 父」、同じチームなら「太郎・花子 父」のように分けられます。</div>` : ""}
     <div class="admin-admin-capacity"><strong>サブ管理者 ${admins.length} / ${maxSubAdmins}</strong><span>${pendingSubAdminInvites ? `承認待ち ${pendingSubAdminInvites}名 · ` : ""}追加可能 ${subAdminSlotsRemaining}名</span></div>
     <div class="admin-identity-list">${memberRows}</div>
     ${pending ? `<div class="admin-section-subtitle"><strong>承認待ちの招待</strong></div><div class="admin-identity-list">${pending}</div>` : ""}
@@ -910,10 +928,32 @@ function adminIdentitySection(teamId, team, auth, management) {
   </section>`;
 }
 
+function openTeamAdminDisplayNameModal(teamId, currentName = "") {
+  openAdminModal({
+    title: "このチームでの管理者名",
+    body: `<div id="admin-modal-error"></div><p class="admin-modal-lead">この名前は、このチームの管理画面・管理者一覧・招待表示・アクティビティ表示で使います。ほかのチームの名前は変わりません。</p><form id="team-admin-display-name-form" class="admin-form"><label>管理者名（ハンドルネーム）<input class="text-input" name="displayName" maxlength="40" autocomplete="nickname" value="${esc(currentName)}" placeholder="例：太郎 父 / 太郎・花子 父" required></label><p class="admin-help">子どもごとにチームが違う場合でも、チームごとに別の名前を設定できます。</p><button class="button button-primary button-full" type="submit">このチームの名前を保存</button></form>`,
+    onOpen(layer) {
+      const input = layer.querySelector<HTMLInputElement>('input[name="displayName"]');
+      input?.focus(); input?.select();
+      layer.querySelector("#team-admin-display-name-form")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget as HTMLFormElement;
+        const fd = new FormData(form);
+        const submit = form.querySelector("button[type=submit]");
+        setButtonBusy(submit, true, "保存しています…");
+        const { response, data } = await requestJson("/api/team-admin/membership/display-name", { method: "PATCH", body: JSON.stringify({ teamId, displayName: fd.get("displayName") }) });
+        if (!response.ok) { setButtonBusy(submit, false); return modalError(data.message || "管理者名を変更できませんでした。"); }
+        closeAdminModal();
+        renderTeamDashboard(teamId, { message: "このチームでの管理者名を変更しました。", view: "admins" });
+      });
+    }
+  });
+}
+
 function showInviteResult(teamId, invite, label) {
   openAdminModal({
     title: label,
-    body: `<div class="admin-invite-result"><strong>このリンクを交代・追加する管理者本人へ送ってください</strong><div class="admin-copy-row"><input class="text-input" id="generated-invite-url" readonly value="${esc(invite.url)}"><button class="button button-primary" id="copy-generated-invite" type="button">コピー</button></div><p class="admin-help" id="invite-copy-status" aria-live="polite"></p><button class="button line-share-button button-full" id="line-generated-invite" type="button">LINEで送る</button><p class="admin-security-note">このリンクは一度だけ使用でき、最長72時間で期限切れになります。SNSなど公開場所には貼らないでください。</p></div><button class="button button-secondary button-full" id="invite-result-close" type="button">閉じる</button>`,
+    body: `<div class="admin-invite-result"><strong>このリンクを交代・追加する管理者本人へ送ってください</strong><div class="admin-copy-row"><input class="text-input" id="generated-invite-url" readonly value="${esc(invite.url)}"><button class="button button-primary" id="copy-generated-invite" type="button">コピー</button></div><p class="admin-help" id="invite-copy-status" aria-live="polite"></p><button class="button line-share-button button-full" id="line-generated-invite" type="button"><img class="button-brand-icon" src="/assets/line-brand-icon.svg" alt="">LINEで送る</button><p class="admin-security-note">このリンクは一度だけ使用でき、最長72時間で期限切れになります。SNSなど公開場所には貼らないでください。</p></div><button class="button button-secondary button-full" id="invite-result-close" type="button">閉じる</button>`,
     onOpen(layer) {
       layer.querySelector("#copy-generated-invite")?.addEventListener("click", () => copyText(invite.url, layer.querySelector("#invite-copy-status")));
       layer.querySelector("#line-generated-invite")?.addEventListener("click", () => window.open(`https://line.me/R/share?text=${encodeURIComponent(`【SIGN TRAINER】\n${label}の招待です。\n${invite.url}`)}`, "_blank", "noopener,noreferrer"));
@@ -925,7 +965,7 @@ function showInviteResult(teamId, invite, label) {
 function openAdminInviteModal(teamId) {
   openAdminModal({
     title: "サブ管理者を招待",
-    body: `<div id="admin-modal-error"></div><p class="admin-modal-lead">招待する人だけにワンタイムリンクを送ります。相手はGoogle / LINEで本人認証してサブ管理者になります。</p><form id="admin-invite-form" class="admin-form"><label>リンクの有効時間<select class="text-input" name="expiresHours"><option value="24">24時間</option><option value="48">48時間</option><option value="72">72時間</option></select></label><button class="button button-primary button-full" type="submit">招待リンクを発行</button></form>`,
+    body: `<div id="admin-modal-error"></div><p class="admin-modal-lead">招待する人だけにワンタイムリンクを送ります。相手はGoogle / LINEで本人認証したあと、ハンドルネームを確認してサブ管理者になります。メールアドレスは本人以外の管理者には表示しません。</p><form id="admin-invite-form" class="admin-form"><label>リンクの有効時間<select class="text-input" name="expiresHours"><option value="24">24時間</option><option value="48">48時間</option><option value="72">72時間</option></select></label><button class="button button-primary button-full" type="submit">招待リンクを発行</button></form>`,
     onOpen(layer) {
       layer.querySelector("#admin-invite-form")?.addEventListener("submit", async (event) => {
         event.preventDefault(); const fd = new FormData(event.currentTarget as HTMLFormElement); const submit = event.currentTarget.querySelector("button[type=submit]"); setButtonBusy(submit, true, "発行しています…");
@@ -1038,7 +1078,7 @@ function teamSystemNotices({ team, auth, adminManagement, plan, groups, signs })
   }
   if (!groups.length) notices.push({ id: "no-groups", kind: "setup", source: "fixed", date: "セットアップ", title: "サイングループがまだありません", body: "サイングループ画面から、バッティングサイン・守備サイン（ランナーなし）・守備サイン（2塁ランナーあり）・ピッチングサイン・走塁サインなど、用途や状況ごとの単位を作成できます。" });
   if (!signs.length) notices.push({ id: "no-signs", kind: "setup", source: "fixed", date: "セットアップ", title: "サインがまだ登録されていません", body: "サイン管理画面から最初のサインとYouTube動画を登録できます。" });
-  if (plan?.isFree) notices.push({ id: "free-plan", kind: "info", source: "fixed", date: "現在", title: `${plan.name || "Free"}プランを利用中です`, body: "基本的なサイン登録・YouTube動画・クイズ・共有・PWAと規定の1グループを利用できます。Plus / Proは現在、特定チーム限定で提供中です。" });
+  if (plan?.isFree) notices.push({ id: "free-plan", kind: "info", source: "fixed", date: "現在", title: `${plan.name || "Free"}プランを利用中です`, body: "基本的なサイン登録・YouTube動画・クイズ・共有・アプリのホーム画面追加と規定の1グループを利用できます。Plus / Proは現在、特定チーム限定で提供中です。" });
   return notices;
 }
 
@@ -1055,6 +1095,9 @@ function teamNoticeList(notices, { limit = 0 } = {}) {
 function auditActionLabel(item) {
   const labels = {
     "auth.success": "共有管理者パスワードでログイン",
+    "auth.account.success": "管理者アカウントでログイン",
+    "team.create": "チームを作成",
+    "team.self_register": "チームを作成",
     "team.update": "チーム設定を変更",
     "group.create": "サイングループを追加",
     "group.update": "サイングループを編集",
@@ -1065,20 +1108,39 @@ function auditActionLabel(item) {
     "video.create": "サイン動画を追加",
     "video.update": "サイン動画を編集",
     "video.soft_delete": "サイン動画を削除",
-    "admin.invite.create": "サブ管理者の招待を作成",
-    "admin.invite.revoke": "管理者招待を取り消し",
-    "admin.invite.accept": "サブ管理者の招待を承認",
+    "admin.display_name.update": "このチームでの管理者名を変更",
+    "account.create": "管理者アカウントを作成",
+    "account.display_name.update": "基本の管理者名を変更",
+    "account.delete": "管理者アカウントを削除",
+    "admin.invite.create": "サブ管理者を招待",
+    "admin.invite.revoke": "サブ管理者の招待を取り消し",
+    "admin.invite.accept": "サブ管理者として参加",
     "admin.remove": "サブ管理者を解除",
     "admin.leave": "チーム管理者から退会",
-    "owner.transfer": "メイン管理者を交代",
-    "owner.transfer.accept": "メイン管理者の交代を承認",
+    "owner.transfer": "メイン管理者の交代を開始",
+    "owner.transfer.accept": "メイン管理者の交代を完了",
     "legacy_admin_password.disable": "旧管理者パスワードを無効化",
     "team.claim": "管理者アカウントへ移行",
     "team.withdraw": "チームを退会",
     "team.restore": "退会済みチームを復活",
-    "plan.change": "チームプランを変更"
+    "plan.change": "チームプランを変更",
+    "notice.create": "お知らせを作成",
+    "notice.update": "お知らせを変更",
+    "notice.delete": "お知らせを削除",
+    "data_protection.migrate": "保存データの保護処理を実行"
   };
-  return labels[item?.action] || String(item?.action || "操作を実行");
+  const action = String(item?.action || "");
+  if (labels[action]) return labels[action];
+  if (action.includes("display_name")) return "管理者名を変更";
+  if (action.startsWith("admin.invite.")) return "管理者の招待を変更";
+  if (action.startsWith("owner.transfer")) return "メイン管理者の交代を変更";
+  if (action.startsWith("group.")) return "サイングループを変更";
+  if (action.startsWith("sign.")) return "サインを変更";
+  if (action.startsWith("video.")) return "サイン動画を変更";
+  if (action.startsWith("team.")) return "チーム設定を変更";
+  if (action.startsWith("plan.")) return "チームプランを変更";
+  if (action.startsWith("auth.")) return "管理画面にログイン";
+  return "管理設定を変更";
 }
 
 function activityTargetLabel(item, signs = [], groups = []) {
@@ -1088,6 +1150,9 @@ function activityTargetLabel(item, signs = [], groups = []) {
   if (item?.targetType === "video") return id ? `動画 #${id}` : "動画";
   if (item?.targetType === "team") return "チーム";
   if (item?.targetType === "user") return "管理者アカウント";
+  if (item?.targetType === "admin-invite") return "管理者招待";
+  if (item?.targetType === "system_notice") return "運営からのお知らせ";
+  if (item?.targetType === "system") return "システム設定";
   return "";
 }
 
@@ -1104,7 +1169,31 @@ async function fetchTeamActivity(teamId) {
   } catch { return []; }
 }
 
-function teamAdminFrame(teamId, teamName, activeView: TeamAdminView, content, noticeCount = 0, entitlements = {}) {
+function fallbackTeamSupportHref(teamId, teamName, planName = "") {
+  const query = new URLSearchParams({ teamId: String(teamId || ""), teamName: String(teamName || ""), plan: String(planName || "") });
+  return `/contact?${query.toString()}`;
+}
+
+async function wireTeamSupportLinks(teamId, teamName, planName = "") {
+  const links = [...document.querySelectorAll<HTMLAnchorElement>("[data-team-support-link]")];
+  if (!links.length) return;
+  const fallback = fallbackTeamSupportHref(teamId, teamName, planName);
+  links.forEach((link) => { link.href = fallback; });
+  try {
+    const { response, data } = await requestJson("/api/public/legal");
+    if (!response.ok || !data?.supportUrl) return;
+    const target = new URL(String(data.supportUrl));
+    target.searchParams.set("teamId", String(teamId || ""));
+    target.searchParams.set("teamName", String(teamName || ""));
+    if (planName) target.searchParams.set("plan", String(planName));
+    if (data.environment) target.searchParams.set("environment", String(data.environment));
+    links.forEach((link) => { link.href = target.toString(); link.target = "_blank"; link.rel = "noopener"; });
+  } catch {
+    // PUBLIC_SUPPORT_URL が未設定・取得失敗時は内部お問い合わせページを使う。
+  }
+}
+
+function teamAdminFrame(teamId, teamName, activeView: TeamAdminView, content, noticeCount = 0, entitlements = {}, planName = "") {
   const activityPaid = featureEnabled(entitlements, "activity_log");
   const nav = TEAM_ADMIN_NAV.map((item) => {
     const premium = item.view === "activity" && !activityPaid;
@@ -1117,13 +1206,13 @@ function teamAdminFrame(teamId, teamName, activeView: TeamAdminView, content, no
   return `<div class="team-admin-frame">
     <aside class="team-admin-sidebar" aria-label="チーム管理メニュー">
       <div class="team-admin-sidebar-team"><span>チーム管理</span><strong>${esc(teamName)}</strong></div>
-      <nav class="team-admin-nav">${nav}</nav>
+      <nav class="team-admin-nav">${nav}<a class="team-admin-nav-link team-admin-support-link" data-team-support-link href="${fallbackTeamSupportHref(teamId, teamName, planName)}"><span class="team-admin-nav-icon" aria-hidden="true">${adminNavIcon("support")}</span><span>お問い合わせ</span></a></nav>
       <div class="team-admin-sidebar-footer"><a href="/account">マイアカウント</a><a href="/t/${encodeURIComponent(teamId)}"${relatedPageLinkAttrs()}>選手用ページを開く</a></div>
     </aside>
     <div class="team-admin-workspace">
       <section class="team-admin-mobile-menu-screen" id="team-admin-mobile-menu-screen" aria-label="チーム管理メニュー" role="dialog" aria-modal="true" hidden>
         <header class="team-admin-mobile-menu-head"><div><span>チーム管理</span><strong>${esc(teamName)}</strong></div><button class="team-admin-mobile-menu-close" type="button" data-team-admin-menu-close aria-label="メニューを閉じる">×</button></header>
-        <nav class="team-admin-mobile-menu-list">${mobileNav}</nav>
+        <nav class="team-admin-mobile-menu-list">${mobileNav}<a class="team-admin-mobile-menu-link team-admin-support-link" data-team-support-link href="${fallbackTeamSupportHref(teamId, teamName, planName)}"><span class="team-admin-nav-icon" aria-hidden="true">${adminNavIcon("support")}</span><span>お問い合わせ</span><span class="team-admin-mobile-menu-arrow" aria-hidden="true">›</span></a></nav>
         <div class="team-admin-mobile-menu-footer"><a href="/account">マイアカウント</a><a href="/t/${encodeURIComponent(teamId)}"${relatedPageLinkAttrs()}>選手用ページを開く</a><button class="team-admin-mobile-menu-footer-button" id="team-menu-logout" type="button">ログアウト</button></div>
       </section>
       ${content}
@@ -1142,12 +1231,14 @@ function teamDashboardContent(teamId, team, groups, signs, totalVideos, plan, en
   const canUseActivity = featureEnabled(entitlements, "activity_log");
   const canUseSubAdmins = featureEnabled(entitlements, "sub_admin_management");
   const canUseMultipleGroups = featureEnabled(entitlements, "multiple_sign_groups");
+  const dashboardGroupLimit = featureLimit(entitlements, "multiple_sign_groups");
+  const dashboardSignLimit = featureLimit(entitlements, "sign_count");
   const adminCard = auth?.type === "account"
     ? { view: "admins", icon: "admins", label: "管理者", value: `${adminMembers.length}名`, hint: `サブ管理者 ${subAdmins.length}/${maxSubAdmins}` }
     : { view: "admins", icon: "admins", label: "管理者", value: "アカウント未移行", hint: "Google / LINE認証へ移行" };
   const cards = [
-    { view: "groups", icon: "groups", label: "サイングループ", value: `${groups.length}グループ`, hint: canUseMultipleGroups ? (enabledGroups === groups.length ? "複数グループ利用可" : `使用中 ${enabledGroups}`) : "Freeは1グループまで" },
-    { view: "signs", icon: "signs", label: "サイン管理", value: `${signs.length}サイン`, hint: `練習対象 ${enabledSigns}` },
+    { view: "groups", icon: "groups", label: "サイングループ", value: `${groups.length}グループ`, hint: dashboardGroupLimit == null ? "無制限" : `上限 ${dashboardGroupLimit}グループ` },
+    { view: "signs", icon: "signs", label: "サイン管理", value: `${signs.length}サイン`, hint: dashboardSignLimit == null ? `練習対象 ${enabledSigns}・無制限` : `上限 ${dashboardSignLimit}個・練習対象 ${enabledSigns}` },
     { view: "share", icon: "share", label: "共有", value: "参加リンク・QR", hint: "選手用ページを共有" },
     { ...adminCard, hint: canUseSubAdmins ? adminCard.hint : "Freeはメイン管理者1名" },
     { view: "plan-auth", icon: "plan", label: "プラン・認証", value: plan.name || "Free", hint: "契約・認証方式を確認" },
@@ -1171,12 +1262,13 @@ function teamActivityContent(activity, signs, groups, entitlements = {}) {
 }
 
 function teamGroupsContent(groups, signs, entitlements = {}) {
-  const canAddGroup = groups.length < 1 || featureEnabled(entitlements, "multiple_sign_groups");
+  const groupLimit = featureLimit(entitlements, "multiple_sign_groups");
+  const canAddGroup = groupLimit == null || groups.length < groupLimit;
   const addButton = canAddGroup
     ? `<button class="button button-primary" id="open-add-group" type="button">＋ グループを追加</button>`
-    : `<button class="button button-primary" data-premium-feature="複数サイングループ" data-premium-description="Freeプランではサイングループは1つまでです。Plus / Proでは用途・状況ごとに複数作成できます。既存のグループやサインはそのまま保持されます。" type="button">＋ グループを追加 ${paidFeatureBadge("Plus")}</button>`;
+    : `<button class="button button-primary" disabled type="button">グループ上限 ${groupLimit}個</button>`;
   return `<div class="team-admin-view"><header class="team-admin-page-head"><div><h1>サイングループ</h1><p>グループの作成・説明・説明動画・使用状態を管理します。</p></div>${addButton}</header>
-    ${!canAddGroup ? `<div class="notice notice-info"><strong>Freeプランは1グループまで</strong><br>${esc(PAID_LIMITED_MESSAGE)}</div>` : ""}
+    ${!canAddGroup ? `<div class="notice notice-info"><strong>このプランではサイングループは最大${groupLimit}個です</strong><br>さらに追加する場合はプランの違いをご確認ください。</div>` : ""}
     <section class="admin-card admin-card--flush-mobile"><div class="team-admin-page-summary"><strong>${groups.length}</strong><span>登録グループ</span></div>${groups.length ? `<div class="team-group-filter"><label class="team-sign-search-box" for="group-search"><span aria-hidden="true">⌕</span><input class="text-input" id="group-search" type="search" placeholder="グループ名で検索"></label></div>${pagedCollection(`<div class="admin-group-list">${groups.map((group) => teamGroupCard(group, signs)).join("")}</div>`, groups.length, { pageSize: 10, label: "サイングループ" })}` : `<div class="admin-empty"><strong>グループはまだありません</strong><p>最初のグループはFreeプランでも作成できます。例：バッティングサイン / 守備サイン（ランナーなし） / 守備サイン（2塁ランナーあり） / ピッチングサイン / 走塁サイン</p><button class="button button-primary" id="open-add-group-empty" type="button">＋ 最初のグループを追加</button></div>`}</section>
   </div>`;
 }
@@ -1215,13 +1307,19 @@ function teamSignsContent(signs, groups, entitlements = {}) {
   const signList = visibleSigns.length
     ? pagedCollection(`<div class="admin-sign-list admin-sign-list--overview">${visibleSigns.map((sign, index) => teamSignCard(sign, index, groups, entitlements, { canMoveUp: index > 0, canMoveDown: index < visibleSigns.length - 1 })).join("")}</div>`, visibleSigns.length, { pageSize: 8, label: "サイン" })
     : `<div class="admin-empty"><strong>表示できるサインがありません</strong><p>「サインを追加」から最初のサインを登録してください。</p></div>`;
+  const signLimit = featureLimit(entitlements, "sign_count");
+  const canAddSign = signLimit == null || signs.length < signLimit;
+  const addSignButton = canAddSign
+    ? `<button class="button button-primary team-sign-add-button" id="open-add-sign"${defaultGroupAttr} type="button">${addLabel}</button>`
+    : `<button class="button button-primary team-sign-add-button" disabled type="button">サイン上限 ${signLimit}個</button>`;
   const selector = groups.length || ungroupedSigns.length || signs.length
-    ? `<div class="team-sign-group-picker"><label for="sign-group-filter">表示するグループ</label><div class="team-sign-filter-row"><select class="text-input" id="sign-group-filter"><option value="all" ${selectedKey === "all" ? "selected" : ""}>すべてのサイン（${signs.length}）</option>${groupOptions}${ungroupedOption}</select><label class="team-sign-search-box" for="sign-search"><span aria-hidden="true">⌕</span><input class="text-input" id="sign-search" type="search" placeholder="サイン名・動画メモで検索"></label><button class="button button-primary team-sign-add-button" id="open-add-sign"${defaultGroupAttr} type="button">${addLabel}</button></div><p>「すべてのサイン」を初期表示します。グループを選ぶと目的別に絞り込めます。登録・編集画面では所属グループを変更できます。</p></div>`
+    ? `<div class="team-sign-group-picker"><label for="sign-group-filter">表示するグループ</label><div class="team-sign-filter-row"><select class="text-input" id="sign-group-filter"><option value="all" ${selectedKey === "all" ? "selected" : ""}>すべてのサイン（${signs.length}）</option>${groupOptions}${ungroupedOption}</select><label class="team-sign-search-box" for="sign-search"><span aria-hidden="true">⌕</span><input class="text-input" id="sign-search" type="search" placeholder="サイン名・動画メモで検索"></label>${addSignButton}</div><p>「すべてのサイン」を初期表示します。グループを選ぶと目的別に絞り込めます。登録・編集画面では所属グループを変更できます。${signLimit == null ? "サイン登録数は無制限です。" : `現在 ${signs.length}/${signLimit}個です。`}</p></div>`
     : "";
-  const canAddGroup = groups.length < 1 || featureEnabled(entitlements, "multiple_sign_groups");
+  const groupLimit = featureLimit(entitlements, "multiple_sign_groups");
+  const canAddGroup = groupLimit == null || groups.length < groupLimit;
   const addGroupButton = canAddGroup
     ? `<button class="button button-secondary" id="open-add-group" type="button">＋ グループ追加</button>`
-    : `<button class="button button-secondary" data-premium-feature="複数サイングループ" data-premium-description="Freeプランではサイングループは1つまでです。Plus / Proでは複数作成できます。" type="button">＋ グループ追加 ${paidFeatureBadge("Plus")}</button>`;
+    : `<button class="button button-secondary" disabled type="button">グループ上限 ${groupLimit}個</button>`;
   return `<div class="team-admin-view"><header class="team-admin-page-head"><div><h1>サイン管理</h1><p>グループで絞り込んだり、すべてのサインをまとめて確認・登録できます。</p></div><div class="team-admin-page-actions">${addGroupButton}</div></header>
     <section class="admin-card admin-card--flush-mobile">${groups.length || ungroupedSigns.length || signs.length ? `${selector}${ungroupedWarning}<div class="team-admin-page-summary team-admin-page-summary--signs team-admin-page-summary--sign-total"><strong class="team-sign-total-label">全<span id="sign-visible-count">${visibleSigns.length}</span>サイン</strong></div>${signList}` : `<div class="admin-empty"><strong>先にサイングループを作成してください</strong><p>最初のグループはFreeプランでも作成できます。</p><button class="button button-primary" id="open-add-group-empty" type="button">＋ 最初のグループを追加</button></div>`}</section>
   </div>`;
@@ -1229,7 +1327,7 @@ function teamSignsContent(signs, groups, entitlements = {}) {
 
 function teamShareContent(team, playerUrl, qrSrc) {
   return `<div class="team-admin-view"><header class="team-admin-page-head"><div><h1>選手用ページを共有</h1><p>参加リンクとQRコードだけをまとめています。合言葉は別途チーム内で共有してください。</p></div></header>
-    <section class="admin-card admin-share-card"><div class="admin-share-grid"><div class="admin-share-content"><label>選手用URL<div class="admin-copy-row"><input class="text-input" id="team-player-url" readonly value="${esc(playerUrl)}"><button class="button button-primary" id="copy-player-url" type="button">コピー</button></div></label><div class="admin-share-actions"><button class="button line-share-button" id="share-player-line" type="button">LINEで共有</button><button class="button button-secondary" id="share-player-native" type="button">その他で共有</button></div><p class="admin-help" id="copy-player-status">URL・QRコードには合言葉を含めません。</p></div><div class="admin-qr-wrap"><div class="admin-qr"><img src="${esc(qrSrc)}" alt="${esc(team.name)}の選手用ページQRコード" width="220" height="220"><span class="admin-qr-logo"><img src="${ICON}" alt=""></span></div><p>現在の環境URLから生成</p></div></div></section>
+    <section class="admin-card admin-share-card"><div class="admin-share-grid"><div class="admin-share-content"><label>選手用URL<div class="admin-copy-row"><input class="text-input" id="team-player-url" readonly value="${esc(playerUrl)}"><button class="button button-primary" id="copy-player-url" type="button">コピー</button></div></label><div class="admin-share-actions"><button class="button line-share-button" id="share-player-line" type="button"><img class="button-brand-icon" src="/assets/line-brand-icon.svg" alt="">LINEで共有</button><button class="button button-secondary" id="share-player-native" type="button">その他で共有</button></div><p class="admin-help" id="copy-player-status">URL・QRコードには合言葉を含めません。</p></div><div class="admin-qr-wrap"><div class="admin-qr"><img src="${esc(qrSrc)}" alt="${esc(team.name)}の選手用ページQRコード" width="220" height="220"><span class="admin-qr-logo"><img src="${ICON}" alt=""></span></div><p>現在の環境URLから生成</p></div></div></section>
   </div>`;
 }
 
@@ -1261,9 +1359,9 @@ function teamPlanAuthContent(teamId, team, plan, auth, adminManagement, entitlem
   const roleLabel = auth?.type === "account" ? (auth?.role === "owner" ? "メイン管理者" : "サブ管理者") : "共有パスワード";
   const legacyEnabled = auth?.type === "account" ? Boolean(adminManagement?.legacyPasswordEnabled) : true;
   const features = [
-    ["基本的なサイン登録・練習", true, "Free"],
+    [plan.code === "team_pro" ? "サイン登録 無制限" : plan.code === "team_plus" ? "サイン登録 最大20個" : "サイン登録 最大10個", true, "Free"],
     ["Google / LINE OAuth認証", true, "Free"],
-    ["複数サイングループ", featureEnabled(entitlements, "multiple_sign_groups"), "Plus"],
+    [plan.code === "team_pro" ? "サイングループ 無制限" : plan.code === "team_plus" ? "サイングループ 最大3個" : "サイングループ 1個", true, "Free"],
     ["1サイン複数動画", featureEnabled(entitlements, "multiple_sign_videos"), "Plus"],
     ["動画プレビュー開始位置の秒数指定", featureEnabled(entitlements, "custom_video_thumbnail"), "Plus"],
     ["サブ管理者（Plusは最大5名・Proは最大10名）", featureEnabled(entitlements, "sub_admin_management"), "Plus"],
@@ -1271,7 +1369,7 @@ function teamPlanAuthContent(teamId, team, plan, auth, adminManagement, entitlem
     ["最近のアクティビティ・監査ログ", featureEnabled(entitlements, "activity_log"), "Pro"]
   ];
   return `<div class="team-admin-view"><header class="team-admin-page-head"><div><h1>プラン・認証</h1><p>現在のプランと認証方式を確認できます。OAuth認証はFreeプランでも利用できます。</p></div></header>
-    <section class="admin-plan-card"><div><div class="admin-plan-title"><h2>${esc(plan.name || "Free")}</h2><span class="admin-plan-price">${plan.isFree ? "Free" : "限定提供"}</span></div><p>${plan.code === "team_pro" ? "Plusのチーム運用機能に加えて、成績分析・監査ログまで利用できます。" : plan.code === "team_plus" ? "複数グループ・複数動画・サブ管理者など、チーム運用を強化できます。" : "基本的なサイン登録・練習、規定の1グループ、メイン管理者1名で利用できます。"}</p><div class="admin-plan-feature-list">${features.map(([label, enabled, requiredPlan]) => enabled ? `<span class="admin-plan-feature is-enabled">✓ ${esc(label)}</span>` : `<a class="admin-plan-feature is-locked" href="${premiumPlanUrl(String(label))}" target="_blank" rel="noopener">🔒 ${esc(label)} ${paidFeatureBadge(String(requiredPlan))}<small>詳しく見る ↗</small></a>`).join("")}</div></div><div class="admin-plan-future"><strong>Plus / Proは現在、特定チーム限定で提供しています</strong><span>${esc(PAID_LIMITED_MESSAGE)} プランの変更はSYSTEM管理者が行います。</span><a class="button button-secondary" href="/plans" target="_blank" rel="noopener">プランの違いを見る ↗</a></div></section>
+    <section class="admin-plan-card"><div><div class="admin-plan-title"><h2>${esc(plan.name || "Free")}</h2><span class="admin-plan-price">${plan.isFree ? "Free" : "限定提供"}</span></div><p>${plan.code === "team_pro" ? "Plusのチーム運用機能に加えて、成績分析・監査ログまで利用できます。" : plan.code === "team_plus" ? "サイン最大20個・グループ最大3つ・複数動画・サブ管理者など、チーム運用を強化できます。" : "基本的なサイン登録・練習、規定の1グループ、メイン管理者1名で利用できます。"}</p><div class="admin-plan-feature-list">${features.map(([label, enabled, requiredPlan]) => enabled ? `<span class="admin-plan-feature is-enabled">✓ ${esc(label)}</span>` : `<a class="admin-plan-feature is-locked" href="${premiumPlanUrl(String(label))}" target="_blank" rel="noopener">🔒 ${esc(label)} ${paidFeatureBadge(String(requiredPlan))}<small>詳しく見る ↗</small></a>`).join("")}</div></div><div class="admin-plan-future"><strong>Plus / Proは現在、特定チーム限定で提供しています</strong><span>${esc(PAID_LIMITED_MESSAGE)} プランの変更はSYSTEM管理者が行います。</span><a class="button button-secondary" href="/plans" target="_blank" rel="noopener">プランの違いを見る ↗</a></div></section>
     <section class="admin-card team-admin-settings-summary"><div class="admin-section-heading"><div><h2>認証方式</h2></div><a class="button button-secondary" href="${teamAdminHref(teamId, "admins")}">管理者を管理</a></div><dl><div><dt>現在の認証</dt><dd>${esc(authLabel)}</dd></div><div><dt>あなたの権限</dt><dd>${esc(roleLabel)}</dd></div><div><dt>旧共有パスワード</dt><dd>${legacyEnabled ? "有効" : "無効"}</dd></div></dl><p class="admin-help">Google / LINE OAuth認証自体はFreeプランでも利用できます。</p></section>
   </div>`;
 }
@@ -1325,9 +1423,13 @@ async function renderTeamDashboard(teamId, { message = "", view = teamAdminViewF
   else if (view === "notices") viewContent = teamNoticesContent(notices);
   else if (view === "settings") viewContent = teamSettingsContent(team, auth, accountManaged);
   else viewContent = teamDashboardContent(teamId, team, groups, signs, totalVideos, plan, entitlements, notices, auth, adminManagement, activity);
-  const body = `${message ? notice(message, "success") : ""}${teamAdminFrame(teamId, team.name, view, viewContent, notices.length, entitlements)}`;
+  const nameReview = auth?.user?.needsDisplayNameReview
+    ? `<div class="notice notice-info admin-name-review-notice"><strong>管理者名を確認してください</strong><br>現在はGoogle / LINEのプロフィール名が入っている場合があります。チーム内で分かりやすいハンドルネームに変更できます。<br><a class="button button-primary" href="/account?reviewName=1&returnTo=${encodeURIComponent(teamAdminCurrentPath(teamId))}">名前を確認・変更する</a></div>`
+    : "";
+  const body = `${message ? notice(message, "success") : ""}${nameReview}${teamAdminFrame(teamId, team.name, view, viewContent, notices.length, entitlements, plan.name)}`;
   shell("チーム管理", body, adminHeaderActions(adminHeaderMenuButton("team-admin-menu-open", "team-admin-mobile-menu-screen"), teamAdminHref(teamId, "notices"), notices.length));
   wireTeamDashboard(teamId, team, groups, signs, playerUrl, auth, adminManagement, entitlements);
+  void wireTeamSupportLinks(teamId, team.name, plan.name);
 }
 
 function teamGroupCard(group, signs) {
@@ -1343,7 +1445,7 @@ function teamGroupCard(group, signs) {
   </article>`;
 }
 
-function teamSignCard(sign, index, groups = [], entitlements = {}, moveState = {}) {
+function teamSignCard(sign, index, groups = [], entitlements = {}, moveState: { canMoveUp?: boolean; canMoveDown?: boolean } = {}) {
   const videos = sign.videoItems || [];
   const canAddMultipleVideos = featureEnabled(entitlements, "multiple_sign_videos");
   const enabledVideos = videos.filter((video) => video.enabled).length;
@@ -1427,7 +1529,7 @@ function openGroupModal(teamId, group = null) {
   const editing = Boolean(group);
   openAdminModal({
     title: editing ? "グループを編集" : "グループを追加",
-    body: `<div id="admin-modal-error"></div>${editing ? "" : `<section class="group-use-cases"><div class="group-use-cases-head"><strong>こんな分け方ができます</strong><span>例を選ぶとグループ名と説明に入ります</span></div><div class="group-use-case-grid"><button type="button" class="group-use-case" data-group-example-name="バッティングサイン" data-group-example-description="バント、エンドランなど、攻撃時にベンチから出すサインをまとめます。"><b>バッティングサイン</b><small>攻撃時の作戦・打撃サイン</small></button><button type="button" class="group-use-case" data-group-example-name="守備サイン（ランナーなし）" data-group-example-description="ランナーがいない場面で使う守備連携やキャッチャーのサインパターンをまとめます。"><b>守備サイン（ランナーなし）</b><small>走者なしの基本パターン</small></button><button type="button" class="group-use-case" data-group-example-name="守備サイン（2塁ランナーあり）" data-group-example-description="2塁ランナーがいる場面で使う守備サインを分けて管理します。キャッチャーのサインを見られやすい状況に備え、別パターンを練習できます。"><b>守備サイン（2塁ランナーあり）</b><small>2塁走者がいる場面の別パターン</small></button><button type="button" class="group-use-case" data-group-example-name="ピッチングサイン" data-group-example-description="球種・コース・けん制など、投手と捕手を中心に使うサインをまとめます。"><b>ピッチングサイン</b><small>球種・コース・けん制など</small></button><button type="button" class="group-use-case" data-group-example-name="走塁サイン" data-group-example-description="盗塁、スタート、スクイズなど、ランナー向けの走塁サインをまとめます。"><b>走塁サイン</b><small>ランナー向けの走塁指示</small></button></div><p>チームの運用に合わせて自由に名前を変更できます。Freeは1グループ、Plus / Proでは複数グループを作成できます。</p></section>`}<form id="group-modal-form" class="admin-form"><label>グループ名<input class="text-input" name="name" maxlength="80" value="${esc(group?.name || "")}" placeholder="例：守備サイン（2塁ランナーあり）" required></label><label>グループの説明<textarea class="text-input admin-textarea" name="description" maxlength="1200" placeholder="例：2塁ランナーがいる場面で使う守備サイン。">${esc(group?.description || "")}</textarea></label><label>説明用YouTube URL <span class="admin-optional">任意</span><input class="text-input" name="youtubeUrl" type="url" inputmode="url" value="${esc(group?.youtubeUrl || "")}" placeholder="https://youtube.com/..."></label>${editing ? `<label>並び順<input class="text-input" name="sortOrder" type="number" value="${Number(group.sortOrder || 0)}"></label><label class="admin-toggle admin-toggle--panel"><input name="enabled" type="checkbox" ${group.enabled ? "checked" : ""}><span>選手画面で使用する</span></label>` : ""}<div class="admin-modal-actions"><button class="button button-primary" type="submit">${editing ? "保存する" : "追加する"}</button>${editing ? `<button class="button button-danger" id="delete-group-in-modal" type="button">グループを削除</button>` : ""}</div></form>`,
+    body: `<div id="admin-modal-error"></div>${editing ? "" : `<section class="group-use-cases"><div class="group-use-cases-head"><strong>こんな分け方ができます</strong><span>例を選ぶとグループ名と説明に入ります</span></div><div class="group-use-case-grid"><button type="button" class="group-use-case" data-group-example-name="バッティングサイン" data-group-example-description="バント、エンドランなど、攻撃時にベンチから出すサインをまとめます。"><b>バッティングサイン</b><small>攻撃時の作戦・打撃サイン</small></button><button type="button" class="group-use-case" data-group-example-name="守備サイン（ランナーなし）" data-group-example-description="ランナーがいない場面で使う守備連携やキャッチャーのサインパターンをまとめます。"><b>守備サイン（ランナーなし）</b><small>走者なしの基本パターン</small></button><button type="button" class="group-use-case" data-group-example-name="守備サイン（2塁ランナーあり）" data-group-example-description="2塁ランナーがいる場面で使う守備サインを分けて管理します。キャッチャーのサインを見られやすい状況に備え、別パターンを練習できます。"><b>守備サイン（2塁ランナーあり）</b><small>2塁走者がいる場面の別パターン</small></button><button type="button" class="group-use-case" data-group-example-name="ピッチングサイン" data-group-example-description="球種・コース・けん制など、投手と捕手を中心に使うサインをまとめます。"><b>ピッチングサイン</b><small>球種・コース・けん制など</small></button><button type="button" class="group-use-case" data-group-example-name="走塁サイン" data-group-example-description="盗塁、スタート、スクイズなど、ランナー向けの走塁サインをまとめます。"><b>走塁サイン</b><small>ランナー向けの走塁指示</small></button></div><p>チームの運用に合わせて自由に名前を変更できます。Freeは1グループ、Plusは最大3グループ、Proは無制限で作成できます。</p></section>`}<form id="group-modal-form" class="admin-form"><label>グループ名<input class="text-input" name="name" maxlength="80" value="${esc(group?.name || "")}" placeholder="例：守備サイン（2塁ランナーあり）" required></label><label>グループの説明<textarea class="text-input admin-textarea" name="description" maxlength="1200" placeholder="例：2塁ランナーがいる場面で使う守備サイン。">${esc(group?.description || "")}</textarea></label><label>説明用YouTube URL <span class="admin-optional">任意</span><input class="text-input" name="youtubeUrl" type="url" inputmode="url" value="${esc(group?.youtubeUrl || "")}" placeholder="https://youtube.com/..."></label>${editing ? `<label>並び順<input class="text-input" name="sortOrder" type="number" value="${Number(group.sortOrder || 0)}"></label><label class="admin-toggle admin-toggle--panel"><input name="enabled" type="checkbox" ${group.enabled ? "checked" : ""}><span>選手画面で使用する</span></label>` : ""}<div class="admin-modal-actions"><button class="button button-primary" type="submit">${editing ? "保存する" : "追加する"}</button>${editing ? `<button class="button button-danger" id="delete-group-in-modal" type="button">グループを削除</button>` : ""}</div></form>`,
     onOpen(layer) {
       layer.querySelectorAll<HTMLElement>("[data-group-example-name]").forEach((example) => example.addEventListener("click", () => {
         const nameInput = layer.querySelector<HTMLInputElement>('input[name="name"]');
@@ -1525,6 +1627,7 @@ function wireTeamDashboard(teamId, team, groups, signs, playerUrl, auth = {}, ad
   document.querySelectorAll<HTMLElement>("[data-premium-feature]").forEach((button) => button.addEventListener("click", () => { window.open(premiumPlanUrl(button.dataset.premiumFeature || "限定機能"), "_blank", "noopener,noreferrer"); }));
   document.querySelector("#open-admin-invite")?.addEventListener("click", () => openAdminInviteModal(teamId));
   document.querySelector("#open-owner-transfer")?.addEventListener("click", () => openOwnerTransferModal(teamId, adminManagement || { members: [] }));
+  document.querySelectorAll("[data-edit-team-admin-name]").forEach((button) => button.addEventListener("click", () => openTeamAdminDisplayNameModal(teamId, button.dataset.editTeamAdminName || "")));
   document.querySelector("#disable-legacy-password")?.addEventListener("click", async () => {
     if (!confirm("旧管理者パスワードでのログインを無効化します。Google / LINEアカウントでログインできることを確認済みですか？")) return;
     const { response, data } = await requestJson(`/api/team-admin/legacy-password/disable?teamId=${encodeURIComponent(teamId)}`, { method: "POST" });

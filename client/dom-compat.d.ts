@@ -3,7 +3,7 @@ export {};
 declare global {
   interface Element {
     inert: boolean;
-    hidden: boolean;
+    hidden: boolean | "until-found";
     dataset: DOMStringMap;
     style: CSSStyleDeclaration;
     value: string;

@@ -36,6 +36,23 @@ export function applyTeamManifestLink(html: string, pathname: string) {
   return html.replace("</head>", `  ${manifestTag}\n  </head>`);
 }
 
+function environmentContext(url, env) {
+  const configured = String(env?.ENVIRONMENT || "dev").trim().toLowerCase();
+  const host = String(url?.hostname || "").toLowerCase();
+  const local = host === "127.0.0.1" || host === "localhost" || host === "0.0.0.0";
+  if (!local && configured === "production") return null;
+  if (local) return { key: "local", label: "LOCAL 環境", note: "ローカル環境です。本番ではありません" };
+  if (configured === "staging") return { key: "staging", label: "STAGING 環境", note: "検証環境です。本番ではありません" };
+  return { key: "dev", label: "DEV 環境", note: "開発環境です。本番ではありません" };
+}
+
+function applyEnvironmentContext(html, env, url) {
+  const context = environmentContext(url, env);
+  if (!context) return html;
+  const badge = `<button class="environment-context-badge environment-context-badge--${context.key}" type="button" data-environment-context-badge aria-label="${context.label}。${context.note}。操作先を確認して、クリックで閉じる"><span class="environment-context-close" aria-hidden="true">×</span><strong>${context.label}</strong><span>${context.note}</span><small>操作先を確認してクリックで閉じる</small></button>`;
+  return String(html).replace(/<body([^>]*)>/i, `<body$1>${badge}`);
+}
+
 export async function serveHtmlPage(request, env, url, assetPath) {
   const assetUrl = new URL(assetPath, url.origin);
   const assetRequest = new Request(assetUrl, { method: "GET", headers: request.headers });
@@ -57,7 +74,7 @@ export async function serveHtmlPage(request, env, url, assetPath) {
   headers.delete("content-length");
   headers.delete("etag");
   headers.delete("last-modified");
-  const html = applyTeamManifestLink(applyAssetVersion(await assetResponse.text(), env), url.pathname);
+  const html = applyTeamManifestLink(applyAssetVersion(applyEnvironmentContext(await assetResponse.text(), env, url), env), url.pathname);
   return withHeaders(new Response(html, { status: 200, headers }), {
     noIndex: !["/", "/index.html", "/plans", "/plans.html", "/install", "/install.html"].includes(url.pathname),
     noCache: true

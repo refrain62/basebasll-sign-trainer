@@ -2,6 +2,7 @@
 import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils";
 import { practiceHeader } from "./components/practice-header";
 import { filterPracticeSigns, findPracticeGroup, getPracticeOptions } from "./practice-utils";
+import { initEnvironmentContextBadge } from "./environment-context";
 
 const APP_BUILD = __APP_VERSION__;
 console.info(`[SIGN TRAINER] build ${APP_BUILD}`);
@@ -505,11 +506,11 @@ async function openShareDialog(target = "site") {
   if (target === "team") {
     if (nativeButton) nativeButton.textContent = "その他のアプリで共有";
     if (copyButton) copyButton.textContent = "参加リンクをコピー";
-    if (lineButton) lineButton.textContent = "LINEでメンバーに共有";
+    if (lineButton) lineButton.innerHTML = '<img class="button-brand-icon" src="/assets/line-brand-icon.svg" alt="">LINEでメンバーに共有';
   } else {
     if (nativeButton) nativeButton.textContent = "共有メニューを開く";
     if (copyButton) copyButton.textContent = "リンクをコピー";
-    if (lineButton) lineButton.textContent = "LINEで共有";
+    if (lineButton) lineButton.innerHTML = '<img class="button-brand-icon" src="/assets/line-brand-icon.svg" alt="">LINEで共有';
   }
   if (qrStatus) qrStatus.textContent = "QRコードを準備しています…";
   if (qr) {
@@ -583,7 +584,7 @@ document.addEventListener("click", (event) => {
   if (menuButton) {
     const menu = document.querySelector<HTMLElement>("#practice-header-menu");
     if (menu) {
-      const opening = menu.hidden;
+      const opening = Boolean(menu.hidden);
       menu.hidden = !opening;
       menuButton.setAttribute("aria-expanded", opening ? "true" : "false");
       document.body.classList.toggle("practice-menu-open", opening);
@@ -746,21 +747,61 @@ function renderAuth({ error = "", value = "", configError = false } = {}) {
             ${error ? `<div class="form-error" role="alert"><span class="form-error-mark">!</span><span>${escapeHtml(error)}${configError ? "" : "<br>もう一度確認して入力してください。"}</span></div>` : ""}
             <button class="button button-primary button-full" id="auth-submit" type="submit">練習をはじめる</button>
           </form>
-          <section class="team-pwa-login-guide" aria-labelledby="team-pwa-login-guide-title">
-            <div class="team-pwa-login-guide-head">
-              <span>${icons.phone}</span>
-              <div><small>次回からもっと簡単に</small><h2 id="team-pwa-login-guide-title">このチームをホーム画面に追加</h2></div>
+          <details class="team-pwa-login-guide">
+            <summary class="team-pwa-login-guide-summary">
+              <span class="team-pwa-login-guide-summary-icon">${icons.phone}</span>
+              <span class="team-pwa-login-guide-summary-copy"><small>はじめて使う方へ</small><strong>ホーム画面への追加方法を見る</strong></span>
+              <span class="team-pwa-login-guide-summary-arrow" aria-hidden="true">›</span>
+            </summary>
+            <div class="team-pwa-login-guide-content">
+              <p class="team-pwa-login-intro"><strong>${escapeHtml(state.teamName)}</strong> のチームページをホーム画面に追加すると、次回からチーム名のアイコンをタップするだけで開けます。説明は文字を中心に、迷いやすいボタンの位置だけ画像で確認できます。</p>
+
+              <div class="pwa-platform-guides pwa-platform-guides-inline">
+                <section class="pwa-platform-guide" aria-labelledby="login-pwa-iphone-title">
+                  <div class="pwa-platform-title"><span class="pwa-platform-badge">iPhone / iPad</span><h3 id="login-pwa-iphone-title">Safariから追加</h3></div>
+                  <ol class="pwa-install-steps">
+                    <li>
+                      <span class="pwa-step-no">1</span>
+                      <div class="pwa-step-body"><strong>このチームページをSafariで開く</strong><p>LINEなどで開いている場合は、Safariでこのページを開いてください。</p></div>
+                    </li>
+                    <li class="pwa-step-with-image">
+                      <span class="pwa-step-no">2</span>
+                      <div class="pwa-step-body"><strong>画面下の「共有」ボタンをタップ</strong><p>四角から上向き矢印が出ているボタンです。場所だけ下の画像で確認できます。</p><img src="/assets/pwa-iphone-share.webp" alt="Safari画面下部にある共有ボタンの位置" width="600" height="210" loading="lazy" decoding="async" /></div>
+                    </li>
+                    <li class="pwa-step-with-image">
+                      <span class="pwa-step-no">3</span>
+                      <div class="pwa-step-body"><strong>「ホーム画面に追加」を選ぶ</strong><p>共有メニューを少し下へスクロールすると表示されます。</p><img src="/assets/pwa-iphone-add-home.webp" alt="Safari共有メニュー内のホーム画面に追加の位置" width="612" height="340" loading="lazy" decoding="async" /></div>
+                    </li>
+                    <li class="pwa-step-with-image">
+                      <span class="pwa-step-no">4</span>
+                      <div class="pwa-step-body"><strong>右上の「追加」をタップ</strong><p>表示名はチーム名のままでOKです。</p><img src="/assets/pwa-iphone-confirm-add.webp" alt="iPhoneのホーム画面に追加画面にある追加ボタンの位置" width="570" height="230" loading="lazy" decoding="async" /></div>
+                    </li>
+                  </ol>
+                </section>
+
+                <section class="pwa-platform-guide" aria-labelledby="login-pwa-android-title">
+                  <div class="pwa-platform-title"><span class="pwa-platform-badge pwa-platform-badge-android">Android</span><h3 id="login-pwa-android-title">Chromeから追加</h3></div>
+                  <ol class="pwa-install-steps">
+                    <li>
+                      <span class="pwa-step-no">1</span>
+                      <div class="pwa-step-body"><strong>このチームページをChromeで開く</strong><p>Chromeでこのチームページを表示してください。</p></div>
+                    </li>
+                    <li class="pwa-step-with-image">
+                      <span class="pwa-step-no">2</span>
+                      <div class="pwa-step-body"><strong>「インストール」が表示されたらタップ</strong><p>画面にインストール案内が出た場合は、そのボタンから進むのが一番簡単です。</p><img src="/assets/pwa-android-install.webp" alt="Android Chromeのインストールボタンの位置" width="612" height="350" loading="lazy" decoding="async" /></div>
+                    </li>
+                    <li class="pwa-step-with-image">
+                      <span class="pwa-step-no">3</span>
+                      <div class="pwa-step-body"><strong>表示されない場合は右上の「︙」をタップ</strong><p>Chromeのメニューを開き、「ホーム画面に追加」を選びます。メニューの場所だけ画像で確認できます。</p><img src="/assets/pwa-android-menu.webp" alt="Android Chrome右上のメニューボタンとホーム画面に追加の位置" width="612" height="780" loading="lazy" decoding="async" /></div>
+                    </li>
+                  </ol>
+                </section>
+              </div>
+              <p class="team-pwa-login-multi">追加後はホーム画面に <strong>${escapeHtml(state.teamName)}</strong> の名前で表示されます。複数チームに所属している場合も、チーム名で見分けられます。</p>
             </div>
-            <p>SIGN TRAINER本体ではなく、<strong>${escapeHtml(state.teamName)}</strong> のチームページをホーム画面へ追加します。</p>
-            <ol class="team-pwa-login-steps">
-              <li><span>1</span><div><b>合言葉でチームを確認</b><small>この画面から一度だけ練習ページへ入ります。</small></div></li>
-              <li><span>2</span><div><b>「このチームをホーム画面に追加」</b><small>iPhoneは共有 → ホーム画面に追加。Androidは表示されるインストール案内から進めます。</small></div></li>
-              <li><span>3</span><div><b>次回から「${escapeHtml(state.teamName)}」をタップ</b><small>選手の個別ログインなしで、このチームの練習ページを直接開けます。</small></div></li>
-            </ol>
-            <p class="team-pwa-login-multi">複数チームに所属していても、チームごとに追加でき、ホーム画面のチーム名で見分けられます。</p>
-          </section>
+          </details>
           <div class="team-entry-tools" aria-label="このチームの便利な入口">
-            <button class="button button-secondary button-full" id="auth-install-pwa" type="button">${icons.phone} このチームをホーム画面に追加</button>
+            <button class="button button-full pwa-install-entry-button" id="auth-install-pwa" type="button">${icons.phone} このチームをホーム画面に追加</button>
             <a class="button button-secondary button-full team-admin-login-button" href="${activeTeamAdminPath()}">${icons.users} チーム管理者ログイン</a>
           </div>
           <p class="form-help">合言葉は監督・コーチに確認してください。</p>
@@ -1009,7 +1050,7 @@ function renderPracticeSetup() {
           <span class="history-entry-arrow">›</span>
         </button>
         <div class="practice-team-tools">
-          <button class="button button-secondary" id="setup-install-pwa" type="button">${icons.phone} ホーム画面に追加</button>
+          <button class="button pwa-install-entry-button" id="setup-install-pwa" type="button">${icons.phone} ホーム画面に追加</button>
           <a class="button button-secondary team-admin-login-button" href="${activeTeamAdminPath()}">${icons.users} チーム管理者ログイン</a>
         </div>
         <div class="practice-points" aria-label="練習のポイント">
@@ -2024,5 +2065,6 @@ function renderClientNotFound() {
 
 pwaInstallDialog?.querySelector("[data-pwa-install-close]")?.addEventListener("click", () => pwaInstallDialog.close());
 
+initEnvironmentContextBadge();
 registerTeamPwa();
 route();

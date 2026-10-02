@@ -15,6 +15,10 @@ export function createGroupRepository(db, protector = null) {
     },
     getPublicById: (teamId, groupId) => getGroup(db, teamId, groupId, protector),
     validId: (teamId, value) => validGroupId(db, teamId, value),
+    async count(teamId) {
+      const row = await db.prepare("SELECT COUNT(*) AS count FROM sign_groups WHERE team_id=? AND deleted_at IS NULL").bind(teamId).first();
+      return Number(row?.count || 0);
+    },
     async nextSortOrder(teamId) {
       const row = await db.prepare("SELECT COALESCE(MAX(sort_order),0) AS max_order FROM sign_groups WHERE team_id=? AND deleted_at IS NULL").bind(teamId).first();
       return Number(row?.max_order || 0) + 10;

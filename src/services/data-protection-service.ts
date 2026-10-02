@@ -7,7 +7,7 @@ function protectOptional(protector, value, context) {
 
 export function createDataProtectionService({ repository, protector }) {
   async function protectOnce(batchSize) {
-    const counts = { teams: 0, users: 0, identities: 0, signs: 0, groups: 0, videos: 0, audit: 0, skippedIdentities: 0 };
+    const counts = { teams: 0, users: 0, identities: 0, adminMemberships: 0, signs: 0, groups: 0, videos: 0, audit: 0, skippedIdentities: 0 };
 
     for (const row of await repository.listTeams(batchSize)) {
       await repository.protectTeam({ ...row, name: await protector.encrypt(row.name, "teams.name") });
@@ -44,6 +44,14 @@ export function createDataProtectionService({ repository, protector }) {
         avatar_url: await protectOptional(protector, row.avatar_url, "user_identities.avatar_url")
       });
       counts.identities += 1;
+    }
+
+    for (const row of await repository.listAdminMemberships(batchSize)) {
+      await repository.protectAdminMembership({
+        ...row,
+        display_name: await protectOptional(protector, row.display_name, "team_admin_memberships.display_name")
+      });
+      counts.adminMemberships += 1;
     }
 
     for (const row of await repository.listSigns(batchSize)) {
@@ -87,11 +95,11 @@ export function createDataProtectionService({ repository, protector }) {
     async protectExisting({ batchSize = 100, maxBatches = 10 } = {}) {
       batchSize = Math.max(10, Math.min(Number(batchSize) || 100, 250));
       maxBatches = Math.max(1, Math.min(Number(maxBatches) || 10, 20));
-      const total = { teams: 0, users: 0, identities: 0, signs: 0, groups: 0, videos: 0, audit: 0, skippedIdentities: 0 };
+      const total = { teams: 0, users: 0, identities: 0, adminMemberships: 0, signs: 0, groups: 0, videos: 0, audit: 0, skippedIdentities: 0 };
       for (let i = 0; i < maxBatches; i += 1) {
         const counts = await protectOnce(batchSize);
         for (const key of Object.keys(total)) total[key] += counts[key] || 0;
-        const processed = counts.teams + counts.users + counts.identities + counts.signs + counts.groups + counts.videos + counts.audit;
+        const processed = counts.teams + counts.users + counts.identities + counts.adminMemberships + counts.signs + counts.groups + counts.videos + counts.audit;
         if (processed === 0) break;
       }
       const remaining = await repository.remainingCounts();

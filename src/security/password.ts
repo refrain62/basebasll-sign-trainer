@@ -1,4 +1,4 @@
-import { PBKDF2_ITERATIONS } from "../config/constants.ts";
+import { PBKDF2_ITERATIONS, PBKDF2_MAX_SUPPORTED_ITERATIONS } from "../config/constants.ts";
 import { normalizeSecret } from "../validation/common.ts";
 import { base64UrlDecode, base64UrlEncode, constantTimeBytes, encoder } from "./encoding.ts";
 
@@ -25,7 +25,7 @@ export function isSupportedPasswordHash(stored) {
   const [scheme, iterRaw, saltRaw, hashRaw, extraPart] = stored.split("$");
   if (![LEGACY_SCHEME, PEPPERED_SCHEME].includes(scheme) || extraPart || !saltRaw || !hashRaw) return false;
   const iterations = Number(iterRaw);
-  if (!Number.isInteger(iterations) || iterations < 10000 || iterations > 1000000) return false;
+  if (!Number.isInteger(iterations) || iterations < 10000 || iterations > PBKDF2_MAX_SUPPORTED_ITERATIONS) return false;
   try {
     return base64UrlDecode(saltRaw).length >= 8 && base64UrlDecode(hashRaw).length >= 16;
   } catch {
@@ -51,7 +51,7 @@ export async function verifyPasswordDetailed(value, stored, pepper) {
   const [scheme, iterRaw, saltRaw, hashRaw, extraPart] = stored.split("$");
   if (![LEGACY_SCHEME, PEPPERED_SCHEME].includes(scheme) || extraPart) return { valid: false, needsRehash: false };
   const iterations = Number(iterRaw);
-  if (!Number.isInteger(iterations) || iterations < 10000 || iterations > 1000000) return { valid: false, needsRehash: false };
+  if (!Number.isInteger(iterations) || iterations < 10000 || iterations > PBKDF2_MAX_SUPPORTED_ITERATIONS) return { valid: false, needsRehash: false };
   try {
     const salt = base64UrlDecode(saltRaw);
     const expected = base64UrlDecode(hashRaw);

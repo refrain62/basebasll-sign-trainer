@@ -9,15 +9,17 @@ const protector = createDataProtector({
 });
 
 test("data protection service encrypts legacy sensitive fields and redacts audit details", async () => {
-  const stored = { teams: [], users: [], identities: [], signs: [], groups: [], videos: [], audit: [] };
+  const stored = { teams: [], users: [], identities: [], adminMemberships: [], signs: [], groups: [], videos: [], audit: [] };
   let first = true;
   const repository = {
-    async listTeams() { if (!first) return []; return [{ id: "t1", name: "熊本ジュニア" }]; },
+    async listTeams() { if (!first) return []; return [{ id: "t1", name: "サンプルジュニア" }]; },
     async protectTeam(row) { stored.teams.push(row); },
     async listUsers() { if (!first) return []; return [{ id: "u1", display_name: "Coach", email: "coach@example.com", avatar_url: "https://example.com/a.png" }]; },
     async protectUser(row) { stored.users.push(row); },
     async listIdentities() { if (!first) return []; return [{ id: 1, provider: "google", provider_subject: "google-sub-123", provider_subject_ciphertext: null, provider_email: "coach@example.com", display_name: "Coach", avatar_url: "" }]; },
     async protectIdentity(row) { stored.identities.push(row); },
+    async listAdminMemberships() { if (!first) return []; return [{ team_id: "t1", user_id: "u1", display_name: "太郎 父" }]; },
+    async protectAdminMembership(row) { stored.adminMemberships.push(row); },
     async listSigns() { if (!first) return []; return [{ id: 1, name: "スクイズ" }]; },
     async protectSign(row) { stored.signs.push(row); },
     async listGroups() { if (!first) return []; return [{ id: 1, name: "Aサイン", description: "帽子→胸", explanation_youtube_url: "https://youtu.be/abc12345678", explanation_youtube_video_id: "abc12345678" }]; },
@@ -26,17 +28,19 @@ test("data protection service encrypts legacy sensitive fields and redacts audit
     async protectVideo(row) { stored.videos.push(row); },
     async listAuditDetails() { if (!first) return []; first = false; return [{ id: 1, detail_json: JSON.stringify({ name: "スクイズ", enabled: true }) }]; },
     async protectAuditDetail(id, detailJson) { stored.audit.push({ id, detailJson }); },
-    async remainingCounts() { return { teams: 0, users: 0, identities: 0, signs: 0, groups: 0, videos: 0, audit: 0 }; }
+    async remainingCounts() { return { teams: 0, users: 0, identities: 0, adminMemberships: 0, signs: 0, groups: 0, videos: 0, audit: 0 }; }
   };
 
   const service = createDataProtectionService({ repository, protector });
   const result = await service.protectExisting({ batchSize: 20, maxBatches: 2 });
   assert.equal(result.complete, true);
   assert.match(stored.teams[0].name, /^enc:v1:/);
-  assert.equal(await protector.decrypt(stored.teams[0].name, "teams.name"), "熊本ジュニア");
+  assert.equal(await protector.decrypt(stored.teams[0].name, "teams.name"), "サンプルジュニア");
   assert.match(stored.users[0].email, /^enc:v1:/);
   assert.match(stored.identities[0].provider_subject, /^hmac:v1:/);
   assert.match(stored.identities[0].provider_subject_ciphertext, /^enc:v1:/);
+  assert.match(stored.adminMemberships[0].display_name, /^enc:v1:/);
+  assert.equal(await protector.decrypt(stored.adminMemberships[0].display_name, "team_admin_memberships.display_name"), "太郎 父");
   assert.match(stored.signs[0].name, /^enc:v1:/);
   assert.equal(await protector.decrypt(stored.signs[0].name, "signs.name"), "スクイズ");
   assert.match(stored.groups[0].description, /^enc:v1:/);
@@ -108,15 +112,15 @@ test("new self-service teams are encrypted before D1 persistence", async () => {
     async batch(statements) { return statements; }
   };
   const repo = createAccountProvisioningRepository(db, protector);
-  await repo.createOwnedTeam({ teamId: "team123", name: "熊本ジュニア", passphraseHash: "hash1", adminHash: "hash2", userId: "u1" });
+  await repo.createOwnedTeam({ teamId: "team123", name: "サンプルジュニア", passphraseHash: "hash1", adminHash: "hash2", userId: "u1" });
   const teamInsert = bound.find((entry) => entry.sql.includes("INSERT INTO teams"));
   assert.ok(teamInsert);
   assert.match(teamInsert.params[1], /^enc:v1:/);
-  assert.equal(await protector.decrypt(teamInsert.params[1], "teams.name"), "熊本ジュニア");
+  assert.equal(await protector.decrypt(teamInsert.params[1], "teams.name"), "サンプルジュニア");
 });
 
 test("owned team names are decrypted at the repository boundary", async () => {
-  const encryptedName = await protector.encrypt("熊本ジュニア", "teams.name");
+  const encryptedName = await protector.encrypt("サンプルジュニア", "teams.name");
   const db = {
     prepare() {
       return { bind() { return { async all() { return { results: [{ id: "team123", name: encryptedName, status: "active" }] }; } }; } };
@@ -124,5 +128,26 @@ test("owned team names are decrypted at the repository boundary", async () => {
   };
   const repo = createAdminMembershipRepository(db, protector);
   const teams = await repo.ownedTeams("u1");
-  assert.equal(teams[0].name, "熊本ジュニア");
+  assert.equal(teams[0].name, "サンプルジュニア");
+});
+
+
+test("team-specific administrator names are encrypted at the repository boundary", async () => {
+  const bound = [];
+  const db = {
+    prepare(sql) {
+      return {
+        bind(...params) {
+          bound.push({ sql, params });
+          return { async run() { return { success: true, meta: { changes: 1 } }; } };
+        }
+      };
+    }
+  };
+  const repo = createAdminMembershipRepository(db, protector);
+  await repo.updateDisplayName("team123", "u1", "太郎 父");
+  const update = bound.find((entry) => entry.sql.includes("UPDATE team_admin_memberships SET display_name"));
+  assert.ok(update);
+  assert.match(update.params[0], /^enc:v1:/);
+  assert.equal(await protector.decrypt(update.params[0], "team_admin_memberships.display_name"), "太郎 父");
 });

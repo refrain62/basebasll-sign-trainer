@@ -8,19 +8,31 @@
 - `version_metadata` は named environment に継承されないため、productionだけでなく `env.dev` / `env.staging` にも `CF_VERSION_METADATA` binding を設定しています。
 - ローカルmigrationは `npm run db:migrate:local` を使用してください。
 
-最終更新: 2026-09-26
+最終更新: 2026-09-29
 
 ## 公開前
 
 1. `PUBLIC_OPERATOR_NAME` と `PUBLIC_SUPPORT_URL` を本番値へ設定する。
 2. Google / LINE OAuthの本番callback・規約URL・プライバシーURLを確認する。
-3. Cloudflare Accessで `/admin*` と `/api/system/*` を保護する。
-4. Secret（SESSION_SECRET / SYSTEM_ADMIN_SECRET / PASSWORD_PEPPER / DATA_ENCRYPTION_KEY / DATA_LOOKUP_KEY）を環境ごとに別値で設定する。
-5. **`0017_result_sharing.sql`まで全migrationを適用する。**
+3. Dev / StagingはWorker全体をCloudflare Accessで保護する。ProductionのSYSTEM管理はCloudflare Accessを使わず、`SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで保護する。
+4. Secret（SESSION_SECRET / SYSTEM_ADMIN_SECRET / PASSWORD_PEPPER / DATA_ENCRYPTION_KEY / DATA_LOOKUP_KEY / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / LINE_CHANNEL_ID / LINE_CHANNEL_SECRET）を環境ごとに設定する。Google / LINE OAuthは全環境で必須。
+5. **`0021_plan_content_limits.sql`まで全migrationを適用する。**
 6. `package-lock.json`をGit管理し、`npm ci --ignore-scripts`で再現可能にする。
 7. `npm run check`, `npm run security:preflight`, `npm run ops:preflight`を通す。
 
+## Dev / Staging 非公開運用
+
+- `wrangler.jsonc` の dev / staging は `REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true`。Productionは `false`。
+- Dev / StagingはLP・チーム画面・API・静的アセットを含むWorker全体をCloudflare Accessで保護する。
+- Cloudflare Access Policyで許可するメール/IdPユーザーを限定する。
+- Worker側で追加制限する場合は `ENVIRONMENT_ACCESS_ALLOWED_EMAILS` にカンマ区切りで設定する。空欄ならAccess Policyを信頼する。
+- `CF_ACCESS_TEAM_DOMAIN` はZero Trust Team Domain、`CF_ACCESS_POLICY_AUD` は各環境のAccess ApplicationのApplication Audience (AUD) tag。
+- Dev / StagingはAccess JWTがない、設定不備、不正JWT、許可外メールのいずれもWorker全体を403にする。
+- ローカルホストは開発用に環境全体Access検証をスキップする。
+
 ## プラン運用
+
+- `ACCOUNT_TEAM_CREATE_LIMIT=3` により、1管理者アカウントから新規作成できるチームは最大3チーム。招待参加はカウント外。
 
 - Freeは新規チームのデフォルト。
 - Plus / Proは現在、特定チーム限定。一般申し込み・オンライン課金はない。

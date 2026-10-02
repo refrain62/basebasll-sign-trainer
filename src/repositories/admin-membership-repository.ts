@@ -1,8 +1,10 @@
 export function createAdminMembershipRepository(db, protector = null) {
   return {
     async find(teamId, userId) {
-      return db.prepare("SELECT team_id,user_id,role,created_at,updated_at FROM team_admin_memberships WHERE team_id=? AND user_id=?")
+      const row = await db.prepare("SELECT team_id,user_id,role,display_name,created_at,updated_at FROM team_admin_memberships WHERE team_id=? AND user_id=?")
         .bind(teamId, userId).first();
+      if (row && protector && row.display_name) row.display_name = await protector.decrypt(row.display_name, "team_admin_memberships.display_name");
+      return row;
     },
 
     async hasAny(teamId) {
@@ -20,10 +22,16 @@ export function createAdminMembershipRepository(db, protector = null) {
         .bind(teamId, userId, role).run();
     },
 
+    async updateDisplayName(teamId, userId, displayName) {
+      const protectedName = protector ? await protector.encrypt(displayName, "team_admin_memberships.display_name") : displayName;
+      return db.prepare("UPDATE team_admin_memberships SET display_name=?,updated_at=CURRENT_TIMESTAMP WHERE team_id=? AND user_id=?")
+        .bind(protectedName, teamId, userId).run();
+    },
+
     async listForTeam(teamId) {
       const result = await db.prepare(`
-        SELECT m.team_id,m.user_id,m.role,m.created_at,
-               u.display_name,u.email,u.avatar_url
+        SELECT m.team_id,m.user_id,m.role,m.created_at,m.display_name AS team_display_name,
+               u.display_name AS account_display_name,u.email,u.avatar_url
         FROM team_admin_memberships m
         JOIN app_users u ON u.id=m.user_id AND u.deleted_at IS NULL AND u.status='active'
         WHERE m.team_id=?
@@ -31,10 +39,15 @@ export function createAdminMembershipRepository(db, protector = null) {
       `).bind(teamId).all();
       const output = [];
       for (const row of result.results || []) {
+        const teamDisplayName = row.team_display_name
+          ? (protector ? await protector.decrypt(row.team_display_name, "team_admin_memberships.display_name") : row.team_display_name)
+          : "";
+        const accountDisplayName = protector ? await protector.decrypt(row.account_display_name, "app_users.display_name") : row.account_display_name;
         output.push({
           userId: row.user_id,
           role: row.role,
-          displayName: protector ? await protector.decrypt(row.display_name, "app_users.display_name") : row.display_name,
+          displayName: teamDisplayName || accountDisplayName || "管理者",
+          usesTeamDisplayName: Boolean(teamDisplayName),
           email: protector ? await protector.decrypt(row.email, "app_users.email") || "" : row.email || "",
           avatarUrl: protector ? await protector.decrypt(row.avatar_url, "app_users.avatar_url") || "" : row.avatar_url || "",
           joinedAt: row.created_at
@@ -45,19 +58,27 @@ export function createAdminMembershipRepository(db, protector = null) {
 
     async listForUser(userId) {
       const result = await db.prepare(`
-        SELECT m.team_id,m.role,m.created_at,t.name,t.status,t.created_at AS team_created_at
+        SELECT m.team_id,m.role,m.created_at,m.display_name AS team_display_name,
+               t.name,t.status,t.created_at AS team_created_at,u.display_name AS account_display_name
         FROM team_admin_memberships m
         JOIN teams t ON t.id=m.team_id AND t.deleted_at IS NULL
+        JOIN app_users u ON u.id=m.user_id AND u.deleted_at IS NULL AND u.status='active'
         WHERE m.user_id=?
         ORDER BY CASE m.role WHEN 'owner' THEN 0 ELSE 1 END, t.updated_at DESC, t.id
       `).bind(userId).all();
       const output = [];
       for (const row of result.results || []) {
+        const teamDisplayName = row.team_display_name
+          ? (protector ? await protector.decrypt(row.team_display_name, "team_admin_memberships.display_name") : row.team_display_name)
+          : "";
+        const accountDisplayName = protector ? await protector.decrypt(row.account_display_name, "app_users.display_name") : row.account_display_name;
         output.push({
           teamId: row.team_id,
           teamName: protector ? await protector.decrypt(row.name, "teams.name") : row.name,
           teamStatus: row.status,
           role: row.role,
+          adminDisplayName: teamDisplayName || accountDisplayName || "管理者",
+          usesTeamDisplayName: Boolean(teamDisplayName),
           joinedAt: row.created_at,
           teamCreatedAt: row.team_created_at
         });

@@ -79,6 +79,10 @@ SYSTEM_ADMIN_SECRET
 PASSWORD_PEPPER
 DATA_ENCRYPTION_KEY
 DATA_LOOKUP_KEY
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+LINE_CHANNEL_ID
+LINE_CHANNEL_SECRET
 ```
 
 候補値は以下で生成できます。
@@ -124,6 +128,10 @@ npx wrangler secret put DATA_LOOKUP_KEY
 - `PASSWORD_PEPPER`: 32文字以上の十分ランダムな値
 - `DATA_ENCRYPTION_KEY`: 32文字以上の十分ランダムな値
 - `DATA_LOOKUP_KEY`: 32文字以上の十分ランダムな値
+- `GOOGLE_CLIENT_ID`: Google OAuth WebクライアントID（必須）
+- `GOOGLE_CLIENT_SECRET`: Google OAuth WebクライアントSecret（必須）
+- `LINE_CHANNEL_ID`: LINE LoginチャネルID（必須）
+- `LINE_CHANNEL_SECRET`: LINE LoginチャネルSecret（必須）
 
 ---
 
@@ -186,41 +194,136 @@ npx wrangler secret put LINE_CHANNEL_SECRET
 
 本番と非本番でOAuthアプリを分けられる場合は、production用とdev/staging用を分離すると誤設定を減らせます。
 
+### 5-1. OAuth設定確認
+
+デプロイ後、Access認証済みのブラウザで `/api/account/providers` を開き、Google / LINEが両方有効になっていることを確認します。
+
+```json
+{"providers":{"google":true,"line":true},"environment":"staging"}
+```
+
+`environment` はdevでは `dev`、stagingでは `staging`、productionでは `production` になります。
+
+### 5-2. 共通の公開設定
+
+`wrangler.jsonc` では以下の公開設定も環境ごとに管理します。
+
+```text
+ACCOUNT_TEAM_CREATE_LIMIT=3
+PUBLIC_SUPPORT_URL=https://<問い合わせフォームURL>
+```
+
+`ACCOUNT_TEAM_CREATE_LIMIT=3` は、1つのOAuth管理者アカウントから**新規作成できるチームを最大3チーム**に制限します。招待されてサブ管理者として参加したチームはこの上限に含みません。
+
+チーム管理画面の「お問い合わせ」は `PUBLIC_SUPPORT_URL` へ遷移し、問い合わせ先URLに次の情報をクエリパラメータとして付与します。
+
+```text
+teamId
+teamName
+plan
+environment
+```
+
+Googleフォームで実際のフォーム項目へ事前入力したい場合は、Googleフォーム側の `entry.<id>` に合わせたURLへ調整してください。現在の実装は上記の汎用パラメータを付与します。
+
+### 5-3. 非本番環境バッジ
+
+LOCAL / DEV / STAGINGでは、誤操作防止のためページ右下に環境バッジを表示します。Productionでは表示しません。
+
+```text
+LOCAL 環境
+DEV 環境
+STAGING 環境
+```
+
+バッジはクリックするとそのページでは閉じられますが、ページ遷移後は再表示されます。これは誤環境での操作を防ぐための仕様です。
+
 ---
 
 ## 6. Cloudflare Access
 
-remoteの dev / staging / production では、SYSTEM管理画面をCloudflare Accessで保護します。
+### 6-1. 公開方針
 
-保護対象:
+環境ごとの公開範囲は次のとおりです。
+
+| 環境 | 公開範囲 | Worker側の設定 |
+|---|---|---|
+| local | ローカルのみ | Access検証をスキップ |
+| dev | **一般公開しない。許可ユーザーのみ** | `REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true` |
+| staging | **一般公開しない。許可ユーザーのみ** | `REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true` |
+| production | 一般公開 | `REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=false` |
+
+Dev / Staging はLP、チーム画面、管理画面、API、静的アセットを含む**Worker全体**をCloudflare Accessで保護します。Worker側でも `Cf-Access-Jwt-Assertion` を検証するため、Cloudflare Accessの設定漏れや不正なJWTがある場合はfail closedで403になります。
+
+Productionは一般公開のままです。SYSTEM管理画面にもCloudflare Accessは要求せず、SIGN TRAINER内の `SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで保護します。
 
 ```text
-/admin*
-/api/system/*
+REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN=false
 ```
 
-各環境のSelf-hosted Applicationを作成し、許可するユーザーを限定してください。
+### 6-2. Dev / Staging のAccess Application
 
-`wrangler.jsonc` ではremote環境で以下が有効です。
+Cloudflare Zero Trustで、Dev用とStaging用にそれぞれWorker全体を対象にしたAccess Applicationを作成します。許可Policyには、自分・開発メンバー・テスターなど**接続を許可するメールアドレスだけ**を指定してください。
+
+例:
 
 ```text
-REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN=true
+SIGN TRAINER DEV
+  Host: basebasll-sign-trainer-dev.refrain62.workers.dev
+  Path: /*
+
+SIGN TRAINER STAGING
+  Host: basebasll-sign-trainer-staging.refrain62.workers.dev
+  Path: /*
 ```
 
-各環境で次を設定します。
+Dev / StagingではSYSTEM管理用に別のAccess Applicationを重ねず、環境全体のAccess Applicationをそのまま使用します。環境全体Access通過後、SYSTEM管理はさらに `SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで認証されます。
+
+### 6-3. Workerへ指定する値
+
+`CF_ACCESS_TEAM_DOMAIN` はZero Trust組織のTeam Domainです。現在はDev / Stagingの環境全体Accessで使用します。ProductionのSYSTEM管理では使用しません。
 
 ```text
 CF_ACCESS_TEAM_DOMAIN=https://<your-team>.cloudflareaccess.com
-CF_ACCESS_POLICY_AUD=<各Access ApplicationのAUD tag>
 ```
 
-必要に応じて、SYSTEM管理画面へ入れるメールを以下で追加制限できます。
+`CF_ACCESS_POLICY_AUD` は**その環境でWorkerを保護しているAccess Applicationの Application Audience (AUD) tag**を指定します。
 
 ```text
-SYSTEM_ADMIN_ALLOWED_EMAILS=user1@example.com,user2@example.com
+# dev
+CF_ACCESS_POLICY_AUD=<DEV Worker全体を保護するAccess ApplicationのAUD>
+
+# staging
+CF_ACCESS_POLICY_AUD=<STAGING Worker全体を保護するAccess ApplicationのAUD>
+
+# production
+# SYSTEM管理ではCloudflare Accessを使わないためAUDは不要
 ```
 
-Access設定が未完成の状態では、remoteのSYSTEM管理画面が403になる設計です。
+Account ID / Application ID / Policy IDではなく、必ず **Application Audience (AUD) tag** を指定します。
+
+### 6-4. 許可メールの二重制限
+
+Cloudflare Access Policy側の許可ユーザーに加えて、Worker側でもDev / Stagingの利用者を限定したい場合は、`ENVIRONMENT_ACCESS_ALLOWED_EMAILS` にカンマ区切りで設定します。
+
+```text
+ENVIRONMENT_ACCESS_ALLOWED_EMAILS=user1@example.com,user2@example.com
+```
+
+空欄の場合はCloudflare Access Policy側の許可設定を信頼します。安全上、Dev / StagingではAccess Policy側で必ず対象ユーザーを限定してください。
+
+`SYSTEM_ADMIN_ALLOWED_EMAILS` はSYSTEM管理専用のCloudflare Accessゲートを無効化している現在の構成では使用しません。
+
+### 6-5. fail closedの確認
+
+Dev / Stagingのremote環境では、以下のいずれかに該当するとWorker全体が403になります。
+
+- `Cf-Access-Jwt-Assertion` がない
+- `CF_ACCESS_TEAM_DOMAIN` / `CF_ACCESS_POLICY_AUD` が未設定または不正
+- JWTの署名・issuer・audience・有効期限が不正
+- `ENVIRONMENT_ACCESS_ALLOWED_EMAILS` を設定していて、JWTのemailが一覧にない
+
+ローカルホスト (`localhost` / `127.0.0.1`) は開発できるよう環境全体のAccess検証をスキップします。
 
 ---
 
@@ -275,12 +378,20 @@ npm run dev
 - LPが開く
 - チームページが開く
 - 合言葉認証が通る
-- チーム専用PWAのmanifestが取得できる
+- チーム専用アプリのmanifestが取得できる
 - チーム管理者ログイン導線が開く
 - SYSTEM管理画面のローカル確認ができる
 - サイン登録・編集・練習ができる
 
 ### STEP 2: dev
+
+まずSecretが揃っていることを確認します。
+
+```bash
+npx wrangler secret list --env dev
+```
+
+Google / LINEを含む9個の必須Secretがあることを確認します。
 
 migration状況確認:
 
@@ -300,14 +411,41 @@ deploy:
 npm run deploy:dev
 ```
 
+デプロイ後は、未許可のブラウザからWorkerへアクセスしてCloudflare Accessで止まることを確認します。許可ユーザーでAccess認証後、以下も確認します。
+
+```text
+https://basebasll-sign-trainer-dev.refrain62.workers.dev/api/account/providers
+```
+
+期待値:
+
+```json
+{"providers":{"google":true,"line":true},"environment":"dev"}
+```
+
 確認後、devで問題がなければstagingへ進みます。
 
 ### STEP 3: staging
 
+Secret一覧を確認してからmigration / deployします。
+
 ```bash
+npx wrangler secret list --env staging
 npm run db:list:staging
 npm run db:migrate:staging
 npm run deploy:staging
+```
+
+デプロイ後、未許可のブラウザではWorker全体がCloudflare Accessで止まることを確認します。許可ユーザーで認証後、以下が有効になっていることも確認します。
+
+```text
+https://basebasll-sign-trainer-staging.refrain62.workers.dev/api/account/providers
+```
+
+期待値:
+
+```json
+{"providers":{"google":true,"line":true},"environment":"staging"}
 ```
 
 stagingでは本番相当の確認をします。
@@ -319,8 +457,8 @@ stagingでは本番相当の確認をします。
 - チーム新規登録
 - チーム管理
 - 選手の合言葉認証
-- チーム専用PWAインストール
-- PWAから該当チームが直接起動する
+- チーム専用アプリをホームに追加
+- ホーム画面から該当チームが直接起動する
 - 複数チームを追加した場合にチーム名で識別できる
 - スマートフォン表示
 - Free / Plus / Pro制御
@@ -364,7 +502,7 @@ npm run deploy:prod
 4. サンプルまたは確認用チームページ `/t/{teamId}` が表示される
 5. 合言葉認証が動作する
 6. `/t/{teamId}/admin` が表示される
-7. `/admin` がCloudflare Accessで保護されている
+7. `/admin` が `SYSTEM_ADMIN_SECRET` でログインでき、未認証状態ではSYSTEM管理APIが拒否される
 8. チーム専用manifestが正しいチーム名・`start_url`を返す
 9. 練習開始 → 回答 → 履歴保存まで動く
 10. APIで500系エラーが増えていない
@@ -492,19 +630,26 @@ production deploy: OK
 
 ### dev
 
+- [ ] Dev Worker全体のCloudflare Access Application / Allow Policyを設定
+- [ ] `REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true` を確認
+- [ ] `CF_ACCESS_TEAM_DOMAIN` / Dev用 `CF_ACCESS_POLICY_AUD` を設定
 - [ ] dev D1へmigration
 - [ ] dev deploy
+- [ ] 未許可ユーザーがWorker全体へアクセスできないことを確認
 - [ ] OAuth確認
-- [ ] PWA確認
+- [ ] ホーム画面追加確認
 
 ### staging
 
+- [ ] Staging Worker全体のCloudflare Access Application / Allow Policyを設定
+- [ ] `REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true` を確認
+- [ ] `CF_ACCESS_TEAM_DOMAIN` / Staging用 `CF_ACCESS_POLICY_AUD` を設定
 - [ ] staging D1へmigration
 - [ ] staging deploy
+- [ ] 未許可ユーザーがWorker全体へアクセスできないことを確認
 - [ ] Google / LINEログイン確認
-- [ ] Cloudflare Access確認
 - [ ] チーム管理確認
-- [ ] スマホ/PWA確認
+- [ ] スマホ/ホーム画面追加確認
 
 ### production
 
@@ -582,3 +727,18 @@ Cloudflare上で試す     → dev
 ```
 
 **productionで初めて試す変更を作らない**ことを最優先にしてください。
+
+
+## PBKDF2 / 合言葉の注意
+
+Cloudflare Workers Web CryptoではPBKDF2のiteration countは100,000以下を使用する。SIGN TRAINERの新規合言葉・旧管理者パスワードは `PBKDF2-SHA256 + PASSWORD_PEPPER + 16-byte random salt + 100,000 iterations` で保存する。
+
+`0022_cloudflare_pbkdf2_compat.sql` は、旧seedのまま残っているサンプルチーム `6BnWv2K3zo` の選手用合言葉「ホームラン」を100,000回のlegacy hashへ修復する。STAGING/DEVで以下を適用する。
+
+```powershell
+npm run db:migrate:staging
+# または
+npm run db:migrate:dev
+```
+
+100,000回を超える既存PBKDF2 hashはWorkersでは検証できないため、該当チームはSYSTEM管理またはチーム管理から合言葉/旧管理者パスワードを再設定する。

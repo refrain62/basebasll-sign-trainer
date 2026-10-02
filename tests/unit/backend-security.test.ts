@@ -10,8 +10,10 @@ import {
   systemSession,
   validateCloudflareAccess,
   validateMutationRequest,
+  requiresEnvironmentAccess,
   verifyCloudflareAccessJwt,
   verifyPasswordDetailed,
+  isSupportedPasswordHash,
   verifySessionToken,
   withHeaders,
   isFreshAccountSession,
@@ -27,7 +29,7 @@ const DATA_LOOKUP_KEY = "SignTrainerUnitTestLookupKey2026";
 
 test("password hashing verifies the right value and rejects the wrong value", async () => {
   const hash = await hashPassword("Baseball2026", PASSWORD_PEPPER);
-  assert.match(hash, /^pbkdf2-sha256-pepper-v1\$600000\$/);
+  assert.match(hash, /^pbkdf2-sha256-pepper-v1\$100000\$/);
   assert.deepEqual(await verifyPasswordDetailed("Baseball2026", hash, PASSWORD_PEPPER), { valid: true, needsRehash: false });
   assert.deepEqual(await verifyPasswordDetailed("WrongPassword2026", hash, PASSWORD_PEPPER), { valid: false, needsRehash: false });
   assert.deepEqual(await verifyPasswordDetailed("Baseball2026", hash, "wrong-pepper-but-long-enough-123456"), { valid: false, needsRehash: false });
@@ -38,10 +40,19 @@ test("password hashing verifies the right value and rejects the wrong value", as
 test("legacy salt-only PBKDF2 hashes still verify and request peppered rehash", async () => {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode("Baseball2026"), "PBKDF2", false, ["deriveBits"]);
-  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 120000 }, key, 256));
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 100000 }, key, 256));
   const b64 = (bytes) => Buffer.from(bytes).toString("base64url");
-  const legacy = `pbkdf2-sha256$120000$${b64(salt)}$${b64(bits)}`;
+  const legacy = `pbkdf2-sha256$100000$${b64(salt)}$${b64(bits)}`;
   assert.deepEqual(await verifyPasswordDetailed("Baseball2026", legacy, PASSWORD_PEPPER), { valid: true, needsRehash: true });
+});
+
+
+test("PBKDF2 hashes above the Cloudflare Workers limit are rejected without throwing", async () => {
+  const salt = Buffer.alloc(16, 1).toString("base64url");
+  const hash = Buffer.alloc(32, 2).toString("base64url");
+  const unsupported = `pbkdf2-sha256-pepper-v1$600000$${salt}$${hash}`;
+  assert.equal(isSupportedPasswordHash(unsupported), false);
+  assert.deepEqual(await verifyPasswordDetailed("Baseball2026", unsupported, PASSWORD_PEPPER), { valid: false, needsRehash: false });
 });
 
 test("session token round-trips and rejects tampering", async () => {
@@ -85,6 +96,16 @@ async function makeAccessJwt({ email = "coach@example.com", aud = "aud-123", iss
   return { token: `${input}.${Buffer.from(signature).toString("base64url")}`, jwk };
 }
 
+
+test("remote dev and staging require environment-wide Cloudflare Access while local and production stay available", () => {
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "dev", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "true" } as any, "basebasll-sign-trainer-dev.example.workers.dev"), true);
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "staging", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "true" } as any, "basebasll-sign-trainer-staging.example.workers.dev"), true);
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "dev", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "true" } as any, "localhost"), false);
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "dev", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "true" } as any, "127.0.0.1"), false);
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "production", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "false" } as any, "basebasll-sign-trainer.example.workers.dev"), false);
+  assert.equal(requiresEnvironmentAccess({ ENVIRONMENT: "production", REQUIRE_CF_ACCESS_FOR_ENVIRONMENT: "true" } as any, "basebasll-sign-trainer.example.workers.dev"), false);
+});
+
 test("Cloudflare Access gate verifies RS256 signature, issuer, audience and verified email allowlist", async () => {
   const url = "https://example.com/admin";
   assert.equal((await validateCloudflareAccess(new Request(url), {})).status, 403);
@@ -93,6 +114,7 @@ test("Cloudflare Access gate verifies RS256 signature, issuer, audience and veri
   const env = { CF_ACCESS_TEAM_DOMAIN: "https://team.cloudflareaccess.com", CF_ACCESS_POLICY_AUD: "aud-123", SYSTEM_ADMIN_ALLOWED_EMAILS: "coach@example.com" };
   const headers = { "cf-access-authenticated-user-email": "spoofed@example.com", "cf-access-jwt-assertion": token };
   assert.equal(await validateCloudflareAccess(new Request(url, { headers }), env, { fetcher, nowSeconds: 1500 }), null);
+  assert.equal(await validateCloudflareAccess(new Request(url, { headers }), { ...env, SYSTEM_ADMIN_ALLOWED_EMAILS: "other@example.com" }, { fetcher, nowSeconds: 1500, allowedEmails: "coach@example.com" }), null);
   assert.equal((await validateCloudflareAccess(new Request(url, { headers }), { ...env, SYSTEM_ADMIN_ALLOWED_EMAILS: "other@example.com" }, { fetcher, nowSeconds: 1500 })).status, 403);
   assert.equal((await validateCloudflareAccess(new Request(url, { headers }), { ...env, CF_ACCESS_POLICY_AUD: "wrong-aud" }, { fetcher, nowSeconds: 1500 })).status, 403);
 });

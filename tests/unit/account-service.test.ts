@@ -26,6 +26,11 @@ function serviceFixture(overrides = {}) {
     },
     publicUser(row) { return row ? { id: row.id, displayName: row.display_name, email: row.email || "" } : null; },
     async listIdentities() { return []; },
+    async updateDisplayName(userId, displayName) {
+      calls.push(["updateDisplayName", userId, displayName]);
+      const row = users.get(userId);
+      if (row) row.display_name = displayName;
+    },
     async recordLegalConsent(userId, termsVersion, privacyVersion) {
       calls.push(["recordLegalConsent", userId, termsVersion, privacyVersion]);
       const row = users.get(userId);
@@ -77,20 +82,46 @@ test("account service reuses an existing provider subject", async () => {
   fx.identities.set("line:U123", fx.users.get("u_existing123"));
   const user = await fx.service.upsertOAuthUser({ provider: "line", subject: "U123", email: "", emailVerified: false, displayName: "New Name", avatarUrl: "" });
   assert.equal(user.id, "u_existing123");
-  assert.equal(user.displayName, "New Name");
+  assert.equal(user.displayName, "Old");
   assert.equal(fx.calls.some(([name]) => name === "createWithIdentity"), false);
+});
+
+test("account display name can be changed to a team handle", async () => {
+  const fx = serviceFixture();
+  fx.users.set("u_owner123", { id: "u_owner123", display_name: "Google Name", email: "", status: "active" });
+  const user = await fx.service.updateDisplayName("u_owner123", " コーチA ");
+  assert.equal(user.displayName, "コーチA");
 });
 
 test("self-service team creation provisions an owner-managed team without a usable shared admin password", async () => {
   const fx = serviceFixture();
   fx.users.set("u_owner123", { id: "u_owner123", display_name: "Owner", email: "", status: "active" });
-  const result = await fx.service.createTeam("u_owner123", { name: " 熊本ジュニア ", passphrase: "ホームラン" });
+  const result = await fx.service.createTeam("u_owner123", { name: " サンプルジュニア ", passphrase: "ホームラン" });
   assert.equal(result.team.id, "TeamABC123");
   const provision = fx.calls.find(([name]) => name === "createOwnedTeam")[1];
   assert.equal(provision.userId, "u_owner123");
   assert.equal(provision.passphraseHash, "hash:ホームラン");
   assert.match(provision.adminHash, /^hash:/);
   assert.notEqual(provision.adminHash, "hash:ホームラン");
+});
+
+test("team creation is limited to three owned teams while invited sub-admin teams do not count", async () => {
+  const fx = serviceFixture({ teamCreationLimit: 3 });
+  fx.users.set("u_owner123", { id: "u_owner123", display_name: "Owner", email: "", status: "active" });
+  fx.membershipRepository.listForUser = async () => [
+    { teamId: "T1", teamName: "One", role: "owner" },
+    { teamId: "T2", teamName: "Two", role: "owner" },
+    { teamId: "T3", teamName: "Three", role: "owner" },
+    { teamId: "T4", teamName: "Invited", role: "admin" }
+  ];
+  fx.membershipRepository.ownedTeams = async () => [
+    { id: "T1", name: "One" }, { id: "T2", name: "Two" }, { id: "T3", name: "Three" }
+  ];
+  const dashboard = await fx.service.dashboard("u_owner123");
+  assert.equal(dashboard.teamCreation.limit, 3);
+  assert.equal(dashboard.teamCreation.ownedTeamCount, 3);
+  assert.equal(dashboard.teamCreation.canCreate, false);
+  await expect(fx.service.createTeam("u_owner123", { name: "Fourth", passphrase: "secret" })).rejects.toMatchObject({ code: "team_create_limit_reached", status: 409 });
 });
 
 test("account deletion is blocked while the user owns a team", async () => {

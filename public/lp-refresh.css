@@ -1076,7 +1076,7 @@ body { background:#eef5f8; }
   }
 }
 
-/* v1.5.37 UI fix32: team-specific PWA note on LP */
+/* v1.5.37 UI fix32: team-specific ホーム画面アプリ note on LP */
 .lp-team-pwa-note { margin-top:12px; padding:12px 14px; display:grid; grid-template-columns:34px 1fr auto; gap:11px; align-items:center; border:1px solid #d7e7df; border-radius:12px; background:#f6fbf8; }
 .lp-team-pwa-note > span { width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:#e4f7ed; color:#078a4f; font-size:18px; font-weight:950; }
 .lp-team-pwa-note strong { display:block; color:#0b304d; font-size:11px; }

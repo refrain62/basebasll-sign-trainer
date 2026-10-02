@@ -1,27 +1,23 @@
-# ローカル開発用の例。実際は .dev.vars.dev にコピーし、値を置き換えてください。
-# このファイルには本物のSecretを保存しないでください。
-SESSION_SECRET=replace-with-a-long-random-session-secret-2026
-SYSTEM_ADMIN_SECRET=SignTrainer2026Admin
+# SIGN TRAINER local development secrets
+# Copy this file to .dev.vars.dev and replace every REPLACE_ME value.
+# Never commit .dev.vars.dev.
 
-# アプリケーションレベルのデータ保護（各環境で別々の十分ランダムな値を使用）
-PASSWORD_PEPPER=replace-with-random-password-pepper-at-least-32-chars
-DATA_ENCRYPTION_KEY=replace-with-random-data-encryption-key-at-least-32-chars
-DATA_LOOKUP_KEY=replace-with-random-data-lookup-key-at-least-32-chars
+# Required: session / admin / data protection
+SESSION_SECRET=REPLACE_ME_WITH_32_PLUS_RANDOM_CHARACTERS
+SYSTEM_ADMIN_SECRET=REPLACE_ME_WITH_12_PLUS_CHARS_CONTAINING_LETTERS_AND_NUMBERS
+PASSWORD_PEPPER=REPLACE_ME_WITH_32_PLUS_RANDOM_CHARACTERS
+DATA_ENCRYPTION_KEY=REPLACE_ME_WITH_32_PLUS_RANDOM_CHARACTERS
+DATA_LOOKUP_KEY=REPLACE_ME_WITH_32_PLUS_RANDOM_CHARACTERS
 
-# Google OAuth（Web application）
-GOOGLE_CLIENT_ID=replace-with-google-client-id
-GOOGLE_CLIENT_SECRET=replace-with-google-client-secret
+# Required: Google OAuth (Web application client)
+# Local redirect URI example:
+# http://127.0.0.1:8787/api/account/oauth/google/callback
+GOOGLE_CLIENT_ID=REPLACE_ME.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=REPLACE_ME_WITH_GOOGLE_OAUTH_CLIENT_SECRET
 
-# LINE Login v2.1
-LINE_CHANNEL_ID=replace-with-line-channel-id
-LINE_CHANNEL_SECRET=replace-with-line-channel-secret
-# LINEのメールアドレス取得権限を申請・承認済みの場合だけ true
-LINE_REQUEST_EMAIL=false
+# Required: LINE Login
+LINE_CHANNEL_ID=REPLACE_ME_WITH_LINE_LOGIN_CHANNEL_ID
+LINE_CHANNEL_SECRET=REPLACE_ME_WITH_LINE_LOGIN_CHANNEL_SECRET
 
-# Cloudflare Access (remote system admin only; localhost is bypassed)
-CF_ACCESS_TEAM_DOMAIN=https://your-team.cloudflareaccess.com
-CF_ACCESS_POLICY_AUD=your-access-application-aud-tag
-
-# 公開用の運営者情報（Secretではありません）
-PUBLIC_OPERATOR_NAME=SIGN TRAINER 運営者
-PUBLIC_SUPPORT_URL=https://forms.gle/REPLACE_ME
+# ACCOUNT_TEAM_CREATE_LIMIT / LINE_REQUEST_EMAIL / CF_ACCESS_* / PUBLIC_* are defined in wrangler.jsonc vars.
+# Localhost skips Cloudflare Access verification.

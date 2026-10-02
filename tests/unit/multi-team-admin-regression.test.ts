@@ -115,4 +115,38 @@ describe("multi-team administrator regression", () => {
 
     expect(Number(count.count)).toBe(2);
   });
+
+  test("the same account can use a different administrator name in each team", async () => {
+    const db = createMigratedDatabase();
+    const memberships = createAdminMembershipRepository(createD1Adapter(db));
+
+    db.prepare(`
+      INSERT INTO app_users(id, display_name, status)
+      VALUES ('u_parent', '保護者', 'active')
+    `).run();
+    insertTeam(db, "TeamA00001", "Team A");
+    insertTeam(db, "TeamB00001", "Team B");
+
+    await memberships.add({ teamId: "TeamA00001", userId: "u_parent", role: "owner" });
+    await memberships.add({ teamId: "TeamB00001", userId: "u_parent", role: "admin" });
+    await memberships.updateDisplayName("TeamA00001", "u_parent", "太郎 父");
+    await memberships.updateDisplayName("TeamB00001", "u_parent", "花子 父");
+
+    const result = await memberships.listForUser("u_parent");
+    const byTeam = new Map(result.map((team) => [team.teamId, team.adminDisplayName]));
+    expect(byTeam.get("TeamA00001")).toBe("太郎 父");
+    expect(byTeam.get("TeamB00001")).toBe("花子 父");
+  });
+
+  test("My Account exposes a per-team name editor without changing the account-wide name", () => {
+    const account = readFileSync("client/account.ts", "utf8");
+    const routes = readFileSync("src/routes/account.ts", "utf8");
+    const controller = readFileSync("src/controllers/account-controller.ts", "utf8");
+    expect(account).toContain("data-edit-team-display-name");
+    expect(account).toContain("このチームだけで表示する名前です。ほかのチームや基本の管理者名は変わりません。");
+    expect(account).toContain("/api/account/teams/${encodeURIComponent(team.teamId)}/display-name");
+    expect(routes).toContain('patch("/teams/:teamId/display-name"');
+    expect(controller).toContain("adminMembership.updateOwnDisplayName(teamId, session.userId");
+  });
+
 });

@@ -1,4 +1,4 @@
-import { randomId } from "../validation/common.ts";
+import { cleanName, randomId } from "../validation/common.ts";
 import { randomToken, sha256Token } from "../security/tokens.ts";
 import { ServiceError } from "./errors.ts";
 import { MAX_SUB_ADMINS } from "../config/constants.ts";
@@ -59,6 +59,13 @@ export function createAdminMembershipService({
       const team = await teamRepository.findById(teamId);
       if (!team) throw new ServiceError("team_not_found", "チームが見つかりません。", 404);
       const members = await membershipRepository.listForTeam(teamId);
+      // Admin email addresses are private to the account owner. The management API
+      // intentionally removes other administrators' email addresses before the data
+      // reaches the browser, so privacy does not depend on UI-only hiding.
+      const visibleMembers = members.map((member) => ({
+        ...member,
+        email: String(member.userId || "") === String(userId || "") ? (member.email || "") : ""
+      }));
       const pendingInvites = actor.role === "owner" ? await inviteRepository.listPending(teamId, now()) : [];
       const subAdminCountValue = members.filter((member) => member.role === "admin").length;
       const pendingSubAdminInvites = pendingInvites.filter((invite) => invite.kind === "admin").length;
@@ -66,7 +73,7 @@ export function createAdminMembershipService({
       const reservedSubAdminSlots = Math.min(maxSubAdmins, subAdminCountValue + pendingSubAdminInvites);
       return {
         currentRole: actor.role,
-        members,
+        members: visibleMembers,
         pendingInvites,
         legacyPasswordEnabled: Boolean(team.admin_password_enabled),
         maxSubAdmins,
@@ -90,6 +97,17 @@ export function createAdminMembershipService({
       if (!claimed) throw new ServiceError("team_already_claimed", "このチームにはすでにアカウント管理者が設定されています。", 409);
       await auditRepository.record("account-owner", teamId, "team.claim", "team", teamId, { userId, legacyPasswordDisabled: true }, userId);
       return membershipRepository.find(teamId, userId);
+    },
+
+
+    async updateOwnDisplayName(teamId, userId, value) {
+      const current = await membership(teamId, userId);
+      if (!current) throw new ServiceError("membership_not_found", "このチームの管理者ではありません。", 404);
+      const displayName = cleanName(value, 40);
+      if (!displayName) throw new ServiceError("invalid_display_name", "このチームで表示する管理者名を入力してください。", 400);
+      await membershipRepository.updateDisplayName(teamId, userId, displayName);
+      await auditRepository.record("account", teamId, "admin.display_name.update", "user", userId, { changed: true }, userId);
+      return { displayName };
     },
 
     async createInvite(teamId, userId, input) {

@@ -5,7 +5,7 @@ INSERT OR IGNORE INTO teams(id,name,passphrase_hash,admin_password_hash,status)
 VALUES(
   '6BnWv2K3zo',
   'サンプルチーム',
-  'pbkdf2-sha256$120000$Hj9WSJTt-MnUftwYy2hejA$sW69qlUk73wWVGHLJHMQpQfpsDSOuYzJSZqW0m_oQfQ',
+  'pbkdf2-sha256$100000$Hj9WSJTt-MnUftwYy2hejA$iEBaRTX_oGhIXbjAW1q-oZ6PYoHrWev0ASbdUFa-GVY',
   'pbkdf2-sha256$120000$BFoXgMdtlF5CPAAXBbzScg$TBsPiBqnQkmRnZKr_cylL_RPQnHNffjqGRlTAsUM1Nc',
   'active'
 );

@@ -8,10 +8,20 @@ export function isSystemAdminPath(pathname) {
   return pathname === "/admin" || pathname === "/admin.html" || pathname.startsWith("/admin/") || pathname === "/register" || pathname.startsWith("/api/system/");
 }
 
-export async function validateCloudflareAccess(request, env, { fetcher = fetch, nowSeconds }: { fetcher?: typeof fetch; nowSeconds?: number } = {}) {
+export async function validateCloudflareAccess(request, env, {
+  fetcher = fetch,
+  nowSeconds,
+  allowedEmails,
+  missingTokenMessage = "System admin is protected by Cloudflare Access."
+}: {
+  fetcher?: typeof fetch;
+  nowSeconds?: number;
+  allowedEmails?: unknown;
+  missingTokenMessage?: string;
+} = {}) {
   const assertion = request.headers.get("cf-access-jwt-assertion") || "";
   if (!assertion) {
-    return withHeaders(new Response("System admin is protected by Cloudflare Access.", { status: 403 }), { noIndex: true, noCache: true });
+    return withHeaders(new Response(missingTokenMessage, { status: 403 }), { noIndex: true, noCache: true });
   }
   let payload;
   try {
@@ -29,7 +39,8 @@ export async function validateCloudflareAccess(request, env, { fetcher = fetch, 
   if (!email) {
     return withHeaders(new Response("Cloudflare Access identity is missing an email claim.", { status: 403 }), { noIndex: true, noCache: true });
   }
-  const allowed = String(env.SYSTEM_ADMIN_ALLOWED_EMAILS || "").split(",").map((v) => v.trim().toLowerCase()).filter(Boolean);
+  const allowlistSource = allowedEmails === undefined ? env.SYSTEM_ADMIN_ALLOWED_EMAILS : allowedEmails;
+  const allowed = String(allowlistSource || "").split(",").map((v) => v.trim().toLowerCase()).filter(Boolean);
   if (allowed.length && !allowed.includes(email)) {
     return withHeaders(new Response("Access denied.", { status: 403 }), { noIndex: true, noCache: true });
   }

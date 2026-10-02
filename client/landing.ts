@@ -1,6 +1,7 @@
 // Source of truth: TypeScript. Vite generates content-hashed browser bundles under public/build/.
 import { lineShareUrl, qrImageUrl, teamUrl, topUrl } from "./share-utils";
 import { initSiteChrome } from "./site-chrome";
+import { initEnvironmentContextBadge } from "./environment-context";
 
 const APP_BUILD = __APP_VERSION__;
 const TERMS_VERSION = "2026-09-25";
@@ -203,6 +204,7 @@ function initInstallTabs() {
 }
 
 
+initEnvironmentContextBadge();
 initShareDialog();
 initRegistrationDialog();
 initInstallTabs();

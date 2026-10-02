@@ -104,11 +104,20 @@ export const ownerTransferBodySchema = z.object({
   currentOwnerExit: z.boolean().optional().default(false)
 }).strip();
 
+export const teamAdminDisplayNameBodySchema = z.object({
+  teamId: teamIdSchema,
+  displayName: z.string().transform(nfcTrim).refine((value) => value.length > 0 && value.length <= 40)
+}).strip();
+
 export const teamIdOnlyBodySchema = z.object({ teamId: teamIdSchema }).strip();
 
 export const accountCreateTeamBodySchema = z.object({
   name: z.string(),
   passphrase: z.string()
+}).strip();
+
+export const accountUpdateProfileBodySchema = z.object({
+  displayName: z.string().transform(nfcTrim).refine((value) => value.length > 0 && value.length <= 40)
 }).strip();
 
 export const accountDeleteBodySchema = z.object({

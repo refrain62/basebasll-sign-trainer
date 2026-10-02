@@ -9,11 +9,13 @@ interface PackageJson {
 interface WranglerEnvironment {
   secrets?: { required?: string[] };
   version_metadata?: { binding?: string };
+  vars?: Record<string, unknown>;
 }
 
 interface WranglerConfig {
   secrets?: { required?: string[] };
   version_metadata?: { binding?: string };
+  vars?: Record<string, unknown>;
   env?: Record<string, WranglerEnvironment>;
 }
 
@@ -38,11 +40,44 @@ if (!fs.existsSync(path.join(root, "package-lock.json"))) {
 }
 
 const wrangler = JSON.parse(fs.readFileSync(path.join(root, "wrangler.jsonc"), "utf8")) as WranglerConfig;
-const requiredSecuritySecrets = ["SESSION_SECRET", "SYSTEM_ADMIN_SECRET", "PASSWORD_PEPPER", "DATA_ENCRYPTION_KEY", "DATA_LOOKUP_KEY"];
+const requiredSecuritySecrets = ["SESSION_SECRET", "SYSTEM_ADMIN_SECRET", "PASSWORD_PEPPER", "DATA_ENCRYPTION_KEY", "DATA_LOOKUP_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "LINE_CHANNEL_ID", "LINE_CHANNEL_SECRET"];
+
+const devVarsExamplePath = path.join(root, ".dev.vars.example");
+if (!fs.existsSync(devVarsExamplePath)) {
+  failures.push(".dev.vars.example is missing");
+} else {
+  const devVarsExample = fs.readFileSync(devVarsExamplePath, "utf8");
+  for (const name of requiredSecuritySecrets) {
+    if (!new RegExp(`^${name}=`, "m").test(devVarsExample)) failures.push(`.dev.vars.example required entry missing: ${name}`);
+  }
+}
+
 for (const name of requiredSecuritySecrets) {
   if (!(wrangler.secrets?.required || []).includes(name)) failures.push(`wrangler production required secret missing: ${name}`);
   for (const envName of ["dev", "staging"]) {
     if (!(wrangler.env?.[envName]?.secrets?.required || []).includes(name)) failures.push(`wrangler ${envName} required secret missing: ${name}`);
+  }
+}
+
+if (String(wrangler.vars?.REQUIRE_CF_ACCESS_FOR_ENVIRONMENT || "false") !== "false") {
+  failures.push("wrangler production REQUIRE_CF_ACCESS_FOR_ENVIRONMENT must remain false so the public site stays public");
+}
+if (String(wrangler.vars?.REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN || "false") !== "false") {
+  failures.push("wrangler production REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN must remain false; SYSTEM admin uses SYSTEM_ADMIN_SECRET + application session");
+}
+for (const envName of ["dev", "staging"]) {
+  const vars = wrangler.env?.[envName]?.vars || {};
+  if (String(vars.REQUIRE_CF_ACCESS_FOR_ENVIRONMENT || "false") !== "true") {
+    failures.push(`wrangler ${envName} REQUIRE_CF_ACCESS_FOR_ENVIRONMENT must be true`);
+  }
+  if (String(vars.REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN || "false") !== "false") {
+    failures.push(`wrangler ${envName} REQUIRE_CF_ACCESS_FOR_SYSTEM_ADMIN must be false; environment-wide Access already protects this environment`);
+  }
+  if (!("ENVIRONMENT_ACCESS_ALLOWED_EMAILS" in vars)) {
+    failures.push(`wrangler ${envName} ENVIRONMENT_ACCESS_ALLOWED_EMAILS entry is missing`);
+  }
+  if (!("CF_ACCESS_TEAM_DOMAIN" in vars) || !("CF_ACCESS_POLICY_AUD" in vars)) {
+    failures.push(`wrangler ${envName} Cloudflare Access configuration entries are missing`);
   }
 }
 

@@ -8,6 +8,10 @@ export function createSignRepository(db, protector = null) {
       return { ...row, name: await protector.decrypt(row.name, "signs.name") };
     },
     getWithVideos: (teamId, signId) => getSignWithVideos(db, teamId, signId, protector),
+    async count(teamId) {
+      const row = await db.prepare("SELECT COUNT(*) AS count FROM signs WHERE team_id=? AND deleted_at IS NULL").bind(teamId).first();
+      return Number(row?.count || 0);
+    },
     async nextSortOrder(teamId) {
       const row = await db.prepare("SELECT COALESCE(MAX(sort_order),0) AS max_order FROM signs WHERE team_id=?").bind(teamId).first();
       return Number(row?.max_order || 0) + 10;
