@@ -39,6 +39,8 @@
 
 ## major の必須条件
 
+お知らせの文章ルール・過去分の正本は[`../product/system-notices.md`](../product/system-notices.md)を参照する。
+
 `impact: "major"`では`noticeMigration`を必須とし、そのmigrationは`system_notices`へ公開お知らせをINSERTする。
 
 ```sql
@@ -65,6 +67,9 @@ INSERT INTO system_notices(
 
 ```bash
 npm run release:notice -- --slug feature-name --title "新機能のお知らせ" --body "変更内容"
+
+# 過去分を登録するときだけ公開日時を明示
+npm run release:notice -- --slug historical-feature --title "過去のお知らせ" --body "変更内容" --publish-at "2026-09-26T00:00:00Z"
 ```
 
 ## 自動チェック

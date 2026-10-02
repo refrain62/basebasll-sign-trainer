@@ -1,0 +1,10 @@
+{
+  "id": "2026-10-03-historical-system-notices",
+  "summary": "告知ルール導入前の主要な利用者向けアップデートをSYSTEMお知らせとして整理し、過去分の作成ルールを文書化",
+  "impact": "minor",
+  "docs": [
+    "docs/product/system-notices.md",
+    "docs/engineering/change-policy.md"
+  ],
+  "noticeMigration": null
+}

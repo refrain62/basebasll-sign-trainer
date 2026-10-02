@@ -45,7 +45,7 @@ npm run db:migrate:staging
 npm run db:migrate:prod
 ```
 
-migrationは番号順に追加し、既存migrationを後から書き換えないでください。最新の既存migrationは`0024_team_admin_display_name.sql`です。
+migrationは番号順に追加し、既存migrationを後から書き換えないでください。最新の既存migrationは`0025_notice_history_backfill.sql`です。
 
 ## デプロイ
 
@@ -77,6 +77,7 @@ AI・開発者ともに、最初に [`docs/INDEX.md`](docs/INDEX.md) を見て**
 - アーキテクチャ: [`docs/engineering/architecture.md`](docs/engineering/architecture.md)
 - テスト: [`docs/engineering/testing.md`](docs/engineering/testing.md)
 - 変更・お知らせルール: [`docs/engineering/change-policy.md`](docs/engineering/change-policy.md)
+- SYSTEMお知らせ内容・過去分一覧: [`docs/product/system-notices.md`](docs/product/system-notices.md)
 - 環境構成: [`docs/operations/environment-overview.md`](docs/operations/environment-overview.md)
 - Secret / OAuth: [`docs/operations/secrets-oauth.md`](docs/operations/secrets-oauth.md)
 - Cloudflare Access: [`docs/operations/cloudflare-access.md`](docs/operations/cloudflare-access.md)

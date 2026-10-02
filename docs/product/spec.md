@@ -133,7 +133,7 @@ D1: チーム、サイン、動画、グループ、管理者、プラン、Enti
 
 ## 13. 最新migration
 
-`0024_team_admin_display_name.sql`まで適用する。
+`0025_notice_history_backfill.sql`まで適用する。
 
 
 ## v1.5.30 UI / 操作仕様

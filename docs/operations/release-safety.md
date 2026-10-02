@@ -55,7 +55,7 @@ productionへ出したcommit SHAはリリース記録として残してくださ
 ```text
 release: 2026-09-27
 commit: abc1234
-migration: 0024まで
+migration: 0025まで
 staging確認: OK
 production deploy: OK
 ```
