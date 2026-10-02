@@ -181,6 +181,6 @@
 </footer>
 <!-- SITE_FOOTER_END -->
     </div>
-    <script src="/build/test-landing.js" type="module"></script>
+    <script src="/build/assets/landing-BT-ABR7A.js" type="module"></script>
   </body>
 </html>
