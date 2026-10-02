@@ -59,7 +59,7 @@ npm run test:coverage
 - DevToolsで`state.entitlements`相当を改変してもpremium module取得時のサーバー判定を突破できない
 
 ## Migration
-空DBへ`0001`〜`0024`を順番に適用できることを確認する。既存DBを想定し、ALTER/UPSERTの再適用方針も確認する。
+空DBへ`0001`〜`0025`を順番に適用できることを確認する。既存DBを想定し、ALTER/UPSERTの再適用方針も確認する。
 ## Documentation / release governance
 - `npm run docs:check`でREADME肥大化、`docs/INDEX.md`未登録文書、主要Markdownのリンク切れを検出する。
 - `npm run release:policy`で`changes/*.json`とmajor向けSYSTEMお知らせmigrationを検証する。

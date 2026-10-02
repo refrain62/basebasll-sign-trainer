@@ -5,6 +5,7 @@
 | 目的 | 読むファイル | 更新するタイミング |
 | --- | --- | --- |
 | 現在の機能・ユーザー・プラン仕様 | [`product/spec.md`](product/spec.md) | 利用者向け仕様が変わるとき |
+| SYSTEMお知らせの内容・過去アップデート一覧 | [`product/system-notices.md`](product/system-notices.md) | お知らせ追加・過去分整備・文章ルール変更時 |
 | Plus / Pro・将来の課金設計 | [`product/plans.md`](product/plans.md) | プラン/Entitlement/価格方針が変わるとき |
 | Route / Controller / Service / Repository設計 | [`engineering/architecture.md`](engineering/architecture.md) | 技術境界や主要構成が変わるとき |
 | テスト戦略・必須回帰 | [`engineering/testing.md`](engineering/testing.md) | テスト方針・重要回帰条件が変わるとき |

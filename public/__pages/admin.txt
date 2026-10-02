@@ -22,6 +22,6 @@
   </head>
   <body>
     <div id="app" aria-live="polite"></div>
-    <script src="/build/assets/admin-entry-BK_uIc1I.js" type="module"></script>
+    <script src="/build/test-admin.js" type="module"></script>
   </body>
 </html>
