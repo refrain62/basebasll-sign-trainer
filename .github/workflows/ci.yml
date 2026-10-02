@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -24,5 +26,15 @@ jobs:
         run: npm ci --ignore-scripts
       - name: TypeScript, route parity, architecture and unit tests
         run: npm run check
+      - name: Release policy diff guard
+        if: github.event_name == 'pull_request'
+        env:
+          RELEASE_BASE_REF: origin/${{ github.base_ref }}
+        run: npm run release:policy:ci
+      - name: Release policy diff guard for direct pushes
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        env:
+          RELEASE_BASE_REF: ${{ github.event.before }}
+        run: npm run release:policy:ci
       - name: Audit high severity vulnerabilities
         run: npm audit --audit-level=high

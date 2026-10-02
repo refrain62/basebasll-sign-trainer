@@ -1,0 +1,10 @@
+{
+  "id": "2026-10-02-documentation-governance",
+  "summary": "READMEを入口に縮小し、目的別ドキュメントと利用者向け変更の告知ルールを自動チェックする仕組みを追加",
+  "impact": "none",
+  "docs": [
+    "docs/INDEX.md",
+    "docs/engineering/change-policy.md"
+  ],
+  "noticeMigration": null
+}
