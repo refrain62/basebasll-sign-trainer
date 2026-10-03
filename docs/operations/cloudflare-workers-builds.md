@@ -4,7 +4,7 @@
 
 ## 方針
 
-GitHub ActionsはCIだけを担当し、Cloudflareへの実デプロイはCloudflare Workers Buildsへ任せます。GitHubへ`CLOUDFLARE_API_TOKEN`や`CLOUDFLARE_ACCOUNT_ID`を保存しません。
+GitHub Actionsは通常CIを担当し、任意タイミングのデプロイ時だけCloudflare Deploy HookをPOSTします。Cloudflareへの実build/deployはWorkers Buildsへ任せ、GitHubへ`CLOUDFLARE_API_TOKEN`や`CLOUDFLARE_ACCOUNT_ID`を保存しません。
 
 Cloudflare Workers Builds自体はCloudflare側で管理されるBuild用API tokenを使います。GitHub Secretsとして永続トークンを持たせる方式ではありません。
 
@@ -50,7 +50,7 @@ Workers Buildsのbuild scriptは`npm ci --ignore-scripts`を使うため、`pack
 
 ## GitHub Actionsの役割
 
-`.github/workflows/ci.yml`だけを使います。
+通常のpush / Pull Requestでは`.github/workflows/ci.yml`が検証だけを行います。
 
 ```text
 push / Pull Request
@@ -61,13 +61,37 @@ push / Pull Request
   → npm audit
 ```
 
-GitHub Actionsから次は実行しません。
+任意タイミングで再デプロイしたい場合は`.github/workflows/manual-deploy.yml`を手動実行し、選択した環境のCloudflare Deploy HookをPOSTします。
 
-- `wrangler deploy`
-- remote D1 migration
-- Cloudflare API token認証
+```text
+Actions → manual-deploy → Run workflow
+  → dev / staging / production を選択
+  → 対象GitHub EnvironmentのCLOUDFLARE_DEPLOY_HOOKを取得
+  → Deploy HookへPOST
+  → Workers Buildsが対応branchをbuild/deploy
+```
 
-そのためGitHub側にCloudflare API token / Account IDのSecretは不要です。
+GitHub Actionsから`wrangler deploy`、remote D1 migration、Cloudflare API token認証は実行しません。そのため`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`はGitHub Secretへ置きません。
+
+### Deploy Hookを1回だけ設定する
+
+Cloudflare Dashboardの **Workers & Pages → 対象Worker → Settings → Builds → Deploy Hooks** で、各Workerにbranch固定のHookを作成します。
+
+| GitHub Environment | Cloudflare Worker | Hook branch | Environment secret |
+| --- | --- | --- | --- |
+| `dev` | `basebasll-sign-trainer-dev` | `dev` | `CLOUDFLARE_DEPLOY_HOOK` |
+| `staging` | `basebasll-sign-trainer-staging` | `staging` | `CLOUDFLARE_DEPLOY_HOOK` |
+| `production` | `basebasll-sign-trainer` | `main` | `CLOUDFLARE_DEPLOY_HOOK` |
+
+GitHubの **Settings → Environments** で`dev` / `staging` / `production`を作り、それぞれのEnvironment secretとして同じ名前`CLOUDFLARE_DEPLOY_HOOK`に対応URLを登録します。Hook URLは知っている人がbuildを起動できるためSecretとして扱い、repositoryへ書きません。
+
+### productionは承認後だけ実行する
+
+`production` GitHub Environmentでは **Required reviewers** を有効にし、承認者を設定します。可能なら **Prevent self-review** も有効にします。
+
+`manual-deploy.yml`のproduction jobは`environment: production`を参照するため、承認が通るまでjobは開始せず、production用`CLOUDFLARE_DEPLOY_HOOK`にもアクセスできません。承認後にだけDeploy HookをPOSTします。
+
+DEV / STAGINGはRequired reviewersを付けなければ、そのまま手動実行できます。
 
 ## 通常のデプロイ
 
@@ -133,6 +157,8 @@ Build用変数とWorker runtime Secretは別物です。OAuth Secret等をBuild 
 
 ## productionの保護
 
-productionは`main`へのpushでWorkers Buildsがdeployします。そのためGitHub側では`main`を直接push不可にし、PR + CI成功 + 必要なレビューを通してからmergeする運用を推奨します。
+通常の自動デプロイは`main`へのpushでWorkers Buildsが実行します。GitHub側では`main`を直接push不可にし、PR + CI成功 + review後にmergeする運用を推奨します。
+
+任意タイミングの再デプロイは`manual-deploy`で`production`を選び、GitHub EnvironmentのRequired reviewers承認後にだけDeploy Hookを実行します。
 
 D1 migrationを含む場合は、migration適用・baseline更新が済んでいないとproduction buildが失敗します。

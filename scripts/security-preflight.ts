@@ -58,15 +58,30 @@ if (fs.existsSync(workflowsDir)) {
   for (const name of fs.readdirSync(workflowsDir).filter((file) => /\.ya?ml$/i.test(file))) {
     const workflow = fs.readFileSync(path.join(workflowsDir, name), "utf8");
     if (/CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID/.test(workflow)) {
-      failures.push(`GitHub Actions must stay CI-only; remove Cloudflare deploy credentials from .github/workflows/${name}`);
+      failures.push(`GitHub Actions must not store Cloudflare API credentials; manual deploys may only trigger Deploy Hooks: .github/workflows/${name}`);
     }
     if (/wrangler\s+deploy|npm\s+run\s+deploy:(?:dev|staging|prod)|npm\s+run\s+db:migrate:(?:dev|staging|prod)/.test(workflow)) {
-      failures.push(`GitHub Actions must not deploy or run remote D1 migrations; use Workers Builds / local OAuth instead: .github/workflows/${name}`);
+      failures.push(`GitHub Actions must not run Wrangler deploy or remote D1 migrations; use Workers Builds / local OAuth instead: .github/workflows/${name}`);
     }
   }
 }
 if (fs.existsSync(path.join(workflowsDir, "deploy-staging.yml"))) {
   failures.push("legacy .github/workflows/deploy-staging.yml must be removed; Workers Builds owns deployment");
+}
+const manualDeployWorkflowPath = path.join(workflowsDir, "manual-deploy.yml");
+if (!fs.existsSync(manualDeployWorkflowPath)) {
+  failures.push(".github/workflows/manual-deploy.yml is missing; manual deploys must trigger Cloudflare Deploy Hooks");
+} else {
+  const manualDeploy = fs.readFileSync(manualDeployWorkflowPath, "utf8");
+  if (!/workflow_dispatch:/m.test(manualDeploy)) failures.push("manual-deploy.yml must use workflow_dispatch");
+  if (!/secrets\.CLOUDFLARE_DEPLOY_HOOK/.test(manualDeploy)) failures.push("manual-deploy.yml must read the environment-scoped CLOUDFLARE_DEPLOY_HOOK secret");
+  for (const environmentName of ["dev", "staging", "production"]) {
+    if (!new RegExp(`name:\\s*${environmentName}(?:\\s|$)`, "m").test(manualDeploy)) failures.push(`manual-deploy.yml must reference the ${environmentName} GitHub Environment`);
+  }
+  if (!/runs-on:\s*ubuntu-24\.04(?:\s|$)/m.test(manualDeploy)) failures.push("manual-deploy.yml runner must be pinned to ubuntu-24.04");
+  if (/CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|wrangler\s+deploy|db:migrate:/.test(manualDeploy)) {
+    failures.push("manual-deploy.yml must only POST to Deploy Hooks; direct Cloudflare API credentials, Wrangler deploy, and D1 migration are forbidden");
+  }
 }
 const dependabotPath = path.join(root, ".github/dependabot.yml");
 const dependabot = fs.existsSync(dependabotPath) ? fs.readFileSync(dependabotPath, "utf8") : "";

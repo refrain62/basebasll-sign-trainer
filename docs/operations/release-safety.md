@@ -107,7 +107,7 @@ production deploy: OK
 
 ## 15. Cloudflare Workers Builds deploy
 
-GitHub Actionsは`.github/workflows/ci.yml`でCIだけを担当します。Cloudflareへのdeployはdev / staging / productionすべてWorkers Buildsへ統一します。
+GitHub Actionsは通常`.github/workflows/ci.yml`でCIを担当し、任意デプロイ時だけ`.github/workflows/manual-deploy.yml`からCloudflare Deploy Hookを呼びます。実build/deployはdev / staging / productionすべてWorkers Buildsへ統一します。
 
 ```text
 GitHub push / Pull Request
@@ -121,9 +121,16 @@ staging branch
 
 main branch
   → Workers Builds → production Worker
+
+Actions / manual-deploy
+  → 環境選択
+  → Deploy Hook
+  → Workers Builds
 ```
 
-GitHubには`CLOUDFLARE_API_TOKEN`や`CLOUDFLARE_ACCOUNT_ID`を保存しません。Cloudflare側のGit integrationとBuild用tokenでWorker deployを実行します。
+productionを手動実行するjobはGitHub Environment `production`を参照し、Required reviewers承認後だけ開始します。DEV / STAGINGは承認なしで任意実行できます。
+
+GitHubには`CLOUDFLARE_API_TOKEN`や`CLOUDFLARE_ACCOUNT_ID`を保存しません。Deploy Hook URLだけを各GitHub Environmentの`CLOUDFLARE_DEPLOY_HOOK` Secretとして保存します。Cloudflare側のGit integrationとBuild用tokenでWorker deployを実行します。
 
 D1 migrationはWorkers Buildsから自動適用せず、手元のWrangler OAuthで対象DBへ適用します。適用後に`config/deployment-migrations.json`のbaselineを更新しない限り、対象環境のWorkers Build preflightがdeployを拒否します。詳細は[`cloudflare-workers-builds.md`](cloudflare-workers-builds.md)を参照してください。
 

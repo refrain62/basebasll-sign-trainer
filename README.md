@@ -51,7 +51,7 @@ migrationは番号順に追加し、既存migrationを後から書き換えな�
 
 ## デプロイ
 
-GitHub ActionsはCI専用です。通常のWorker deployはCloudflare Workers Buildsで行います。
+GitHub Actionsは通常CIを担当し、任意デプロイ時だけCloudflare Deploy Hookを呼び出します。実際のWorker build/deployはCloudflare Workers Buildsで行います。
 
 ```text
 dev branch     → dev

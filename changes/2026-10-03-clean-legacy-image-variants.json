@@ -1,0 +1,9 @@
+{
+  "id": "2026-10-03-clean-legacy-image-variants",
+  "summary": "既存Git作業ツリーに残る未使用の旧WebP/参考画像をVite build前に削除し、image budgetの総量超過を防止",
+  "impact": "none",
+  "docs": [
+    "docs/engineering/testing.md"
+  ],
+  "noticeMigration": null
+}

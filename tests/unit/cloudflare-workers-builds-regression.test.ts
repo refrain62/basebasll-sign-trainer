@@ -4,15 +4,18 @@ import { existsSync, readFileSync } from "node:fs";
 const read = (file: string) => readFileSync(file, "utf8");
 
 describe("Cloudflare Workers Builds deployment", () => {
-  test("keeps GitHub Actions CI-only and free of Cloudflare deploy credentials", () => {
+  test("keeps direct Cloudflare deployment and API credentials out of GitHub Actions", () => {
     expect(existsSync(".github/workflows/deploy-staging.yml")).toBe(false);
     const ci = read(".github/workflows/ci.yml");
-    expect(ci).not.toContain("CLOUDFLARE_API_TOKEN");
-    expect(ci).not.toContain("CLOUDFLARE_ACCOUNT_ID");
-    expect(ci).not.toContain("wrangler deploy");
-    expect(ci).not.toContain("db:migrate:dev");
-    expect(ci).not.toContain("db:migrate:staging");
-    expect(ci).not.toContain("db:migrate:prod");
+    const manual = read(".github/workflows/manual-deploy.yml");
+    for (const workflow of [ci, manual]) {
+      expect(workflow).not.toContain("CLOUDFLARE_API_TOKEN");
+      expect(workflow).not.toContain("CLOUDFLARE_ACCOUNT_ID");
+      expect(workflow).not.toContain("wrangler deploy");
+      expect(workflow).not.toContain("db:migrate:dev");
+      expect(workflow).not.toContain("db:migrate:staging");
+      expect(workflow).not.toContain("db:migrate:prod");
+    }
   });
 
   test("defines branch-specific Workers Builds commands for all three environments", () => {
@@ -38,10 +41,22 @@ describe("Cloudflare Workers Builds deployment", () => {
     expect(baselines.production).toBe("0025");
   });
 
-  test("documents Cloudflare-managed deploys without GitHub Cloudflare secrets", () => {
+  test("supports manual Deploy Hook triggers for all environments", () => {
+    const manual = read(".github/workflows/manual-deploy.yml");
+    expect(manual).toContain("workflow_dispatch:");
+    expect(manual).toContain("CLOUDFLARE_DEPLOY_HOOK");
+    expect(manual).toContain("environment:\n      name: dev");
+    expect(manual).toContain("environment:\n      name: staging");
+    expect(manual).toContain("environment:\n      name: production");
+    expect(manual).toContain('curl --fail-with-body --silent --show-error --request POST "$DEPLOY_HOOK_URL"');
+    expect(manual).toContain("runs-on: ubuntu-24.04");
+  });
+
+  test("documents production approval before the production hook is released", () => {
     const docs = read("docs/operations/cloudflare-workers-builds.md");
-    expect(docs).toContain("GitHub ActionsはCIだけ");
-    expect(docs).toContain("SKIP_DEPENDENCY_INSTALL=1");
+    expect(docs).toContain("Required reviewers");
+    expect(docs).toContain("Prevent self-review");
+    expect(docs).toContain("production用`CLOUDFLARE_DEPLOY_HOOK`にもアクセスできません");
     expect(docs).toContain("npm run workers:build:dev");
     expect(docs).toContain("npm run workers:build:staging");
     expect(docs).toContain("npm run workers:build:prod");

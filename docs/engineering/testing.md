@@ -76,10 +76,11 @@ npm run test:coverage
 
 
 ## Deployment governance
-- GitHub ActionsはCI専用とし、workflow内にCloudflare deploy credential・`wrangler deploy`・remote D1 migrationを入れない。
+- GitHub ActionsはCloudflare API credential・`wrangler deploy`・remote D1 migrationを持たない。任意デプロイはEnvironment secretのDeploy Hook URLへPOSTするだけとし、実deployはWorkers Buildsへ任せる。
 - dev / staging / productionのWorkers Builds用build scriptとbranch対応を`tests/unit/cloudflare-workers-builds-regression.test.ts`で固定する。
 - `scripts/workers-build-preflight.ts`は`WORKERS_CI_BRANCH`と対象環境を照合し、誤branchからのdeployを拒否する。
 - repository最新migrationと`config/deployment-migrations.json`の対象環境baselineが一致しない場合はdeployを拒否する。
+- `.github/workflows/manual-deploy.yml`はdev / staging / productionの3 Environmentを参照し、productionはGitHub EnvironmentのRequired reviewersで承認後にだけHook Secretへアクセスする運用とする。
 
 ## Client source artifact policy
 - `public/`直下の手書き/旧生成JavaScriptは原則禁止し、Vite build前に`scripts/clean-client-artifacts.ts`で削除する。
@@ -90,6 +91,6 @@ npm run test:coverage
 - LPの大きな写真素材は表示サイズに合わせて縮小・WebP再圧縮し、`npm run tooling:check`の1画像160 KiB / 合計1200 KiB制限を維持する。
 
 ## Static asset cleanup
-- `npm run build:client`の前に`scripts/clean-client-artifacts.ts`を実行し、旧Vite直書きJSと過去版の重量PNGを削除する。
-- 現行配信画像はWebP/JPEG等の軽量版を正とし、`sign-trainer-icon.png`、`why-baseball.png`、旧install統合PNG、`lp-feature-admin_2.png`、`team-pwa-install-guide.png`、旧`og.png`をpublicへ戻さない。
+- `npm run build:client`の前に`scripts/clean-client-artifacts.ts`を実行し、旧Vite直書きJS、過去版の重量PNG、未使用の旧WebP/参考画像を削除する。
+- 現行配信画像はWebP/JPEG等の軽量版を正とし、重量PNGに加えて旧install結合WebP、旧recommend/ref画像など現在のページから参照されない画像をpublicへ戻さない。ZIPを既存Git作業ツリーへ上書きしてもcleanupがこれらを除去する。
 - `scripts/image-budget-check.ts`で1画像160 KiB、public画像合計1.2 MiB以下を回帰確認する。

@@ -55,13 +55,16 @@
 
 ## デプロイ
 
-GitHub ActionsはCI専用、Worker deployはCloudflare Workers Buildsで行う。
+GitHub Actionsは通常CIを担当し、任意デプロイ時だけDeploy Hookを呼ぶ。Worker build/deploy本体はCloudflare Workers Buildsで行う。
 
 ```text
 dev branch     → Workers Builds → dev
 staging branch → Workers Builds → staging
 main branch    → Workers Builds → production
+Actions手動実行 → Deploy Hook → Workers Builds
 ```
+
+productionの手動実行はGitHub Environment `production`のRequired reviewers承認後だけ進める。各Environmentには`CLOUDFLARE_DEPLOY_HOOK`だけをSecret登録し、Cloudflare API tokenはGitHubへ置かない。
 
 D1 migrationがある場合だけ、対象branchへ反映する前に手元のWrangler OAuthでmigrationを適用し、baselineを更新する。
 

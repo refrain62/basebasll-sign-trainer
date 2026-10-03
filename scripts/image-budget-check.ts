@@ -37,9 +37,25 @@ for (const obsolete of [
   "public/assets/install-android.png",
   "public/assets/lp-feature-admin_2.png",
   "public/assets/team-pwa-install-guide.png",
-  "public/og.png"
+  "public/og.png",
+  "public/assets/faq-hero-clean.webp",
+  "public/assets/install-android-12.webp",
+  "public/assets/install-android-34.webp",
+  "public/assets/install-iphone-12.webp",
+  "public/assets/install-iphone-34.webp",
+  "public/assets/lp-feature-admin_2.webp",
+  "public/assets/lp-rec-bond.webp",
+  "public/assets/lp-rec-new.webp",
+  "public/assets/lp-rec-team.webp",
+  "public/assets/lp-rec-variety.webp",
+  "public/assets/ref-faq-hero.webp",
+  "public/assets/ref-faq-photo.webp",
+  "public/assets/ref-home-hero.webp",
+  "public/assets/ref-home-photo.webp",
+  "public/assets/ref-install-hero.webp",
+  "public/assets/ref-install-photo.webp"
 ]) {
-  if (fs.existsSync(obsolete)) failures.push(`obsolete heavy image must not return: ${obsolete}`);
+  if (fs.existsSync(obsolete)) failures.push(`obsolete public image must not return: ${obsolete}`);
 }
 
 if (failures.length) {
