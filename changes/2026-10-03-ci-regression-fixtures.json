@@ -1,0 +1,9 @@
+{
+  "id": "2026-10-03-ci-regression-fixtures",
+  "summary": "現行UIコンポーネント構成とNode 24方針に回帰テスト/fixtureを同期し、contactのinline styleを除去",
+  "impact": "none",
+  "docs": [
+    "docs/engineering/testing.md"
+  ],
+  "noticeMigration": null
+}

@@ -23,7 +23,10 @@ describe("plan content limits", () => {
   });
 
   test("API enforces sign and group limits instead of relying only on UI", () => {
-    expect(controller).toContain("group_limit_reached");
-    expect(controller).toContain("sign_limit_reached");
+    expect(controller).toContain('ServiceError("plan_limit_reached"');
+    expect(controller).toContain("FEATURE_KEYS.MULTIPLE_SIGN_GROUPS");
+    expect(controller).toContain("FEATURE_KEYS.SIGN_COUNT");
+    expect(controller).toContain("groupRepository.count(teamId)");
+    expect(controller).toContain("signRepository.count(teamId)");
   });
 });

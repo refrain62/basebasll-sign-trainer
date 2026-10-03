@@ -31,7 +31,7 @@ describe("team-specific PWA", () => {
     expect(teamSource).toContain('<details class="team-pwa-login-guide">');
     expect(teamSource).toContain("ホーム画面への追加方法を見る");
     expect(teamSource).toContain("pwa-install-entry-button");
-    expect(teamSource).toContain("複数チームに所属していても");
+    expect(teamSource).toContain("次回からチーム名のアイコンをタップするだけで開けます");
     expect(teamSource).toContain("チーム管理者ログイン");
     expect(teamSource).toContain("activeTeamAdminPath()");
     expect(headerSource).toContain("ホーム画面に追加");

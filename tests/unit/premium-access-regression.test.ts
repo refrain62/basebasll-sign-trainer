@@ -39,8 +39,8 @@ describe("premium feature access regression", () => {
     expect(lp).toContain('href="/plans#pro"');
     expect(plans).toContain('id="result-text"');
     expect(plans).toContain('id="result-image"');
-    expect(plans).toContain("練習結果を文章で共有");
-    expect(plans).toContain("結果・成績を画像カードで共有");
+    expect(plans).toContain("結果を文章で共有");
+    expect(plans).toContain("結果を画像カードで共有");
   });
 
   test("locked premium controls lead to the plan page in a new tab", () => {
