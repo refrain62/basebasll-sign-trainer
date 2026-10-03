@@ -20,8 +20,8 @@ describe("team withdrawal and admin header regressions", () => {
   });
 
   test("team menu visibly includes the team name and logout", () => {
-    expect(adminSource).toContain('class="team-admin-menu-team-context"');
-    expect(adminSource).toContain('<span>チーム名</span>');
+    expect(adminSource).toContain('<div class="team-admin-sidebar-team"><span>チーム管理</span><strong>${esc(teamName)}</strong></div>');
+    expect(adminSource).not.toContain("team-admin-menu-team-context");
     expect(adminSource).toContain('id="team-menu-logout"');
   });
 

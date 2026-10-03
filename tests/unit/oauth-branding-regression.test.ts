@@ -6,6 +6,7 @@ describe("OAuth provider branding", () => {
   const admin = readFileSync("client/admin.ts", "utf8");
   const lp = readFileSync("pages/index.html", "utf8");
   const css = readFileSync("public/styles.css", "utf8");
+  const lineLoginIcon = readFileSync("public/assets/line-login-icon.svg", "utf8");
 
   test("uses the standard-color Google G on white authentication buttons", () => {
     expect(account).toContain("/assets/google-g-logo.svg");
@@ -15,10 +16,10 @@ describe("OAuth provider branding", () => {
   });
 
   test("uses a white LINE login mark on LINE-green authentication buttons", () => {
-    expect(account).toContain("/assets/line-login-mark.svg");
-    expect(admin).toContain("/assets/line-login-mark.svg");
-    expect(lp).toContain("/assets/line-login-mark.svg?v=__ASSET_VERSION__");
+    expect(account).toContain("/assets/line-login-icon.svg");
+    expect(admin).toContain("/assets/line-login-icon.svg");
+    expect(lp).toContain("/assets/line-brand-icon.svg?v=__ASSET_VERSION__");
     expect(css).toContain("background: #06C755");
-    expect(css).toContain("url('/assets/line-login-mark.svg')");
+    expect(lineLoginIcon).toContain('<path fill="#fff"');
   });
 });

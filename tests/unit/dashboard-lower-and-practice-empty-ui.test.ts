@@ -20,7 +20,7 @@ describe("dashboard lower information layout regression", () => {
     const lowerStart = teamAdminSource.indexOf('class="team-admin-dashboard-lower-grid"');
     const lower = teamAdminSource.slice(lowerStart, lowerStart + 5000);
     expect(lower.indexOf("<h2>システムのお知らせ</h2>")).toBeGreaterThanOrEqual(0);
-    expect(lower.indexOf("<h2>最近のアクティビティ</h2>")).toBeGreaterThan(lower.indexOf("<h2>システムのお知らせ</h2>"));
+    expect(lower.indexOf("<h2>最近のアクティビティ")).toBeGreaterThan(lower.indexOf("<h2>システムのお知らせ</h2>"));
     expect(styles).toContain("@media (min-width: 900px)");
     expect(styles).toContain("grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)");
   });
