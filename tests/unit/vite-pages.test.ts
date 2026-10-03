@@ -7,8 +7,11 @@ import { PAGE_ENTRIES, renderVitePages } from "../../scripts/render-vite-pages.t
 
 test("Vite page renderer injects hashed entry URLs into Worker page snapshots", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "sign-trainer-vite-pages-"));
-  fs.mkdirSync(path.join(root, "pages"), { recursive: true });
+  fs.mkdirSync(path.join(root, "pages", "components"), { recursive: true });
   fs.mkdirSync(path.join(root, "public"), { recursive: true });
+  for (const component of ["site-header.html", "site-footer.html", "pricing-cards.html", "lp-footer-cta.html"]) {
+    fs.writeFileSync(path.join(root, "pages", "components", component), `<div data-test-component="${component}"></div>`);
+  }
 
   const entries: Record<string, string> = {};
   for (const [page, entry] of Object.entries(PAGE_ENTRIES)) {

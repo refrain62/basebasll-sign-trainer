@@ -94,3 +94,8 @@ npm run test:coverage
 - `npm run build:client`の前に`scripts/clean-client-artifacts.ts`を実行し、旧Vite直書きJS、過去版の重量PNG、未使用の旧WebP/参考画像を削除する。
 - 現行配信画像はWebP/JPEG等の軽量版を正とし、重量PNGに加えて旧install結合WebP、旧recommend/ref画像など現在のページから参照されない画像をpublicへ戻さない。ZIPを既存Git作業ツリーへ上書きしてもcleanupがこれらを除去する。
 - `scripts/image-budget-check.ts`で1画像160 KiB、public画像合計1.2 MiB以下を回帰確認する。
+
+## Regression fixture maintenance
+- UI文言・共有component・Node/runtime方針を変更した場合、実装を旧仕様へ戻してテストを通すのではなく、現行の正本に合わせて回帰テストのfixture/期待値を更新する。
+- `render-vite-pages.ts`のunit fixtureは`pages/components/`の共有componentも用意し、本番render条件と同じ前提で確認する。
+- CSP回帰テストは`pages/`/`client/`のinline styleを禁止するため、余白などはCSS classで指定する。

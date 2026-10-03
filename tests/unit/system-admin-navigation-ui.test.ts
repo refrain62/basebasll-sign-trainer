@@ -33,7 +33,8 @@ describe("system admin navigation UI regression", () => {
     const dashboardStart = systemAdminSource.indexOf("function systemDashboardContent");
     const teamsStart = systemAdminSource.indexOf("function systemTeamsContent");
     const dashboard = systemAdminSource.slice(dashboardStart, teamsStart);
-    expect(dashboard).toContain("全体状況だけを確認して");
+    expect(dashboard).toContain("サービス全体の運用状況を確認し、チーム・データ保護・お知らせを管理します。");
+    expect(dashboard).toContain('class="team-admin-launch-grid system-admin-launch-grid"');
     expect(dashboard).not.toContain('id="create-team-open"');
     expect(dashboard).not.toContain('id="protect-data-now"');
     expect(systemAdminSource).toContain('id="create-team-open"');

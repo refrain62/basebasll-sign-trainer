@@ -1117,3 +1117,6 @@ body { background:#eef5f8; }
   .lp-defense-howto-example,.lp-defense-howto-tags,.lp-defense-howto-quiz { grid-column:1 / -1; margin-top:0; }
   .lp-defense-howto-note { text-align:left; }
 }
+
+/* Contact page */
+.contact-form-action { margin-top: 18px; }
