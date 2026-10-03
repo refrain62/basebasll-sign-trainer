@@ -77,8 +77,8 @@ production deploy: OK
 - [ ] Dev Worker全体のCloudflare Access Application / Allow Policyを設定
 - [ ] `REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true` を確認
 - [ ] `CF_ACCESS_TEAM_DOMAIN` / Dev用 `CF_ACCESS_POLICY_AUD` を設定
-- [ ] dev D1へmigration
-- [ ] dev deploy
+- [ ] migrationがある場合、dev D1へ先に適用してbaseline更新
+- [ ] dev branchのWorkers Build成功
 - [ ] 未許可ユーザーがWorker全体へアクセスできないことを確認
 - [ ] OAuth確認
 - [ ] ホーム画面追加確認
@@ -88,8 +88,8 @@ production deploy: OK
 - [ ] Staging Worker全体のCloudflare Access Application / Allow Policyを設定
 - [ ] `REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true` を確認
 - [ ] `CF_ACCESS_TEAM_DOMAIN` / Staging用 `CF_ACCESS_POLICY_AUD` を設定
-- [ ] staging D1へmigration
-- [ ] staging deploy
+- [ ] migrationがある場合、staging D1へ先に適用してbaseline更新
+- [ ] staging branchのWorkers Build成功
 - [ ] 未許可ユーザーがWorker全体へアクセスできないことを確認
 - [ ] Google / LINEログイン確認
 - [ ] チーム管理確認
@@ -98,37 +98,34 @@ production deploy: OK
 ### production
 
 - [ ] stagingと同じcommitである
-- [ ] production D1 migration内容確認
-- [ ] production deploy
+- [ ] migrationがある場合、production D1へ先に適用してbaseline更新
+- [ ] main branchのproduction Workers Build成功
 - [ ] deploy後スモークテスト
 - [ ] 問題時に戻す直前versionを把握
 
 ---
 
-## 15. 将来GitHub Actions化する場合
+## 15. Cloudflare Workers Builds deploy
 
-手動運用が安定してからCI/CD化します。
-
-推奨イメージ:
+GitHub Actionsは`.github/workflows/ci.yml`でCIだけを担当します。Cloudflareへのdeployはdev / staging / productionすべてWorkers Buildsへ統一します。
 
 ```text
-Pull Request
-  → npm ci
-  → npm run check
+GitHub push / Pull Request
+  → ci.ymlでcheck / audit
 
-開発用ブランチ
-  → dev deploy
+dev branch
+  → Workers Builds → dev Worker
 
-staging実行
-  → staging deploy
+staging branch
+  → Workers Builds → staging Worker
 
-main + 手動承認
-  → production deploy
+main branch
+  → Workers Builds → production Worker
 ```
 
-GitHub側のSecretsにはCloudflare API Token等を置き、アプリ用SecretはCloudflare Worker Secretとして保持します。
+GitHubには`CLOUDFLARE_API_TOKEN`や`CLOUDFLARE_ACCOUNT_ID`を保存しません。Cloudflare側のGit integrationとBuild用tokenでWorker deployを実行します。
 
-最初からproductionまで完全自動化せず、productionだけ手動承認を残す構成が安全です。
+D1 migrationはWorkers Buildsから自動適用せず、手元のWrangler OAuthで対象DBへ適用します。適用後に`config/deployment-migrations.json`のbaselineを更新しない限り、対象環境のWorkers Build preflightがdeployを拒否します。詳細は[`cloudflare-workers-builds.md`](cloudflare-workers-builds.md)を参照してください。
 
 ---
 

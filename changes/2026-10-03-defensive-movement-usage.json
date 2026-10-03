@@ -1,0 +1,10 @@
+{
+  "id": "2026-10-03-defensive-movement-usage",
+  "summary": "サイングループを守備連携や状況別の動き方確認にも応用できることをLP・FAQ・グループ作成例で案内",
+  "impact": "minor",
+  "docs": [
+    "docs/product/spec.md",
+    "docs/design/ui.md"
+  ],
+  "noticeMigration": null
+}

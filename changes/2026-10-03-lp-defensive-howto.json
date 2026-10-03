@@ -1,0 +1,10 @@
+{
+  "id": "2026-10-03-lp-defensive-howto",
+  "summary": "LPに守備の動き・連携へ応用する3ステップの使い方を追加",
+  "impact": "minor",
+  "docs": [
+    "docs/product/spec.md",
+    "docs/design/ui.md"
+  ],
+  "noticeMigration": null
+}

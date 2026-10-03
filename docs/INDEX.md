@@ -15,6 +15,7 @@
 | Cloudflare Access | [`operations/cloudflare-access.md`](operations/cloudflare-access.md) | Dev/Staging Access設定が変わるとき |
 | ローカル開発・PBKDF2 | [`operations/local-development.md`](operations/local-development.md) | ローカル起動/暗号実装上限が変わるとき |
 | dev→staging→production | [`operations/deploy.md`](operations/deploy.md) | デプロイ順序・スモークテストが変わるとき |
+| Cloudflare Workers Builds deploy | [`operations/cloudflare-workers-builds.md`](operations/cloudflare-workers-builds.md) | dev/staging/productionのbranch・build/deploy設定が変わるとき |
 | D1 migration・rollback | [`operations/migrations-rollback.md`](operations/migrations-rollback.md) | DB変更/復旧方針が変わるとき |
 | リリース安全確認・Git・コマンド | [`operations/release-safety.md`](operations/release-safety.md) | チェックリスト/Git/CI運用が変わるとき |
 | 公開前/日常運用チェック | [`operations/checklist.md`](operations/checklist.md) | 運用確認項目が変わるとき |

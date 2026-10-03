@@ -21,12 +21,14 @@
 ## 開発開始
 
 ```bash
+# Node.js 24.x / npm 11.x を使用
+npm run runtime:check
 npm ci --ignore-scripts
 npm run db:migrate:local
 npm run dev
 ```
 
-WindowsでWranglerのローカルD1が`spawn UNKNOWN` / `UV_HANDLE_CLOSING`になる場合は、まずNode 22系とWranglerの既知バージョン差を確認してください。環境固有の手順は [`docs/operations/local-development.md`](docs/operations/local-development.md) にあります。
+WindowsでWranglerのローカルD1が`spawn UNKNOWN` / `UV_HANDLE_CLOSING`になる場合も、Node 24のままWrangler側を確認してください。環境固有の手順は [`docs/operations/local-development.md`](docs/operations/local-development.md) にあります。
 
 ## 必須チェック
 
@@ -49,13 +51,15 @@ migrationは番号順に追加し、既存migrationを後から書き換えな�
 
 ## デプロイ
 
-```bash
-npm run deploy:dev
-npm run deploy:staging
-npm run deploy:prod
+GitHub ActionsはCI専用です。通常のWorker deployはCloudflare Workers Buildsで行います。
+
+```text
+dev branch     → dev
+staging branch → staging
+main branch    → production
 ```
 
-実際の順序、Secret、OAuth、Cloudflare Access、スモークテスト、ロールバックは [`docs/operations/deploy.md`](docs/operations/deploy.md) を参照してください。
+D1 migrationがある場合だけ、対象branchへ反映する前に手元のWrangler OAuthでmigrationを適用し、deployment baselineを更新します。設定と手順は [`docs/operations/cloudflare-workers-builds.md`](docs/operations/cloudflare-workers-builds.md) と [`docs/operations/deploy.md`](docs/operations/deploy.md) を参照してください。
 
 ## 利用者向け変更の必須ルール
 
@@ -83,6 +87,7 @@ AI・開発者ともに、最初に [`docs/INDEX.md`](docs/INDEX.md) を見て**
 - Cloudflare Access: [`docs/operations/cloudflare-access.md`](docs/operations/cloudflare-access.md)
 - ローカル開発: [`docs/operations/local-development.md`](docs/operations/local-development.md)
 - デプロイ: [`docs/operations/deploy.md`](docs/operations/deploy.md)
+- Cloudflare Workers Builds: [`docs/operations/cloudflare-workers-builds.md`](docs/operations/cloudflare-workers-builds.md)
 - migration / rollback: [`docs/operations/migrations-rollback.md`](docs/operations/migrations-rollback.md)
 - リリース安全確認: [`docs/operations/release-safety.md`](docs/operations/release-safety.md)
 - 運用チェック: [`docs/operations/checklist.md`](docs/operations/checklist.md)

@@ -2,6 +2,12 @@
 
 SIGN TRAINERはVitest + TypeScript + Vite production build + tooling checksを`npm run check`でまとめて実行する。
 
+## Runtime baseline
+- ローカル/CI/リリース作業はNode.js 24.x + npm 11.xに統一する。
+- `npm run runtime:check`でNode majorを検証し、`npm run check`の先頭でも実行する。
+- `@types/node`は24系に固定し、Node 25/26向け型定義へ先行更新しない。
+- `tests/unit/node24-runtime-regression.test.ts`でNode 24固定がCI/engines/Dependabotから外れないことを回帰確認する。
+
 ```bash
 npm ci --ignore-scripts
 npm run check
@@ -66,3 +72,9 @@ npm run test:coverage
 - PR / direct pushのCIでは差分を見て、利用者向けコード変更に`changes/*.json`が伴うことを検証する。
 - `tests/unit/release-governance.test.ts`で上記ガードが通常チェックから外れないことを回帰確認する。
 
+
+## Deployment governance
+- GitHub ActionsはCI専用とし、workflow内にCloudflare deploy credential・`wrangler deploy`・remote D1 migrationを入れない。
+- dev / staging / productionのWorkers Builds用build scriptとbranch対応を`tests/unit/cloudflare-workers-builds-regression.test.ts`で固定する。
+- `scripts/workers-build-preflight.ts`は`WORKERS_CI_BRANCH`と対象環境を照合し、誤branchからのdeployを拒否する。
+- repository最新migrationと`config/deployment-migrations.json`の対象環境baselineが一致しない場合はdeployを拒否する。
