@@ -28,7 +28,7 @@ SIGN TRAINERはNode.js 24 / npm 11を実行基準にします。正本は`packag
 CI runnerは`ubuntu-24.04`へ固定し、Node 24 runtimeのAction世代を使います。
 
 - `actions/checkout@v5`
-- `actions/setup-node@v5`
+- `actions/setup-node@v7`
 - `node-version: 24`
 
 `ubuntu-latest`は将来のrunner OS切替で挙動が変わるため使用しません。

@@ -33,7 +33,7 @@ describe("dependency governance", () => {
     expect(pkg.scripts["predeploy:prod"]).toContain("scripts/security-preflight.ts");
     expect(workflow).toContain("node-version: 24");
     expect(workflow).toContain("actions/checkout@v5");
-    expect(workflow).toContain("actions/setup-node@v5");
+    expect(workflow).toContain("actions/setup-node@v7");
     expect(workflow).toContain("ubuntu-24.04");
   });
 });

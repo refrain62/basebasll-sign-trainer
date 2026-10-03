@@ -36,7 +36,7 @@ describe("documentation compatibility paths", () => {
     const dependencies = read("docs/engineering/dependencies.md");
     expect(dependencies).toContain("Node.js 24");
     expect(dependencies).toContain("actions/checkout@v5");
-    expect(dependencies).toContain("actions/setup-node@v5");
+    expect(dependencies).toContain("actions/setup-node@v7");
     expect(dependencies).not.toContain("Node.jsは **22系**");
   });
 });
