@@ -4,7 +4,7 @@ SIGN TRAINERはVitest + TypeScript + Vite production build + tooling checksを`n
 
 ## Runtime baseline
 - ローカル/CI/リリース作業はNode.js 24.x + npm 11.xに統一する。
-- GitHub Actions runnerは`ubuntu-24.04`へ固定し、`actions/checkout@v5` / `actions/setup-node@v7`を使用する。これらのActionもNode 24 runtimeで動作するため、旧Node 20 action runtime警告を出さない。
+- GitHub Actions runnerは`ubuntu-24.04`へ固定し、`actions/checkout@v7` / `actions/setup-node@v7`を使用する。これらのActionもNode 24 runtimeで動作するため、旧Node 20 action runtime警告を出さない。
 - `ubuntu-latest`は将来のrunner OS切替で挙動が変わるため使用しない。GitHub Actions dependencyはDependabotでも監視する。
 - `npm run runtime:check`でNode majorを検証し、`npm run check`の先頭でも実行する。
 - `@types/node`は24系に固定し、Node 25/26向け型定義へ先行更新しない。
