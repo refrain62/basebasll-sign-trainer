@@ -9,6 +9,7 @@
 | Plus / Pro・将来の課金設計 | [`product/plans.md`](product/plans.md) | プラン/Entitlement/価格方針が変わるとき |
 | Route / Controller / Service / Repository設計 | [`engineering/architecture.md`](engineering/architecture.md) | 技術境界や主要構成が変わるとき |
 | テスト戦略・必須回帰 | [`engineering/testing.md`](engineering/testing.md) | テスト方針・重要回帰条件が変わるとき |
+| 依存関係・Node.js更新 | [`engineering/dependencies.md`](engineering/dependencies.md) | npm/Node/Dependabot/GitHub Actionsの依存方針が変わるとき |
 | 変更影響判定・SYSTEMお知らせmigration | [`engineering/change-policy.md`](engineering/change-policy.md) | **利用者向け変更を行うたび確認** |
 | 環境構成・初回セットアップ | [`operations/environment-overview.md`](operations/environment-overview.md) | Worker/D1構成や初回準備が変わるとき |
 | Secret・Google / LINE OAuth | [`operations/secrets-oauth.md`](operations/secrets-oauth.md) | Secret/OAuth設定が変わるとき |
@@ -23,6 +24,20 @@
 | 暗号化・pepper・鍵ローテーション | [`security/data-protection.md`](security/data-protection.md) | 保存データ保護方式が変わるとき |
 | UI原則・デザイン資産 | [`design/ui.md`](design/ui.md) | UI原則・共通デザインが変わるとき |
 | 過去build履歴（通常は読まない） | [`history/legacy-readme-build-notes.md`](history/legacy-readme-build-notes.md) | 過去経緯を保存するときだけ |
+
+## 旧パス互換ドキュメント
+
+過去のURLやGit履歴から参照される旧パスは、古い内容を残さず現行の正本へ誘導する短い互換文書だけを置きます。通常の実装では読みません。
+
+- [`CLOUDFLARE_ENVIRONMENT_RUNBOOK.md`](CLOUDFLARE_ENVIRONMENT_RUNBOOK.md)
+- [`architecture.md`](architecture.md)
+- [`data-protection.md`](data-protection.md)
+- [`design.md`](design.md)
+- [`monetization.md`](monetization.md)
+- [`operations.md`](operations.md)
+- [`security-hardening.md`](security-hardening.md)
+- [`spec.md`](spec.md)
+- [`testing.md`](testing.md)
 
 ## 画像資料
 
