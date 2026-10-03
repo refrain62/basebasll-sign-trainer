@@ -48,7 +48,7 @@
     "db:baseline:prod": "node --experimental-strip-types scripts/mark-migration-baseline.ts production"
   },
   "devDependencies": {
-    "wrangler": "4.141.0",
+    "wrangler": "4.147.0",
     "typescript": "7.0.2",
     "@types/node": "24.10.15",
     "vite": "8.3.1",
