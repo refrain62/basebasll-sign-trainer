@@ -32,10 +32,14 @@ for (const page of pages) {
   }
 }
 
-const legacyGeneratedJs = fs.readdirSync("public", { withFileTypes: true })
-  .filter((entry) => entry.isFile() && entry.name.endsWith(".js"))
+const allowedPublicRootScripts = new Set(["sw.js"]);
+const unexpectedPublicRootScripts = fs.readdirSync("public", { withFileTypes: true })
+  .filter((entry) => entry.isFile() && /\.(?:js|mjs|cjs)$/.test(entry.name) && !allowedPublicRootScripts.has(entry.name))
   .map((entry) => entry.name);
-if (legacyGeneratedJs.length) failures.push(`legacy first-party public/*.js remains: ${legacyGeneratedJs.join(", ")}`);
+if (unexpectedPublicRootScripts.length) {
+  failures.push(`stale first-party public root JavaScript remains: ${unexpectedPublicRootScripts.join(", ")}`);
+}
+if (!fs.existsSync(path.resolve("public/sw.js"))) failures.push("PWA service worker is missing: public/sw.js");
 
 const clientJsSources: string[] = [];
 function collectClientJs(dir: string): void {

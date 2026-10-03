@@ -1,5 +1,18 @@
 # ローカル開発・PBKDF2注意事項
 
+## Node.js
+
+ローカル開発は**Node.js 24.x / npm 11.x**に統一します。`node -v`が`v24.`で始まることを確認してください。`.nvmrc`と`.node-version`はどちらも`24`です。
+
+```bash
+node -v
+npm -v
+npm run runtime:check
+```
+
+Node 22や26では開発・migration・deployを行いません。WindowsでWranglerの`spawn UNKNOWN`等が出ても、NodeのメジャーをずらさずWrangler/Windows側を切り分けます。
+
+
 ## 7. ローカル開発
 
 初回のみ `.dev.vars.example` をコピーします。

@@ -2,8 +2,16 @@ import { expect, test } from "vitest";
 import assert from "node:assert/strict";
 import { createAdminMembershipService } from "../../src/services/admin-membership-service.ts";
 
+// Keep the fixture row aligned with team_admin_memberships: display_name is nullable/optional.
+type TestMembershipRow = {
+  team_id: string;
+  user_id: string;
+  role: string;
+  display_name?: string;
+};
+
 function fixture() {
-  const members = new Map([
+  const members = new Map<string, TestMembershipRow>([
     ["owner", { team_id: "T1", user_id: "owner", role: "owner" }],
     ["admin", { team_id: "T1", user_id: "admin", role: "admin" }]
   ]);

@@ -1,0 +1,9 @@
+{
+  "id": "2026-10-03-github-actions-node24-runner",
+  "summary": "GitHub ActionsをUbuntu 24.04へ固定し、Node 24 runtimeのcheckout/setup-node v5へ更新",
+  "impact": "none",
+  "docs": [
+    "docs/engineering/testing.md"
+  ],
+  "noticeMigration": null
+}

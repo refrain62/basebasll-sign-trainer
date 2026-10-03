@@ -2,6 +2,14 @@
 
 SIGN TRAINERはVitest + TypeScript + Vite production build + tooling checksを`npm run check`でまとめて実行する。
 
+## Runtime baseline
+- ローカル/CI/リリース作業はNode.js 24.x + npm 11.xに統一する。
+- GitHub Actions runnerは`ubuntu-24.04`へ固定し、`actions/checkout@v5` / `actions/setup-node@v5`を使用する。これらv5 action自体もNode 24 runtimeで動作するため、旧Node 20 action runtime警告を出さない。
+- `ubuntu-latest`は将来のrunner OS切替で挙動が変わるため使用しない。GitHub Actions dependencyはDependabotでも監視する。
+- `npm run runtime:check`でNode majorを検証し、`npm run check`の先頭でも実行する。
+- `@types/node`は24系に固定し、Node 25/26向け型定義へ先行更新しない。
+- `tests/unit/node24-runtime-regression.test.ts`でNode 24固定がCI/engines/Dependabotから外れないことを回帰確認する。
+
 ```bash
 npm ci --ignore-scripts
 npm run check
@@ -66,3 +74,23 @@ npm run test:coverage
 - PR / direct pushのCIでは差分を見て、利用者向けコード変更に`changes/*.json`が伴うことを検証する。
 - `tests/unit/release-governance.test.ts`で上記ガードが通常チェックから外れないことを回帰確認する。
 
+
+## Deployment governance
+- GitHub ActionsはCloudflare API credential・`wrangler deploy`・remote D1 migrationを持たない。任意デプロイはEnvironment secretのDeploy Hook URLへPOSTするだけとし、実deployはWorkers Buildsへ任せる。
+- dev / staging / productionのWorkers Builds用build scriptとbranch対応を`tests/unit/cloudflare-workers-builds-regression.test.ts`で固定する。
+- `scripts/workers-build-preflight.ts`は`WORKERS_CI_BRANCH`と対象環境を照合し、誤branchからのdeployを拒否する。
+- repository最新migrationと`config/deployment-migrations.json`の対象環境baselineが一致しない場合はdeployを拒否する。
+- `.github/workflows/manual-deploy.yml`はdev / staging / productionの3 Environmentを参照し、productionはGitHub EnvironmentのRequired reviewersで承認後にだけHook Secretへアクセスする運用とする。
+
+## Client source artifact policy
+- `public/`直下の手書き/旧生成JavaScriptは原則禁止し、Vite build前に`scripts/clean-client-artifacts.ts`で削除する。
+- PWAのService Worker `public/sw.js`だけはVite entryとは別の静的runtime assetとして明示的に許可する。
+- `scripts/client-source-check.ts`は`sw.js`以外の`public/*.{js,mjs,cjs}`が残っていれば失敗する。
+- `tests/unit/client-source-policy-regression.test.ts`でこの例外とbuild前cleanupが外れないことを回帰確認する。
+- 参照用・旧画像は`public/`へ置かず`docs/assets/reference-unused/`へ退避し、配信画像だけをimage budgetの対象にする。
+- LPの大きな写真素材は表示サイズに合わせて縮小・WebP再圧縮し、`npm run tooling:check`の1画像160 KiB / 合計1200 KiB制限を維持する。
+
+## Static asset cleanup
+- `npm run build:client`の前に`scripts/clean-client-artifacts.ts`を実行し、旧Vite直書きJS、過去版の重量PNG、未使用の旧WebP/参考画像を削除する。
+- 現行配信画像はWebP/JPEG等の軽量版を正とし、重量PNGに加えて旧install結合WebP、旧recommend/ref画像など現在のページから参照されない画像をpublicへ戻さない。ZIPを既存Git作業ツリーへ上書きしてもcleanupがこれらを除去する。
+- `scripts/image-budget-check.ts`で1画像160 KiB、public画像合計1.2 MiB以下を回帰確認する。

@@ -1,0 +1,11 @@
+{
+  "id": "2026-10-03-github-actions-staging",
+  "summary": "GitHub ActionsからstagingのD1 migrationとWorker deployを安全な順序で実行できるworkflowを追加",
+  "impact": "none",
+  "docs": [
+    "docs/operations/cloudflare-workers-builds.md",
+    "docs/operations/deploy.md"
+  ],
+  "noticeMigration": null,
+  "docsReason": "The staging GitHub Actions deploy was superseded by the current Workers Builds deployment guide."
+}

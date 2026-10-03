@@ -1088,3 +1088,32 @@ body { background:#eef5f8; }
   .lp-team-pwa-note strong { font-size:12px; }
   .lp-team-pwa-note p { font-size:10px; }
 }
+
+/* v1.5.37 UI fix62: compact LP how-to for defensive movement / coordination use cases. */
+.lp-defense-howto { padding:30px 0; background:linear-gradient(180deg,#f4faf7 0%,#eef7f3 100%); border-top:1px solid #dfece5; border-bottom:1px solid #dfece5; }
+.lp-defense-howto-heading { max-width:780px; margin:0 auto 18px; text-align:center; }
+.lp-defense-howto-kicker { display:inline-flex; min-height:24px; padding:0 10px; align-items:center; border-radius:999px; background:#dcf4e7; color:#087e4a!important; font-size:9px; font-weight:950; letter-spacing:.12em; }
+.lp-defense-howto-heading h2 { margin:9px 0 8px; color:#071e33; font-size:27px; line-height:1.25; font-weight:950; letter-spacing:-.025em; }
+.lp-defense-howto-heading p { margin:0; color:#4f6878; font-size:12px; line-height:1.8; font-weight:700; }
+.lp-defense-howto-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.lp-defense-howto-card { position:relative; min-height:178px; padding:16px; display:flex; flex-direction:column; gap:10px; border:1px solid #d7e7df; border-radius:12px; background:#fff; box-shadow:0 6px 18px rgba(7,56,40,.045); }
+.lp-defense-howto-step { width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:#0aaa5d; color:#fff!important; font-size:11px; font-weight:950; }
+.lp-defense-howto-card strong { color:#0b2b43; font-size:15px; font-weight:950; }
+.lp-defense-howto-card p { margin:5px 0 0; color:#566f7f; font-size:11px; line-height:1.65; font-weight:700; }
+.lp-defense-howto-example { margin-top:auto; padding:9px 10px; border-radius:9px; background:#eef8f2; color:#126c48; font-size:11px; font-weight:900; }
+.lp-defense-howto-tags { margin-top:auto; display:flex; flex-wrap:wrap; gap:6px; }
+.lp-defense-howto-tags span { padding:5px 8px; border:1px solid #d2e5db; border-radius:999px; background:#f8fcfa; color:#325b49; font-size:9px; font-weight:900; }
+.lp-defense-howto-quiz { margin-top:auto; padding:9px 10px; display:grid; gap:4px; border-radius:9px; background:#0b2f49; color:#fff; }
+.lp-defense-howto-quiz small { color:#d8e9f2; font-size:9px; font-weight:800; }
+.lp-defense-howto-quiz b { font-size:10px; font-weight:950; }
+.lp-defense-howto-note { margin:12px 0 0; color:#6d7f89; font-size:10px; line-height:1.6; text-align:center; font-weight:650; }
+@media (max-width: 700px) {
+  .lp-defense-howto { padding:24px 0; }
+  .lp-defense-howto-heading { text-align:left; }
+  .lp-defense-howto-heading h2 { font-size:23px; }
+  .lp-defense-howto-heading p { font-size:12px; }
+  .lp-defense-howto-grid { grid-template-columns:1fr; gap:9px; }
+  .lp-defense-howto-card { min-height:0; padding:14px; display:grid; grid-template-columns:38px 1fr; gap:9px 10px; }
+  .lp-defense-howto-example,.lp-defense-howto-tags,.lp-defense-howto-quiz { grid-column:1 / -1; margin-top:0; }
+  .lp-defense-howto-note { text-align:left; }
+}

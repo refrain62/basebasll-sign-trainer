@@ -1,0 +1,10 @@
+{
+  "id": "2026-10-03-dependency-maintenance",
+  "summary": "Hono/Vitestを安全な最新patchへ更新し、Node 22と型定義・Dependabotの整合を自動検査する依存管理ルールを追加",
+  "impact": "none",
+  "docs": [
+    "docs/engineering/dependencies.md",
+    "docs/operations/local-development.md"
+  ],
+  "noticeMigration": null
+}

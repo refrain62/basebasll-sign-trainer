@@ -8,7 +8,7 @@
     "deploy:dev": "wrangler deploy --env dev",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:prod": "wrangler deploy",
-    "check": "npm run typecheck && npm run build:client && npm run tooling:check && npm run test:unit",
+    "check": "npm run runtime:check && npm run typecheck && npm run build:client && npm run tooling:check && npm run test:unit",
     "db:migrate:local": "wrangler d1 migrations apply DB --local --env dev",
     "db:migrate:dev": "wrangler d1 migrations apply DB --remote --env dev",
     "db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
@@ -18,9 +18,9 @@
     "db:list:staging": "wrangler d1 migrations list DB --remote --env staging",
     "db:list:prod": "wrangler d1 migrations list DB --remote",
     "security:check": "npm audit --audit-level=high",
-    "predeploy:dev": "npm run build:client && npm run release:policy && node --experimental-strip-types scripts/security-preflight.ts",
-    "predeploy:staging": "npm run build:client && npm run release:policy && node --experimental-strip-types scripts/security-preflight.ts",
-    "predeploy:prod": "npm run build:client && npm run release:policy && node --experimental-strip-types scripts/security-preflight.ts && node --experimental-strip-types scripts/operations-preflight.ts",
+    "predeploy:dev": "npm run runtime:check && node --experimental-strip-types scripts/workers-build-preflight.ts dev && npm run build:client && npm run release:policy && node --experimental-strip-types scripts/security-preflight.ts",
+    "predeploy:staging": "npm run runtime:check && node --experimental-strip-types scripts/workers-build-preflight.ts staging && npm run build:client && npm run release:policy && node --experimental-strip-types scripts/security-preflight.ts",
+    "predeploy:prod": "npm run runtime:check && node --experimental-strip-types scripts/workers-build-preflight.ts production && npm run build:client && npm run release:policy && node --experimental-strip-types scripts/security-preflight.ts && node --experimental-strip-types scripts/operations-preflight.ts",
     "security:preflight": "node --experimental-strip-types scripts/security-preflight.ts",
     "test": "vitest run",
     "test:unit": "vitest run",
@@ -31,14 +31,21 @@
     "security:generate-secrets": "node --experimental-strip-types scripts/generate-security-secrets.ts",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.client.json && tsc -p tsconfig.scripts.json && tsc -p tsconfig.test.json",
     "build": "npm run build:client",
-    "build:client": "vite build",
-    "predev": "npm run build:client",
-    "dev:ui": "vite build --watch",
+    "build:client": "node --experimental-strip-types scripts/clean-client-artifacts.ts && vite build",
+    "predev": "npm run runtime:check && npm run build:client",
+    "dev:ui": "node --experimental-strip-types scripts/clean-client-artifacts.ts && vite build --watch",
     "tooling:check": "node --experimental-strip-types scripts/client-source-check.ts && node --experimental-strip-types scripts/check-js.ts && node --experimental-strip-types scripts/image-budget-check.ts && node --experimental-strip-types scripts/route-parity-check.ts && node --experimental-strip-types scripts/architecture-check.ts && node --experimental-strip-types scripts/docs-check.ts && node --experimental-strip-types scripts/release-policy-check.ts",
     "docs:check": "node --experimental-strip-types scripts/docs-check.ts",
     "release:policy": "node --experimental-strip-types scripts/release-policy-check.ts",
     "release:policy:ci": "node --experimental-strip-types scripts/release-policy-check.ts --ci",
-    "release:notice": "node --experimental-strip-types scripts/create-system-notice-migration.ts"
+    "release:notice": "node --experimental-strip-types scripts/create-system-notice-migration.ts",
+    "runtime:check": "node --experimental-strip-types scripts/runtime-version-check.ts",
+    "workers:build:dev": "npm ci --ignore-scripts && node --experimental-strip-types scripts/workers-build-preflight.ts dev && npm run check && npm run security:check",
+    "workers:build:staging": "npm ci --ignore-scripts && node --experimental-strip-types scripts/workers-build-preflight.ts staging && npm run check && npm run security:check",
+    "workers:build:prod": "npm ci --ignore-scripts && node --experimental-strip-types scripts/workers-build-preflight.ts production && npm run check && npm run security:check && npm run ops:preflight",
+    "db:baseline:dev": "node --experimental-strip-types scripts/mark-migration-baseline.ts dev",
+    "db:baseline:staging": "node --experimental-strip-types scripts/mark-migration-baseline.ts staging",
+    "db:baseline:prod": "node --experimental-strip-types scripts/mark-migration-baseline.ts production"
   },
   "devDependencies": {
     "wrangler": "4.141.0",
@@ -50,8 +57,8 @@
     "@types/qrcode": "1.5.6"
   },
   "engines": {
-    "node": ">=22.12 <25",
-    "npm": ">=10 <12"
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
   },
   "packageManager": "npm@11.6.2",
   "dependencies": {

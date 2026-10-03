@@ -1,0 +1,9 @@
+{
+  "id": "2026-10-03-clean-stale-heavy-images",
+  "summary": "Vite build前に旧PNG画像を自動削除し、image budget checkへ流入しないようにする",
+  "impact": "none",
+  "docs": [
+    "docs/engineering/testing.md"
+  ],
+  "noticeMigration": null
+}

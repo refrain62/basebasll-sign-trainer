@@ -1,0 +1,11 @@
+{
+  "id": "2026-10-03-node24-runtime",
+  "summary": "ローカル・CI・デプロイのNode.js実行環境を24系へ統一し、型定義とDependabot運用もNode 24へ固定",
+  "impact": "none",
+  "docs": [
+    "docs/operations/environment-overview.md",
+    "docs/operations/local-development.md",
+    "docs/engineering/testing.md"
+  ],
+  "noticeMigration": null
+}

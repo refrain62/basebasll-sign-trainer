@@ -1,0 +1,78 @@
+name: manual-deploy
+run-name: Manual deploy ${{ inputs.environment }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deploy target
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-dev:
+    if: inputs.environment == 'dev'
+    runs-on: ubuntu-24.04
+    environment:
+      name: dev
+      url: https://basebasll-sign-trainer-dev.refrain62.workers.dev
+    concurrency:
+      group: manual-deploy-dev
+      cancel-in-progress: false
+    steps:
+      - name: Trigger DEV Workers Build
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}
+        shell: bash
+        run: |
+          test -n "$DEPLOY_HOOK_URL" || { echo "CLOUDFLARE_DEPLOY_HOOK is not configured in the dev GitHub Environment." >&2; exit 1; }
+          curl --fail-with-body --silent --show-error --request POST "$DEPLOY_HOOK_URL"
+          echo "### DEV deploy requested" >> "$GITHUB_STEP_SUMMARY"
+          echo "Cloudflare Workers Builds was triggered for the dev branch." >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-staging:
+    if: inputs.environment == 'staging'
+    runs-on: ubuntu-24.04
+    environment:
+      name: staging
+      url: https://basebasll-sign-trainer-staging.refrain62.workers.dev
+    concurrency:
+      group: manual-deploy-staging
+      cancel-in-progress: false
+    steps:
+      - name: Trigger STAGING Workers Build
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}
+        shell: bash
+        run: |
+          test -n "$DEPLOY_HOOK_URL" || { echo "CLOUDFLARE_DEPLOY_HOOK is not configured in the staging GitHub Environment." >&2; exit 1; }
+          curl --fail-with-body --silent --show-error --request POST "$DEPLOY_HOOK_URL"
+          echo "### STAGING deploy requested" >> "$GITHUB_STEP_SUMMARY"
+          echo "Cloudflare Workers Builds was triggered for the staging branch." >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-production:
+    if: inputs.environment == 'production'
+    runs-on: ubuntu-24.04
+    environment:
+      name: production
+      url: https://basebasll-sign-trainer.refrain62.workers.dev
+    concurrency:
+      group: manual-deploy-production
+      cancel-in-progress: false
+    steps:
+      - name: Trigger PRODUCTION Workers Build after approval
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}
+        shell: bash
+        run: |
+          test -n "$DEPLOY_HOOK_URL" || { echo "CLOUDFLARE_DEPLOY_HOOK is not configured in the production GitHub Environment." >&2; exit 1; }
+          curl --fail-with-body --silent --show-error --request POST "$DEPLOY_HOOK_URL"
+          echo "### PRODUCTION deploy requested" >> "$GITHUB_STEP_SUMMARY"
+          echo "Production approval passed and Cloudflare Workers Builds was triggered for the main branch." >> "$GITHUB_STEP_SUMMARY"

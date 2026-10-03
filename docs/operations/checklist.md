@@ -8,7 +8,7 @@
 - `version_metadata` は named environment に継承されないため、productionだけでなく `env.dev` / `env.staging` にも `CF_VERSION_METADATA` binding を設定しています。
 - ローカルmigrationは `npm run db:migrate:local` を使用してください。
 
-最終更新: 2026-10-02
+最終更新: 2026-10-03
 
 ## 公開前
 
@@ -55,19 +55,29 @@
 
 ## デプロイ
 
-```bash
-npm ci --ignore-scripts
-npm run check
-npm run security:preflight
-npm run ops:preflight
-npm run db:migrate:staging
-npm run deploy:staging
-# 確認後
-npm run db:migrate:prod
-npm run deploy:prod
+GitHub Actionsは通常CIを担当し、任意デプロイ時だけDeploy Hookを呼ぶ。Worker build/deploy本体はCloudflare Workers Buildsで行う。
+
+```text
+dev branch     → Workers Builds → dev
+staging branch → Workers Builds → staging
+main branch    → Workers Builds → production
+Actions手動実行 → Deploy Hook → Workers Builds
 ```
 
-DB migrationはコードdeployより先に適用が必要な版があるため、stagingで必ず同じ順序を検証する。
+productionの手動実行はGitHub Environment `production`のRequired reviewers承認後だけ進める。各Environmentには`CLOUDFLARE_DEPLOY_HOOK`だけをSecret登録し、Cloudflare API tokenはGitHubへ置かない。
+
+D1 migrationがある場合だけ、対象branchへ反映する前に手元のWrangler OAuthでmigrationを適用し、baselineを更新する。
+
+```bash
+# 例: staging
+npx wrangler login
+npm run db:list:staging
+npm run db:migrate:staging
+npm run db:list:staging
+npm run db:baseline:staging -- --confirm-applied
+```
+
+`config/deployment-migrations.json`がrepository最新migrationと一致しない環境はWorkers Builds preflightでdeployを止める。詳細は[`cloudflare-workers-builds.md`](cloudflare-workers-builds.md)を参照する。
 
 
 ## 有償機能の認可確認
