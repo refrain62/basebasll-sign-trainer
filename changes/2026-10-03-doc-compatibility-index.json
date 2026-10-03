@@ -1,0 +1,10 @@
+{
+  "id": "2026-10-03-doc-compatibility-index",
+  "summary": "旧docs直下ファイルを現行ドキュメントへの互換スタブに置換し、依存関係ポリシーをINDEXへ登録",
+  "impact": "none",
+  "docs": [
+    "docs/INDEX.md",
+    "docs/engineering/dependencies.md"
+  ],
+  "noticeMigration": null
+}
