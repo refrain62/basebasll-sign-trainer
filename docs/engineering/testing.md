@@ -78,3 +78,11 @@ npm run test:coverage
 - dev / staging / productionのWorkers Builds用build scriptとbranch対応を`tests/unit/cloudflare-workers-builds-regression.test.ts`で固定する。
 - `scripts/workers-build-preflight.ts`は`WORKERS_CI_BRANCH`と対象環境を照合し、誤branchからのdeployを拒否する。
 - repository最新migrationと`config/deployment-migrations.json`の対象環境baselineが一致しない場合はdeployを拒否する。
+
+## Client source artifact policy
+- `public/`直下の手書き/旧生成JavaScriptは原則禁止し、Vite build前に`scripts/clean-client-artifacts.ts`で削除する。
+- PWAのService Worker `public/sw.js`だけはVite entryとは別の静的runtime assetとして明示的に許可する。
+- `scripts/client-source-check.ts`は`sw.js`以外の`public/*.{js,mjs,cjs}`が残っていれば失敗する。
+- `tests/unit/client-source-policy-regression.test.ts`でこの例外とbuild前cleanupが外れないことを回帰確認する。
+- 参照用・旧画像は`public/`へ置かず`docs/assets/reference-unused/`へ退避し、配信画像だけをimage budgetの対象にする。
+- LPの大きな写真素材は表示サイズに合わせて縮小・WebP再圧縮し、`npm run tooling:check`の1画像160 KiB / 合計1200 KiB制限を維持する。
