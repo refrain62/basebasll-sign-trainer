@@ -1,40 +1,61 @@
 # 依存関係・Node.js更新ポリシー
 
-この文書は、Dependabotや手動のnpm依存更新を安全に処理するためのルールです。通常の機能開発では読みません。
+この文書はDependabotや手動のnpm依存更新を安全に処理するためのルールです。通常の機能開発では読みません。
 
-## 基準
+## 現在の実行基準
 
-現在の依存更新基準（2026-10-03）は `hono 4.13.11`、`vitest/@vitest/coverage-v8 5.0.2`、`@types/node 22.20.5`、`wrangler 4.143.0`。Dependabot PRを取り込む際も、別依存のダウングレードをlockfileへ混入させない。
+SIGN TRAINERはNode.js 24 / npm 11を実行基準にします。正本は`package.json`とrootのNode指定ファイルです。
 
-- 実行・CIのNode.jsは **22系** に固定する。
-- `package.json` の `engines.node` は `>=22.12 <23` とする。
-- `@types/node` もNode 22系に合わせる。実行環境より新しいメジャーの型定義へ先行更新しない。
-- `vitest` と `@vitest/coverage-v8` は必ず同一バージョンにする。
-- 直接依存は `^` / `~` を使わず完全固定し、`package-lock.json` をGit管理する。
-- CI/ローカルの再現確認は `npm ci --ignore-scripts` を使う。
+- Node.js: `>=24 <25`
+- npm: `>=11 <12`
+- package manager: `npm@11.6.2`
+- `@types/node`: Node 24系に固定
+- `vitest`と`@vitest/coverage-v8`: 同一バージョンを使用
+- 直接依存は意図しないmajor更新を避ける
+- `package-lock.json`をGit管理し、CI/Workers Buildsでは`npm ci --ignore-scripts`を使う
+
+現在の具体的な依存バージョンは`package.json`を正本とし、この文書へ重複して固定値を列挙しません。
 
 ## Dependabot
 
-- `@types/node` のメジャー更新は自動PR対象外にする。Node本体を上げる変更と同じPR/変更セットで更新する。
-- `vitest` と `@vitest/*` は同一グループで更新し、バージョンずれを作らない。
-- patch/minorでも `npm run check` と `npm audit --audit-level=high` が通ることを確認する。
+- `@types/node`のmajor更新は、Node本体を上げる変更とは分離しない。
+- `vitest`と`@vitest/*`は同一グループで更新する。
+- GitHub ActionsもDependabotで監視し、Action内部runtimeの非推奨化を放置しない。
+- patch/minor更新でも`npm run check`と`npm audit --audit-level=high`を通す。
 
-## lockfileの更新
+## GitHub Actions
 
-依存バージョンを変更したら `npm run dependency:sync` で `package-lock.json` を再生成し、続けて `npm ci --ignore-scripts` と `npm run check` を実行する。Dependabot PRのlockfileに、別依存の意図しないダウングレードが混ざっていないことも確認する。
+CI runnerは`ubuntu-24.04`へ固定し、Node 24 runtimeのAction世代を使います。
 
-## 自動検査
+- `actions/checkout@v5`
+- `actions/setup-node@v5`
+- `node-version: 24`
 
-`npm run dependency:policy` は次を検査する。
+`ubuntu-latest`は将来のrunner OS切替で挙動が変わるため使用しません。
 
-1. 直接依存が完全固定されていること。
-2. Node engine / GitHub Actions / `@types/node` がNode 22で揃っていること。
-3. `vitest` と `@vitest/coverage-v8` が同一バージョンであること。
-4. `package-lock.json` のroot依存が `package.json` と一致すること。
-5. DependabotにNode型のメジャー更新抑止とVitestグループ設定があること。
+## lockfile更新
 
-`npm run check` とdeploy前処理の両方から実行する。依存更新時はこの検査を弱めて通すのではなく、実行環境と依存の組み合わせ自体を整える。
+依存を変更したらNode 24 / npm 11環境でlockfileを更新し、そのlockfileをcommitします。
+
+```bash
+npm install --package-lock-only --ignore-scripts
+npm ci --ignore-scripts
+npm run check
+npm audit --audit-level=high
+```
+
+Dependabot PRでも、対象外依存の意図しないダウングレードやmajor更新が`package-lock.json`へ混ざっていないことを確認します。
 
 ## Nodeメジャーを上げる場合
 
-Node 23以降へ移行する場合は、`engines.node`、GitHub Actionsの`node-version`、`@types/node`、ローカル開発文書を同じ変更で更新し、Windows上のWrangler/D1も含めて回帰確認する。
+Node 25以降へ移行する場合は、少なくとも次を同じ変更セットで更新します。
+
+- `package.json`の`engines.node`
+- `.nvmrc` / `.node-version`
+- GitHub Actionsの`node-version`
+- `@types/node`
+- `scripts/runtime-version-check.ts`
+- `scripts/security-preflight.ts`
+- ローカル開発・テスト文書
+
+Node本体だけを先行更新しません。
