@@ -4,6 +4,8 @@ SIGN TRAINERはVitest + TypeScript + Vite production build + tooling checksを`n
 
 ## Runtime baseline
 - ローカル/CI/リリース作業はNode.js 24.x + npm 11.xに統一する。
+- GitHub Actions runnerは`ubuntu-24.04`へ固定し、`actions/checkout@v5` / `actions/setup-node@v5`を使用する。これらv5 action自体もNode 24 runtimeで動作するため、旧Node 20 action runtime警告を出さない。
+- `ubuntu-latest`は将来のrunner OS切替で挙動が変わるため使用しない。GitHub Actions dependencyはDependabotでも監視する。
 - `npm run runtime:check`でNode majorを検証し、`npm run check`の先頭でも実行する。
 - `@types/node`は24系に固定し、Node 25/26向け型定義へ先行更新しない。
 - `tests/unit/node24-runtime-regression.test.ts`でNode 24固定がCI/engines/Dependabotから外れないことを回帰確認する。
@@ -86,3 +88,8 @@ npm run test:coverage
 - `tests/unit/client-source-policy-regression.test.ts`でこの例外とbuild前cleanupが外れないことを回帰確認する。
 - 参照用・旧画像は`public/`へ置かず`docs/assets/reference-unused/`へ退避し、配信画像だけをimage budgetの対象にする。
 - LPの大きな写真素材は表示サイズに合わせて縮小・WebP再圧縮し、`npm run tooling:check`の1画像160 KiB / 合計1200 KiB制限を維持する。
+
+## Static asset cleanup
+- `npm run build:client`の前に`scripts/clean-client-artifacts.ts`を実行し、旧Vite直書きJSと過去版の重量PNGを削除する。
+- 現行配信画像はWebP/JPEG等の軽量版を正とし、`sign-trainer-icon.png`、`why-baseball.png`、旧install統合PNG、`lp-feature-admin_2.png`、`team-pwa-install-guide.png`、旧`og.png`をpublicへ戻さない。
+- `scripts/image-budget-check.ts`で1画像160 KiB、public画像合計1.2 MiB以下を回帰確認する。

@@ -13,12 +13,16 @@ describe("Node 24 runtime baseline", () => {
     expect(read(".nvmrc").trim()).toBe("24");
     expect(read(".node-version").trim()).toBe("24");
     expect(read(".github/workflows/ci.yml")).toMatch(/node-version:\s*24/);
+    expect(read(".github/workflows/ci.yml")).toMatch(/runs-on:\s*ubuntu-24\.04/);
+    expect(read(".github/workflows/ci.yml")).toContain("actions/checkout@v5");
+    expect(read(".github/workflows/ci.yml")).toContain("actions/setup-node@v5");
   });
 
   test("prevents Dependabot from moving @types/node to a different major", () => {
     const dependabot = read(".github/dependabot.yml");
     expect(dependabot).toContain('dependency-name: "@types/node"');
     expect(dependabot).toContain('version-update:semver-major');
+    expect(dependabot).toContain("package-ecosystem: github-actions");
   });
 
   test("requires the lockfile root metadata to match the Node 24 package baseline", () => {

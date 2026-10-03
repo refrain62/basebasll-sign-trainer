@@ -35,6 +35,8 @@ for (const obsolete of [
   "public/assets/why-baseball.png",
   "public/assets/install-iphone.png",
   "public/assets/install-android.png",
+  "public/assets/lp-feature-admin_2.png",
+  "public/assets/team-pwa-install-guide.png",
   "public/og.png"
 ]) {
   if (fs.existsSync(obsolete)) failures.push(`obsolete heavy image must not return: ${obsolete}`);

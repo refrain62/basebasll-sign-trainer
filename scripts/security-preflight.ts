@@ -50,6 +50,9 @@ if (!fs.existsSync(nodeVersionPath) || fs.readFileSync(nodeVersionPath, "utf8").
 const ciWorkflowPath = path.join(root, ".github/workflows/ci.yml");
 const ciWorkflow = fs.existsSync(ciWorkflowPath) ? fs.readFileSync(ciWorkflowPath, "utf8") : "";
 if (!/node-version:\s*24(?:\s|$)/m.test(ciWorkflow)) failures.push("CI must run on Node 24");
+if (!/runs-on:\s*ubuntu-24\.04(?:\s|$)/m.test(ciWorkflow)) failures.push("CI runner must be pinned to ubuntu-24.04 instead of ubuntu-latest");
+if (!/uses:\s*actions\/checkout@v5(?:\s|$)/m.test(ciWorkflow)) failures.push("CI must use actions/checkout@v5 so the action runtime is Node 24");
+if (!/uses:\s*actions\/setup-node@v5(?:\s|$)/m.test(ciWorkflow)) failures.push("CI must use actions/setup-node@v5 so the action runtime is Node 24");
 const workflowsDir = path.join(root, ".github/workflows");
 if (fs.existsSync(workflowsDir)) {
   for (const name of fs.readdirSync(workflowsDir).filter((file) => /\.ya?ml$/i.test(file))) {
@@ -69,6 +72,9 @@ const dependabotPath = path.join(root, ".github/dependabot.yml");
 const dependabot = fs.existsSync(dependabotPath) ? fs.readFileSync(dependabotPath, "utf8") : "";
 if (!dependabot.includes('dependency-name: "@types/node"') || !dependabot.includes('version-update:semver-major')) {
   failures.push("Dependabot must ignore @types/node major updates while the runtime is Node 24");
+}
+if (!dependabot.includes("package-ecosystem: github-actions")) {
+  failures.push("Dependabot must monitor GitHub Actions versions");
 }
 
 const packageLockPath = path.join(root, "package-lock.json");
