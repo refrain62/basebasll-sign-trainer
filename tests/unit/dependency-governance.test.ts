@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
+import { findInvalidGitHubActionUses } from "../../scripts/github-action-pin-policy.ts";
 
 const read = (file: string) => readFileSync(file, "utf8");
 
@@ -32,8 +33,25 @@ describe("dependency governance", () => {
     expect(pkg.scripts["predeploy:staging"]).toContain("scripts/security-preflight.ts");
     expect(pkg.scripts["predeploy:prod"]).toContain("scripts/security-preflight.ts");
     expect(workflow).toContain("node-version: 24");
-    expect(workflow).toContain("actions/checkout@v5");
-    expect(workflow).toContain("actions/setup-node@v5");
+    expect(workflow).toMatch(/uses:\s*actions\/checkout@[0-9a-f]{40}\s+# v\d+\.\d+\.\d+/);
+    expect(workflow).toMatch(/uses:\s*actions\/setup-node@[0-9a-f]{40}\s+# v\d+\.\d+\.\d+/);
+    expect(findInvalidGitHubActionUses(workflow)).toEqual([]);
     expect(workflow).toContain("ubuntu-24.04");
+  });
+
+  test("rejects remote action refs without a full SHA and semver release comment", () => {
+    const sha = "3d3c42e5aac5ba805825da76410c181273ba90b1";
+    const invalidReferences = [
+      `actions/checkout@${sha}`,
+      `actions/setup-node@${sha} # v7`,
+      `actions/checkout@${sha.slice(0, 7)} # v7.0.1`,
+      "actions/setup-node@v7.0.0 # v7.0.0"
+    ];
+    const workflow = [
+      ...invalidReferences.map((reference) => `      - uses: ${reference}`),
+      "      - uses: ./.github/actions/local-action"
+    ].join("\n");
+
+    expect(findInvalidGitHubActionUses(workflow).map(({ reference }) => reference)).toEqual(invalidReferences);
   });
 });
