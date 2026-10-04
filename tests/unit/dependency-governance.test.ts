@@ -20,7 +20,7 @@ describe("dependency governance", () => {
   test("prevents Dependabot from separating Node types and Vitest companion packages", () => {
     const config = read(".github/dependabot.yml");
     expect(config).toContain('dependency-name: "@types/node"');
-    expect(config).toContain('version-update:semver-major');
+    expect(config).toContain("version-update:semver-major");
     expect(config).toContain("vitest-tooling:");
     expect(config).toContain('"@vitest/*"');
     expect(config).toContain("package-ecosystem: github-actions");
@@ -53,5 +53,13 @@ describe("dependency governance", () => {
     ].join("\n");
 
     expect(findInvalidGitHubActionUses(workflow).map(({ reference }) => reference)).toEqual(invalidReferences);
+  });
+
+  test("keeps the audited Wrangler version aligned with the security preflight", () => {
+    const pkg = JSON.parse(read("package.json"));
+    const preflight = read("scripts/security-preflight.ts");
+    expect(pkg.devDependencies.wrangler).toBe("4.147.0");
+    expect(preflight).toContain('const requiredWranglerVersion = "4.147.0";');
+    expect(preflight).toContain("wrangler must be pinned exactly to ${requiredWranglerVersion}");
   });
 });
