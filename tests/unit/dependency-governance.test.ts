@@ -36,4 +36,12 @@ describe("dependency governance", () => {
     expect(workflow).toContain("actions/setup-node@v5");
     expect(workflow).toContain("ubuntu-24.04");
   });
+
+  test("keeps the audited Wrangler version aligned with the security preflight", () => {
+    const pkg = JSON.parse(read("package.json"));
+    const preflight = read("scripts/security-preflight.ts");
+    expect(pkg.devDependencies.wrangler).toBe("4.147.0");
+    expect(preflight).toContain('const requiredWranglerVersion = "4.147.0";');
+    expect(preflight).toContain("wrangler must be pinned exactly to ${requiredWranglerVersion}");
+  });
 });
