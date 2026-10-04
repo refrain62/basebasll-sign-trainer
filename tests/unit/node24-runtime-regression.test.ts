@@ -14,8 +14,8 @@ describe("Node 24 runtime baseline", () => {
     expect(read(".node-version").trim()).toBe("24");
     expect(read(".github/workflows/ci.yml")).toMatch(/node-version:\s*24/);
     expect(read(".github/workflows/ci.yml")).toMatch(/runs-on:\s*ubuntu-24\.04/);
-    expect(read(".github/workflows/ci.yml")).toContain("actions/checkout@v7");
-    expect(read(".github/workflows/ci.yml")).toContain("actions/setup-node@v7");
+    expect(read(".github/workflows/ci.yml")).toMatch(/uses:\s*actions\/checkout@[0-9a-f]{40}\s+# v\d+\.\d+\.\d+/);
+    expect(read(".github/workflows/ci.yml")).toMatch(/uses:\s*actions\/setup-node@[0-9a-f]{40}\s+# v\d+\.\d+\.\d+/);
   });
 
   test("prevents Dependabot from moving @types/node to a different major", () => {

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { findInvalidGitHubActionUses } from "./github-action-pin-policy.ts";
 
 interface PackageJson {
   dependencies?: Record<string, string>;
@@ -24,8 +25,9 @@ interface WranglerConfig {
 const root = process.cwd();
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as PackageJson;
 const failures: string[] = [];
+const requiredWranglerVersion = "4.147.0";
 
-if (pkg.devDependencies?.wrangler !== "4.141.0") failures.push("wrangler must be pinned exactly to 4.141.0");
+if (pkg.devDependencies?.wrangler !== requiredWranglerVersion) failures.push(`wrangler must be pinned exactly to ${requiredWranglerVersion}`);
 if (!/^4\.13\.\d+$/.test(pkg.dependencies?.hono || "")) failures.push("hono must stay on the exact 4.13.x patch line");
 if (pkg.dependencies?.zod !== "4.6.5") failures.push("zod must be pinned exactly to 4.6.5");
 if (pkg.dependencies?.qrcode !== "1.5.4") failures.push("qrcode must be pinned exactly to 1.5.4");
@@ -51,9 +53,26 @@ const ciWorkflowPath = path.join(root, ".github/workflows/ci.yml");
 const ciWorkflow = fs.existsSync(ciWorkflowPath) ? fs.readFileSync(ciWorkflowPath, "utf8") : "";
 if (!/node-version:\s*24(?:\s|$)/m.test(ciWorkflow)) failures.push("CI must run on Node 24");
 if (!/runs-on:\s*ubuntu-24\.04(?:\s|$)/m.test(ciWorkflow)) failures.push("CI runner must be pinned to ubuntu-24.04 instead of ubuntu-latest");
-if (!/uses:\s*actions\/checkout@v7(?:\s|$)/m.test(ciWorkflow)) failures.push("CI must use actions/checkout@v7 so the action runtime is Node 24");
-if (!/uses:\s*actions\/setup-node@v7(?:\s|$)/m.test(ciWorkflow)) failures.push("CI must use actions/setup-node@v7 so the action runtime is Node 24");
+if (!/uses:\s*actions\/checkout@[0-9a-f]{40}\s+# v\d+\.\d+\.\d+\s*$/m.test(ciWorkflow)) failures.push("CI must pin actions/checkout to a full SHA with an inline release-version comment so the action runtime is Node 24");
+if (!/uses:\s*actions\/setup-node@[0-9a-f]{40}\s+# v\d+\.\d+\.\d+\s*$/m.test(ciWorkflow)) failures.push("CI must pin actions/setup-node to a full SHA with an inline release-version comment so the action runtime is Node 24");
 const workflowsDir = path.join(root, ".github/workflows");
+function listWorkflowFiles(directory: string): string[] {
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return listWorkflowFiles(entryPath);
+    return /\.ya?ml$/i.test(entry.name) ? [entryPath] : [];
+  });
+}
+
+for (const workflowPath of listWorkflowFiles(workflowsDir)) {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  const relativePath = path.relative(root, workflowPath).replace(/\\/g, "/");
+  for (const invalidUse of findInvalidGitHubActionUses(workflow)) {
+    failures.push(`${relativePath}:${invalidUse.lineNumber} remote uses must pin a full 40-character lowercase SHA and include a same-line # vMAJOR.MINOR.PATCH comment: ${invalidUse.reference}`);
+  }
+}
+
 if (fs.existsSync(workflowsDir)) {
   for (const name of fs.readdirSync(workflowsDir).filter((file) => /\.ya?ml$/i.test(file))) {
     const workflow = fs.readFileSync(path.join(workflowsDir, name), "utf8");

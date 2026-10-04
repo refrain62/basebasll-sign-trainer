@@ -25,10 +25,10 @@ SIGN TRAINERはNode.js 24 / npm 11を実行基準にします。正本は`packag
 
 ## GitHub Actions
 
-CI runnerは`ubuntu-24.04`へ固定し、Node 24 runtimeのAction世代を使います。
+CI runnerは`ubuntu-24.04`へ固定し、Node 24 runtimeのActionを使います。リモートActionの`uses:`参照は40桁の小文字commit SHAで固定し、同じ行にDependabotが追跡できるリリース番号コメント`# vMAJOR.MINOR.PATCH`を残します。短縮SHA、数字タグ、コメントのないSHAはpreflightと回帰テストで拒否します。
 
-- `actions/checkout@v7`
-- `actions/setup-node@v7`
+SHAはActionの公式リポジトリで対応するリリースタグが指すコミットと照合してから採用します。たとえば[actions/checkoutのv7.0.1リリース](https://github.com/actions/checkout/releases/tag/v7.0.1)と[actions/setup-nodeのv7.0.0リリース](https://github.com/actions/setup-node/releases/tag/v7.0.0)のコミットSHAを確認し、workflowの同じ行に`# v7.0.1` / `# v7.0.0`を付けます。
+
 - `node-version: 24`
 
 `ubuntu-latest`は将来のrunner OS切替で挙動が変わるため使用しません。

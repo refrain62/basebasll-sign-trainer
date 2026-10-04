@@ -35,8 +35,10 @@ describe("documentation compatibility paths", () => {
   test("dependency policy is aligned to Node 24", () => {
     const dependencies = read("docs/engineering/dependencies.md");
     expect(dependencies).toContain("Node.js 24");
-    expect(dependencies).toContain("actions/checkout@v7");
-    expect(dependencies).toContain("actions/setup-node@v7");
+    expect(dependencies).toContain("40桁の小文字");
+    expect(dependencies).toContain("# vMAJOR.MINOR.PATCH");
+    expect(dependencies).toContain("公式リポジトリ");
+    expect(dependencies).toContain("リリースタグ");
     expect(dependencies).not.toContain("Node.jsは **22系**");
   });
 });

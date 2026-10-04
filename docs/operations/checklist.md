@@ -3,8 +3,8 @@
 
 ## Wrangler / ローカルD1
 
-- Wrangler は **`4.141.0`** に完全固定します。
-- Windows + Node.js 24 で `wrangler 4.136.3` 使用時に `spawn UNKNOWN` / `UV_HANDLE_CLOSING` が発生したため、4.141.0 へ更新しています。
+- Wrangler は **`4.147.0`** に完全固定します。
+- Windows + Node.js 24 で発生する `spawn UNKNOWN` / `UV_HANDLE_CLOSING` を避けるため、脆弱性修正版の4.147.0を使用しています。
 - `version_metadata` は named environment に継承されないため、productionだけでなく `env.dev` / `env.staging` にも `CF_VERSION_METADATA` binding を設定しています。
 - ローカルmigrationは `npm run db:migrate:local` を使用してください。
 
