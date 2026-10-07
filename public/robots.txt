@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://basebasll-sign-trainer.refrain62.workers.dev/sitemap.xml
