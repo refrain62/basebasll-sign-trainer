@@ -58,8 +58,9 @@ describe("dependency governance", () => {
   test("keeps the audited Wrangler version aligned with the security preflight", () => {
     const pkg = JSON.parse(read("package.json"));
     const preflight = read("scripts/security-preflight.ts");
-    expect(pkg.devDependencies.wrangler).toBe("4.147.0");
-    expect(preflight).toContain('const requiredWranglerVersion = "4.147.0";');
+    expect(pkg.devDependencies.wrangler).toBe("4.148.0");
+    expect(pkg.overrides).toEqual({ sharp: "0.35.5", "source-map-js": "1.2.2" });
+    expect(preflight).toContain('const requiredWranglerVersion = "4.148.0";');
     expect(preflight).toContain("wrangler must be pinned exactly to ${requiredWranglerVersion}");
   });
 });

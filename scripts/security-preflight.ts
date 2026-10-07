@@ -25,7 +25,7 @@ interface WranglerConfig {
 const root = process.cwd();
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as PackageJson;
 const failures: string[] = [];
-const requiredWranglerVersion = "4.147.0";
+const requiredWranglerVersion = "4.148.0";
 
 if (pkg.devDependencies?.wrangler !== requiredWranglerVersion) failures.push(`wrangler must be pinned exactly to ${requiredWranglerVersion}`);
 if (!/^4\.13\.\d+$/.test(pkg.dependencies?.hono || "")) failures.push("hono must stay on the exact 4.13.x patch line");

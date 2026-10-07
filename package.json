@@ -34,7 +34,7 @@
     "build:client": "node --experimental-strip-types scripts/clean-client-artifacts.ts && vite build",
     "predev": "npm run runtime:check && npm run build:client",
     "dev:ui": "node --experimental-strip-types scripts/clean-client-artifacts.ts && vite build --watch",
-    "tooling:check": "node --experimental-strip-types scripts/client-source-check.ts && node --experimental-strip-types scripts/check-js.ts && node --experimental-strip-types scripts/image-budget-check.ts && node --experimental-strip-types scripts/route-parity-check.ts && node --experimental-strip-types scripts/architecture-check.ts && node --experimental-strip-types scripts/docs-check.ts && node --experimental-strip-types scripts/release-policy-check.ts",
+    "tooling:check": "node --experimental-strip-types scripts/client-source-check.ts && node --experimental-strip-types scripts/check-js.ts && node --experimental-strip-types scripts/image-budget-check.ts && node --experimental-strip-types scripts/seo-check.ts && node --experimental-strip-types scripts/route-parity-check.ts && node --experimental-strip-types scripts/architecture-check.ts && node --experimental-strip-types scripts/docs-check.ts && node --experimental-strip-types scripts/release-policy-check.ts",
     "docs:check": "node --experimental-strip-types scripts/docs-check.ts",
     "release:policy": "node --experimental-strip-types scripts/release-policy-check.ts",
     "release:policy:ci": "node --experimental-strip-types scripts/release-policy-check.ts --ci",
@@ -45,10 +45,11 @@
     "workers:build:prod": "npm ci --ignore-scripts && node --experimental-strip-types scripts/workers-build-preflight.ts production && npm run check && npm run security:check && npm run ops:preflight",
     "db:baseline:dev": "node --experimental-strip-types scripts/mark-migration-baseline.ts dev",
     "db:baseline:staging": "node --experimental-strip-types scripts/mark-migration-baseline.ts staging",
-    "db:baseline:prod": "node --experimental-strip-types scripts/mark-migration-baseline.ts production"
+    "db:baseline:prod": "node --experimental-strip-types scripts/mark-migration-baseline.ts production",
+    "seo:check": "node --experimental-strip-types scripts/seo-check.ts"
   },
   "devDependencies": {
-    "wrangler": "4.147.0",
+    "wrangler": "4.148.0",
     "typescript": "7.0.2",
     "@types/node": "24.19.0",
     "vite": "8.3.1",
@@ -65,5 +66,9 @@
     "hono": "4.13.12",
     "zod": "4.6.5",
     "qrcode": "1.5.4"
+  },
+  "overrides": {
+    "sharp": "0.35.5",
+    "source-map-js": "1.2.2"
   }
 }
