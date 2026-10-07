@@ -76,7 +76,7 @@ export async function serveHtmlPage(request, env, url, assetPath) {
   headers.delete("last-modified");
   const html = applyTeamManifestLink(applyAssetVersion(applyEnvironmentContext(await assetResponse.text(), env, url), env), url.pathname);
   return withHeaders(new Response(html, { status: 200, headers }), {
-    noIndex: !["/", "/index.html", "/plans", "/plans.html", "/install", "/install.html"].includes(url.pathname),
+    noIndex: !["/", "/index.html", "/plans", "/plans.html", "/install", "/install.html", "/support", "/support.html"].includes(url.pathname),
     noCache: true
   });
 }

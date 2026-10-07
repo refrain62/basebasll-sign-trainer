@@ -1,0 +1,9 @@
+{
+  "id": "2026-10-07-search-console-seo",
+  "summary": "Google Search Console確認ファイルをルート配信し、公開ページのcanonical・OG/Twitter metadata・sitemap・robots・構造化データを整備",
+  "impact": "none",
+  "docs": [
+    "docs/operations/search-console-seo.md"
+  ],
+  "noticeMigration": null
+}
