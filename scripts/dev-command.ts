@@ -21,7 +21,3 @@ function createNpxCommand(toolArgs: string[], { platform = process.platform, env
 export function createDevCommand(options: DevCommandOptions = {}): DevCommand {
   return createNpxCommand(["wrangler", "dev", "--env", "dev"], options);
 }
-
-export function createViteWatchCommand(options: DevCommandOptions = {}): DevCommand {
-  return createNpxCommand(["vite", "build", "--watch"], options);
-}

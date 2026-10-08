@@ -34,6 +34,8 @@ D1 migrationはWorkers Buildsから自動適用しません。Cloudflareが自�
 
 `SKIP_DEPENDENCY_INSTALL=1`にする理由は、依存インストールをCloudflareの自動処理と二重化せず、repository側のbuild scriptが`npm ci --ignore-scripts`を明示的に実行するためです。
 
+`wrangler.jsonc`にも`build.command`を定義し、直接`wrangler deploy`した場合もViteの生成物と全ページのasset整合性を検査してからWorkerをbundleします。Workers BuildsはWrangler設定のCustom Buildsを使わないため、Cloudflare DashboardのBuild commandには上表の`workers:build:*`を設定し、Deploy commandには上表の`deploy:*`を設定してください。
+
 Nodeはrepository rootの`.nvmrc` / `.node-version`で24系を指定しています。
 
 初回接続前に、Node 24 + npm 11.6.2でlockfileを同期してcommitします。

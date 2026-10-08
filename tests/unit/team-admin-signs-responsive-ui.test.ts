@@ -1,8 +1,9 @@
 import { describe, expect, test } from "vitest";
 import { readFileSync } from "node:fs";
 
-const adminSource = readFileSync("client/admin.ts", "utf8");
-const styles = readFileSync("public/styles.css", "utf8");
+const read = (file: string) => readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+const adminSource = read("client/admin.ts");
+const styles = read("public/styles.css");
 
 describe("team admin sign management and mobile cards", () => {
   test("sign management defaults to all signs and can filter by group", () => {
