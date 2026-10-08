@@ -1,36 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
+import { validateClientArtifacts } from "./client-artifact-check.ts";
 
-const expectedEntries = ["landing", "team", "admin-entry", "account", "legal"];
-const pages = ["index", "team", "admin", "account", "terms", "privacy", "external-transmission", "support"];
-const manifestPath = path.resolve("public/build/manifest.json");
 const failures: string[] = [];
 
-if (!fs.existsSync(manifestPath)) {
-  failures.push("Vite manifest is missing. Run `npm run build:client` first.");
-} else {
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as Record<string, { name?: string; file?: string; src?: string; isEntry?: boolean }>;
-  const entryNames = new Set(Object.entries(manifest)
-    .filter(([, item]) => item.isEntry)
-    .map(([key, item]) => item.name || path.basename(item.src || key).replace(/\.[^.]+$/, "")));
-  for (const name of expectedEntries) if (!entryNames.has(name)) failures.push(`Vite entry missing from manifest: ${name}`);
-  for (const item of Object.values(manifest)) {
-    if (!item.file) continue;
-    if (!fs.existsSync(path.join("public/build", item.file))) failures.push(`Vite output missing: public/build/${item.file}`);
-  }
-}
-
-for (const page of pages) {
-  const template = path.resolve(`pages/${page}.html`);
-  const generated = path.resolve(`public/${page}.html`);
-  const snapshot = path.resolve(`public/__pages/${page}.txt`);
-  if (!fs.existsSync(template)) failures.push(`page template missing: pages/${page}.html`);
-  if (!fs.existsSync(generated)) failures.push(`generated page missing: public/${page}.html`);
-  if (!fs.existsSync(snapshot)) failures.push(`worker page snapshot missing: public/__pages/${page}.txt`);
-  if (fs.existsSync(generated) && fs.existsSync(snapshot) && fs.readFileSync(generated, "utf8") !== fs.readFileSync(snapshot, "utf8")) {
-    failures.push(`generated page and worker snapshot differ: ${page}`);
-  }
-}
+failures.push(...validateClientArtifacts());
 
 const allowedPublicRootScripts = new Set(["sw.js"]);
 const unexpectedPublicRootScripts = fs.readdirSync("public", { withFileTypes: true })
@@ -71,4 +45,4 @@ if (failures.length) {
   console.error("Vite client source check failed:\n- " + failures.join("\n- "));
   process.exit(1);
 }
-console.log(`Vite client source check passed: ${expectedEntries.length} entries, ${pages.length} rendered pages.`);
+console.log("Vite client source check passed: all rendered pages and referenced assets are present.");

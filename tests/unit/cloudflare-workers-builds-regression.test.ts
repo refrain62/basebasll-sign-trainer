@@ -29,9 +29,12 @@ describe("Cloudflare Workers Builds deployment", () => {
 
   test("builds generated pages before direct deployment", () => {
     const pkg = JSON.parse(read("package.json"));
+    const wrangler = JSON.parse(read("wrangler.jsonc"));
     expect(pkg.scripts["deploy:dev"]).toMatch(/^npm run predeploy:dev && wrangler deploy --env dev$/);
     expect(pkg.scripts["deploy:staging"]).toMatch(/^npm run predeploy:staging && wrangler deploy --env staging$/);
     expect(pkg.scripts["deploy:prod"]).toMatch(/^npm run predeploy:prod && wrangler deploy$/);
+    expect(wrangler.build.command).toContain("npm run build:client");
+    expect(wrangler.build.command).toContain("scripts/client-source-check.ts");
   });
 
   test("guards Workers Builds branch mapping and D1 migration baselines", () => {
