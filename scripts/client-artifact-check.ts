@@ -39,6 +39,19 @@ function manifestOutputFiles(rootDir: string): Set<string> | null {
   }
 }
 
+function manifestEntryFiles(rootDir: string): Map<string, string> | null {
+  const manifestPath = path.join(rootDir, "public", "build", "manifest.json");
+  if (!fs.existsSync(manifestPath)) return null;
+  try {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as Manifest;
+    return new Map(Object.values(manifest)
+      .filter((item): item is ManifestEntry & { name: string; file: string } => Boolean(item.isEntry && item.name && item.file))
+      .map((item) => [item.name, item.file]));
+  } catch {
+    return null;
+  }
+}
+
 export function validateViteManifest(rootDir = process.cwd()): string[] {
   const publicDir = path.join(rootDir, "public");
   const manifestPath = path.join(publicDir, "build", "manifest.json");
@@ -88,7 +101,13 @@ export function validateViteManifest(rootDir = process.cwd()): string[] {
   return failures;
 }
 
-function validatePageScriptReferences(publicDir: string, pageName: string, html: string, manifestFiles: Set<string> | null): string[] {
+function validatePageScriptReferences(
+  publicDir: string,
+  pageName: string,
+  html: string,
+  manifestFiles: Set<string> | null,
+  expectedEntryFile: string | undefined
+): string[] {
   const failures: string[] = [];
   if (html.includes("VITE_ENTRY:")) failures.push(`unrendered Vite entry marker remains: ${pageName}`);
 
@@ -101,12 +120,24 @@ function validatePageScriptReferences(publicDir: string, pageName: string, html:
 
   for (const source of scriptSources) {
     const pathname = source.split(/[?#]/, 1)[0];
-    if (!pathname.startsWith("/build/")) continue;
+    if (!pathname.startsWith("/build/")) {
+      failures.push(`generated page script must use a Vite build asset: ${source} (from ${pageName})`);
+      continue;
+    }
     const relativePath = pathname.slice("/build/".length);
+    if (!buildFilePath(publicDir, relativePath)) {
+      failures.push(`generated page script escapes public/build: ${source} (from ${pageName})`);
+      continue;
+    }
     const missing = checkBuildFile(publicDir, relativePath, "generated page script missing");
     if (missing) failures.push(`${missing} (from ${pageName})`);
-    else if (manifestFiles && !manifestFiles.has(relativePath)) {
-      failures.push(`generated page script is not listed in Vite manifest: ${relativePath} (from ${pageName})`);
+    else {
+      if (expectedEntryFile && relativePath !== expectedEntryFile) {
+        failures.push(`generated page script does not match Vite entry: expected ${expectedEntryFile}, got ${relativePath} (from ${pageName})`);
+      }
+      if (manifestFiles && !manifestFiles.has(relativePath)) {
+        failures.push(`generated page script is not listed in Vite manifest: ${relativePath} (from ${pageName})`);
+      }
     }
   }
 
@@ -117,6 +148,7 @@ export function validateRenderedPages(rootDir = process.cwd()): string[] {
   const publicDir = path.join(rootDir, "public");
   const pagesDir = path.join(rootDir, "pages");
   const manifestFiles = manifestOutputFiles(rootDir);
+  const manifestEntries = manifestEntryFiles(rootDir);
   const failures: string[] = [];
 
   for (const pageName of Object.keys(PAGE_ENTRIES)) {
@@ -131,7 +163,9 @@ export function validateRenderedPages(rootDir = process.cwd()): string[] {
     const html = fs.readFileSync(generated, "utf8");
     const snapshotHtml = fs.readFileSync(snapshot, "utf8");
     if (html !== snapshotHtml) failures.push(`generated page and worker snapshot differ: ${pageName}`);
-    failures.push(...validatePageScriptReferences(publicDir, pageName, html, manifestFiles));
+    const expectedEntryName = PAGE_ENTRIES[pageName as keyof typeof PAGE_ENTRIES];
+    const expectedEntryFile = manifestEntries?.get(expectedEntryName);
+    failures.push(...validatePageScriptReferences(publicDir, pageName, html, manifestFiles, expectedEntryFile));
   }
 
   return failures;

@@ -35,6 +35,8 @@ npm run db:migrate:local
 npm run dev
 ```
 
+`npm run dev`のクライアント生成はWranglerのCustom Buildが担当します。`client/`または`pages/`を変更すると、`wrangler.jsonc`の`build.watch_dir`により生成HTML・Worker snapshot・ハッシュ付きassetがまとめて更新されます。
+
 確認URL:
 
 ```text

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 
-const read = (file: string) => readFileSync(file, "utf8");
+const read = (file: string) => readFileSync(file, "utf8").replace(/\r\n/g, "\n");
 
 describe("Cloudflare Workers Builds deployment", () => {
   test("keeps direct Cloudflare deployment and API credentials out of GitHub Actions", () => {
@@ -35,6 +35,7 @@ describe("Cloudflare Workers Builds deployment", () => {
     expect(pkg.scripts["deploy:prod"]).toMatch(/^npm run predeploy:prod && wrangler deploy$/);
     expect(wrangler.build.command).toContain("npm run build:client");
     expect(wrangler.build.command).toContain("scripts/client-source-check.ts");
+    expect(wrangler.build.watch_dir).toEqual(["client", "pages"]);
   });
 
   test("guards Workers Builds branch mapping and D1 migration baselines", () => {

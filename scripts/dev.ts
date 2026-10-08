@@ -1,8 +1,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { createDevCommand, createViteWatchCommand } from "./dev-command.ts";
+import { createDevCommand } from "./dev-command.ts";
 
 const workerCommand = createDevCommand();
-const viteCommand = createViteWatchCommand();
 const children: ChildProcess[] = [];
 let shuttingDown = false;
 
@@ -32,7 +31,6 @@ function shutdown(code = 0): void {
   process.exitCode = code;
 }
 
-launch("Vite", viteCommand.command, viteCommand.args, process.env);
 launch("Wrangler", workerCommand.command, workerCommand.args, {
   ...process.env,
   CLOUDFLARE_CF_FETCH_ENABLED: process.env.CLOUDFLARE_CF_FETCH_ENABLED || "false"

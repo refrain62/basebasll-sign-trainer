@@ -24,9 +24,18 @@ function createFixture() {
   return { root, entries };
 }
 
+function writeEntryManifest(root: string, entries: Record<string, string>) {
+  const manifest = Object.fromEntries(Object.entries(entries).map(([name, file]) => [
+    `client/${name}.ts`,
+    { file, name, src: `client/${name}.ts`, isEntry: true }
+  ]));
+  fs.writeFileSync(path.join(root, "public", "build", "manifest.json"), JSON.stringify(manifest));
+}
+
 test("Vite page renderer injects hashed entry URLs into every Worker page snapshot", () => {
   const { root, entries } = createFixture();
   renderVitePages(entries, root);
+  writeEntryManifest(root, entries);
   const index = fs.readFileSync(path.join(root, "public", "index.html"), "utf8");
   const snapshot = fs.readFileSync(path.join(root, "public", "__pages", "index.txt"), "utf8");
   assert.equal(index, snapshot);
@@ -50,9 +59,7 @@ test("rendered page validation detects missing snapshots and hashed scripts", ()
 test("rendered page validation rejects a stale hash that is absent from the manifest", () => {
   const { root, entries } = createFixture();
   renderVitePages(entries, root);
-  fs.writeFileSync(path.join(root, "public", "build", "manifest.json"), JSON.stringify({
-    "client/landing.ts": { file: "assets/landing-abc123.js", name: "landing", isEntry: true }
-  }));
+  writeEntryManifest(root, entries);
   const generated = path.join(root, "public", "index.html");
   const snapshot = path.join(root, "public", "__pages", "index.txt");
   const staleHtml = fs.readFileSync(generated, "utf8").replace("landing-abc123.js", "landing-stale.js");
@@ -62,6 +69,35 @@ test("rendered page validation rejects a stale hash that is absent from the mani
 
   const failures = validateRenderedPages(root);
   assert.ok(failures.some((failure) => failure.includes("generated page script is not listed in Vite manifest: assets/landing-stale.js")));
+});
+
+test("rendered page validation rejects wrong, outside, and legacy test script references", () => {
+  const cases = [
+    {
+      replacement: "/build/assets/team-abc123.js",
+      expected: "generated page script does not match Vite entry"
+    },
+    {
+      replacement: "/build/../test/index.js",
+      expected: "generated page script escapes public/build"
+    },
+    {
+      replacement: "/test/index.js",
+      expected: "generated page script must use a Vite build asset"
+    }
+  ];
+
+  for (const { replacement, expected } of cases) {
+    const { root, entries } = createFixture();
+    renderVitePages(entries, root);
+    writeEntryManifest(root, entries);
+    const generated = path.join(root, "public", "index.html");
+    const snapshot = path.join(root, "public", "__pages", "index.txt");
+    const mutatedHtml = fs.readFileSync(generated, "utf8").replace("/build/assets/landing-abc123.js", replacement);
+    fs.writeFileSync(generated, mutatedHtml);
+    fs.writeFileSync(snapshot, mutatedHtml);
+    assert.ok(validateRenderedPages(root).some((failure) => failure.includes(expected)), replacement);
+  }
 });
 
 test("Vite manifest validation follows imported chunks and CSS assets", () => {
@@ -92,4 +128,15 @@ test("Vite manifest validation follows imported chunks and CSS assets", () => {
   assert.deepEqual(validateViteManifest(root), []);
   fs.rmSync(path.join(buildDir, "assets", "site-abc123.css"));
   assert.ok(validateViteManifest(root).some((failure) => failure.includes("Vite referenced asset missing")));
+
+  fs.writeFileSync(path.join(buildDir, "assets", "site-abc123.css"), "body {}\n");
+  manifest["client/landing.ts"].imports = ["missing-import.js"];
+  manifest["client/team.ts"].dynamicImports = ["missing-dynamic-import.js"];
+  fs.writeFileSync(path.join(buildDir, "manifest.json"), JSON.stringify(manifest));
+  const dependencyFailures = validateViteManifest(root);
+  assert.ok(dependencyFailures.some((failure) => failure.includes("missing-import.js")));
+  assert.ok(dependencyFailures.some((failure) => failure.includes("missing-dynamic-import.js")));
+
+  fs.writeFileSync(path.join(buildDir, "manifest.json"), "{\n");
+  assert.ok(validateViteManifest(root).some((failure) => failure.includes("Vite manifest could not be parsed")));
 });
