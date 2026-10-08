@@ -100,6 +100,24 @@ test("rendered page validation rejects wrong, outside, and legacy test script re
   }
 });
 
+test("rendered page validation maps unnamed manifest entries from their source key", () => {
+  const { root, entries } = createFixture();
+  renderVitePages(entries, root);
+  writeEntryManifest(root, entries);
+  const manifestPath = path.join(root, "public", "build", "manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as Record<string, Record<string, unknown>>;
+  delete manifest["client/landing.ts"].name;
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+
+  const generated = path.join(root, "public", "index.html");
+  const snapshot = path.join(root, "public", "__pages", "index.txt");
+  const wrongEntryHtml = fs.readFileSync(generated, "utf8").replace("/build/assets/landing-abc123.js", "/build/assets/team-abc123.js");
+  fs.writeFileSync(generated, wrongEntryHtml);
+  fs.writeFileSync(snapshot, wrongEntryHtml);
+
+  assert.ok(validateRenderedPages(root).some((failure) => failure.includes("generated page script does not match Vite entry")));
+});
+
 test("Vite manifest validation follows imported chunks and CSS assets", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "sign-trainer-vite-manifest-"));
   const buildDir = path.join(root, "public", "build");

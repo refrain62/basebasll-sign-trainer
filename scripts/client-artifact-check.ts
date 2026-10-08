@@ -15,6 +15,10 @@ interface ManifestEntry {
 
 type Manifest = Record<string, ManifestEntry>;
 
+function manifestEntryName(key: string, item: ManifestEntry): string {
+  return item.name || path.basename(item.src || key).replace(/\.[^.]+$/, "");
+}
+
 function buildFilePath(publicDir: string, relativePath: string): string | null {
   const buildDir = path.resolve(publicDir, "build");
   const resolved = path.resolve(buildDir, relativePath);
@@ -44,9 +48,9 @@ function manifestEntryFiles(rootDir: string): Map<string, string> | null {
   if (!fs.existsSync(manifestPath)) return null;
   try {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as Manifest;
-    return new Map(Object.values(manifest)
-      .filter((item): item is ManifestEntry & { name: string; file: string } => Boolean(item.isEntry && item.name && item.file))
-      .map((item) => [item.name, item.file]));
+    return new Map(Object.entries(manifest)
+      .filter(([, item]) => Boolean(item.isEntry && item.file))
+      .map(([key, item]) => [manifestEntryName(key, item), item.file as string]));
   } catch {
     return null;
   }
@@ -71,7 +75,7 @@ export function validateViteManifest(rootDir = process.cwd()): string[] {
 
   const entryNames = new Set(Object.entries(manifest)
     .filter(([, item]) => item.isEntry)
-    .map(([key, item]) => item.name || path.basename(item.src || key).replace(/\.[^.]+$/, "")));
+    .map(([key, item]) => manifestEntryName(key, item)));
   const expectedEntries = new Set(Object.values(PAGE_ENTRIES));
   for (const name of expectedEntries) {
     if (!entryNames.has(name)) failures.push(`Vite entry missing from manifest: ${name}`);
