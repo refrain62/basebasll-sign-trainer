@@ -239,6 +239,7 @@
   </article>
 </div>
 <p class="lp-pricing-note">※ Plus・Pro などの有償プランは、現在一部の特定チーム限定で先行運用しています。一般提供の内容や時期は、今後変更となる場合があります。</p>
+<p class="lp-pricing-note"><strong>管理者アカウント共通：</strong>Google / LINEの1管理者アカウントから新規作成できるチームは最大3チームです。招待でサブ管理者として参加するチームは、この上限に含みません。</p>
 <!-- PRICING_CARDS_END --></div>
     </section>
 
@@ -350,6 +351,6 @@
         <div class="share-security-note"><strong>大切：</strong><span id="share-note">合言葉はURLやQRコードには含まれません。</span></div>
       </div>
     </dialog>
-    <!-- VITE_ENTRY:landing -->
+    <script src="/build/assets/landing-BT-ABR7A.js" type="module"></script>
   </body>
 </html>
