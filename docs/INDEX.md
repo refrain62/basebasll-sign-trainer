@@ -25,6 +25,8 @@
 | 暗号化・pepper・鍵ローテーション | [`security/data-protection.md`](security/data-protection.md) | 保存データ保護方式が変わるとき |
 | UI原則・デザイン資産 | [`design/ui.md`](design/ui.md) | UI原則・共通デザインが変わるとき |
 | 過去build履歴（通常は読まない） | [`history/legacy-readme-build-notes.md`](history/legacy-readme-build-notes.md) | 過去経緯を保存するときだけ |
+| 作業の再開・停止条件 | [`resume-task-list.md`](resume-task-list.md) | 作業中タスクの再開時・状態更新時 |
+| 完了タスクの実施・検証履歴 | [`resume-task-history.md`](resume-task-history.md) | 完了タスクの記録、再検証、監査時 |
 
 ## 旧パス互換ドキュメント
 
