@@ -1,10 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
+import { findInvalidGitHubActionUses } from "./github-action-pin-policy.ts";
 
 interface PackageJson {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
-  engines?: { node?: string; npm?: string };
+  engines?: { node?: string; pnpm?: string };
   packageManager?: string;
 }
 
@@ -31,6 +32,7 @@ if (!/^4\.13\.\d+$/.test(pkg.dependencies?.hono || "")) failures.push("hono must
 if (pkg.dependencies?.zod !== "4.6.5") failures.push("zod must be pinned exactly to 4.6.5");
 if (pkg.dependencies?.qrcode !== "1.5.4") failures.push("qrcode must be pinned exactly to 1.5.4");
 if (pkg.devDependencies?.["@types/qrcode"] !== "1.5.6") failures.push("@types/qrcode must be pinned exactly to 1.5.6");
+if (pkg.devDependencies?.["@playwright/test"] !== "1.57.0") failures.push("@playwright/test must be pinned exactly to 1.57.0");
 if (pkg.dependencies?.["@synapxlab/qrcode"]) failures.push("legacy @synapxlab/qrcode dependency must be removed");
 if (pkg.devDependencies?.typescript !== "7.0.2") failures.push("typescript must be pinned exactly to 7.0.2");
 if (!/^24\./.test(pkg.devDependencies?.["@types/node"] || "")) failures.push("@types/node must stay on the Node 24 major");
@@ -42,8 +44,22 @@ if (!/^5\.0\.\d+$/.test(coverageVersion)) failures.push("@vitest/coverage-v8 mus
 if (vitestVersion && coverageVersion && vitestVersion !== coverageVersion) failures.push("vitest and @vitest/coverage-v8 must use the same version");
 
 if (pkg.engines?.node !== ">=24 <25") failures.push("Node engine must be pinned to the Node 24 major: >=24 <25");
-if (pkg.engines?.npm !== ">=11 <12") failures.push("npm engine must be pinned to npm 11: >=11 <12");
-if (pkg.packageManager !== "npm@11.6.2") failures.push("packageManager must remain npm@11.6.2");
+if (pkg.engines?.pnpm !== ">=12 <13") failures.push("pnpm engine must be pinned to pnpm 12: >=12 <13");
+if (pkg.packageManager !== "pnpm@12.10.0") failures.push("packageManager must remain pnpm@12.10.0");
+const workspaceConfigPath = path.join(root, "pnpm-workspace.yaml");
+if (!fs.existsSync(workspaceConfigPath)) {
+  failures.push("pnpm-workspace.yaml is missing; it must define pnpm overrides and project settings");
+} else {
+  const workspaceConfig = fs.readFileSync(workspaceConfigPath, "utf8");
+  if (!/^overrides:\s*$/m.test(workspaceConfig) || !/^\s+sharp:\s*["']?0\.35\.5["']?\s*$/m.test(workspaceConfig)) {
+    failures.push("pnpm-workspace.yaml must pin overrides.sharp exactly to 0.35.5");
+  }
+  for (const setting of ["saveExact", "lockfile", "ignoreScripts", "engineStrict"]) {
+    if (!new RegExp(`^${setting}:\\s*true\\s*$`, "m").test(workspaceConfig)) {
+      failures.push(`pnpm-workspace.yaml must set ${setting}: true`);
+    }
+  }
+}
 const nvmrcPath = path.join(root, ".nvmrc");
 const nodeVersionPath = path.join(root, ".node-version");
 if (!fs.existsSync(nvmrcPath) || fs.readFileSync(nvmrcPath, "utf8").trim() !== "24") failures.push(".nvmrc must select Node 24");
@@ -52,16 +68,33 @@ const ciWorkflowPath = path.join(root, ".github/workflows/ci.yml");
 const ciWorkflow = fs.existsSync(ciWorkflowPath) ? fs.readFileSync(ciWorkflowPath, "utf8") : "";
 if (!/node-version:\s*24(?:\s|$)/m.test(ciWorkflow)) failures.push("CI must run on Node 24");
 if (!/runs-on:\s*ubuntu-24\.04(?:\s|$)/m.test(ciWorkflow)) failures.push("CI runner must be pinned to ubuntu-24.04 instead of ubuntu-latest");
-if (!/uses:\s*actions\/checkout@v5(?:\s|$)/m.test(ciWorkflow)) failures.push("CI must use actions/checkout@v5 so the action runtime is Node 24");
-if (!/uses:\s*actions\/setup-node@v5(?:\s|$)/m.test(ciWorkflow)) failures.push("CI must use actions/setup-node@v5 so the action runtime is Node 24");
+if (!/uses:\s*actions\/checkout@[0-9a-f]{40}\s+# v\d+\.\d+\.\d+\s*$/m.test(ciWorkflow)) failures.push("CI must pin actions/checkout to a full SHA with an inline release-version comment so the action runtime is Node 24");
+if (!/uses:\s*actions\/setup-node@[0-9a-f]{40}\s+# v\d+\.\d+\.\d+\s*$/m.test(ciWorkflow)) failures.push("CI must pin actions/setup-node to a full SHA with an inline release-version comment so the action runtime is Node 24");
 const workflowsDir = path.join(root, ".github/workflows");
+function listWorkflowFiles(directory: string): string[] {
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return listWorkflowFiles(entryPath);
+    return /\.ya?ml$/i.test(entry.name) ? [entryPath] : [];
+  });
+}
+
+for (const workflowPath of listWorkflowFiles(workflowsDir)) {
+  const workflow = fs.readFileSync(workflowPath, "utf8");
+  const relativePath = path.relative(root, workflowPath).replace(/\\/g, "/");
+  for (const invalidUse of findInvalidGitHubActionUses(workflow)) {
+    failures.push(`${relativePath}:${invalidUse.lineNumber} remote uses must pin a full 40-character lowercase SHA and include a same-line # vMAJOR.MINOR.PATCH comment: ${invalidUse.reference}`);
+  }
+}
+
 if (fs.existsSync(workflowsDir)) {
   for (const name of fs.readdirSync(workflowsDir).filter((file) => /\.ya?ml$/i.test(file))) {
     const workflow = fs.readFileSync(path.join(workflowsDir, name), "utf8");
     if (/CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID/.test(workflow)) {
       failures.push(`GitHub Actions must not store Cloudflare API credentials; manual deploys may only trigger Deploy Hooks: .github/workflows/${name}`);
     }
-    if (/wrangler\s+deploy|npm\s+run\s+deploy:(?:dev|staging|prod)|npm\s+run\s+db:migrate:(?:dev|staging|prod)/.test(workflow)) {
+    if (/wrangler\s+deploy|(?:npm|pnpm)\s+run\s+deploy:(?:dev|staging|prod)|(?:npm|pnpm)\s+run\s+db:migrate:(?:dev|staging|prod)/.test(workflow)) {
       failures.push(`GitHub Actions must not run Wrangler deploy or remote D1 migrations; use Workers Builds / local OAuth instead: .github/workflows/${name}`);
     }
   }
@@ -93,20 +126,25 @@ if (!dependabot.includes("package-ecosystem: github-actions")) {
   failures.push("Dependabot must monitor GitHub Actions versions");
 }
 
-const packageLockPath = path.join(root, "package-lock.json");
-if (!fs.existsSync(packageLockPath)) {
-  failures.push("package-lock.json is missing. Run `npm install --package-lock-only --ignore-scripts` with Node 24 / npm 11 and commit it before deploy.");
+const pnpmLockPath = path.join(root, "pnpm-lock.yaml");
+if (!fs.existsSync(pnpmLockPath)) {
+  failures.push("pnpm-lock.yaml is missing. Run `pnpm install --lockfile-only --ignore-scripts` with Node 24 / pnpm 12 and commit it before deploy.");
 } else {
-  const lock = JSON.parse(fs.readFileSync(packageLockPath, "utf8")) as { packages?: Record<string, { dependencies?: Record<string, string>; devDependencies?: Record<string, string>; engines?: { node?: string; npm?: string } }> };
-  const rootPackage = lock.packages?.[""];
-  if (!rootPackage) failures.push("package-lock.json root package metadata is missing");
-  else {
-    const sameMap = (left: Record<string, string> = {}, right: Record<string, string> = {}) => JSON.stringify(Object.entries(left).sort()) === JSON.stringify(Object.entries(right).sort());
-    if (!sameMap(rootPackage.dependencies, pkg.dependencies)) failures.push("package-lock.json runtime dependencies are out of sync with package.json");
-    if (!sameMap(rootPackage.devDependencies, pkg.devDependencies)) failures.push("package-lock.json devDependencies are out of sync with package.json");
-    if (rootPackage.engines?.node !== pkg.engines?.node || rootPackage.engines?.npm !== pkg.engines?.npm) {
-      failures.push("package-lock.json engines are out of sync with the Node 24 / npm 11 package.json baseline; regenerate the lockfile with Node 24");
-    }
+  const lock = fs.readFileSync(pnpmLockPath, "utf8");
+  if (!/^lockfileVersion:\s*['\"]?9\./m.test(lock)) failures.push("pnpm-lock.yaml must use lockfile format 9");
+  const hasSpecifier = (name: string, version: string) => {
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escapedVersion = version.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`^\\s+['"]?${escapedName}['"]?:\\s*\\n\\s+specifier:\\s*${escapedVersion}\\s*$`, "m").test(lock);
+  };
+  for (const [name, version] of Object.entries(pkg.dependencies || {})) {
+    if (!hasSpecifier(name, version)) failures.push(`pnpm-lock.yaml dependencies are out of sync with package.json: ${name}`);
+  }
+  for (const [name, version] of Object.entries(pkg.devDependencies || {})) {
+    if (!hasSpecifier(name, version)) failures.push(`pnpm-lock.yaml devDependencies are out of sync with package.json: ${name}`);
+  }
+  if (!/(?:^|\n)\s+sharp:\s*0\.35\.5\s*(?:\n|$)/m.test(lock)) {
+    failures.push("pnpm-lock.yaml must record pnpm.overrides.sharp as 0.35.5");
   }
 }
 
@@ -169,7 +207,7 @@ for (const secretFile of [".dev.vars", ".dev.vars.dev", ".env", ".env.local"]) {
 }
 
 const allowedRuntime = new Set(["hono", "zod", "qrcode"]);
-const allowedDev = new Set(["wrangler", "typescript", "@types/node", "@types/qrcode", "vite", "vitest", "@vitest/coverage-v8"]);
+const allowedDev = new Set(["wrangler", "typescript", "@types/node", "@types/qrcode", "@playwright/test", "vite", "vitest", "@vitest/coverage-v8"]);
 for (const name of Object.keys(pkg.dependencies || {})) if (!allowedRuntime.has(name)) failures.push(`unexpected runtime dependency: ${name}`);
 for (const name of Object.keys(pkg.devDependencies || {})) if (!allowedDev.has(name)) failures.push(`unexpected dev dependency: ${name}`);
 

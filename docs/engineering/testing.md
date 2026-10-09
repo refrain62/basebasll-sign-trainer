@@ -1,19 +1,19 @@
 # Testing strategy — v1.5.37
 
-SIGN TRAINERはVitest + TypeScript + Vite production build + tooling checksを`npm run check`でまとめて実行する。
+SIGN TRAINERはVitest + TypeScript + Vite production build + tooling checksを`pnpm run check`でまとめて実行する。
 
 ## Runtime baseline
-- ローカル/CI/リリース作業はNode.js 24.x + npm 11.xに統一する。
-- GitHub Actions runnerは`ubuntu-24.04`へ固定し、`actions/checkout@v5` / `actions/setup-node@v5`を使用する。これらv5 action自体もNode 24 runtimeで動作するため、旧Node 20 action runtime警告を出さない。
+- ローカル/CI/リリース作業はNode.js 24.x + pnpm 12.xに統一する。
+- GitHub Actions runnerは`ubuntu-24.04`へ固定し、リモートActionの`uses:`参照を40桁の小文字commit SHAと同じ行の`# vMAJOR.MINOR.PATCH`コメントで固定する。preflightと回帰テストで数字タグ、短縮SHA、コメントなしの参照を拒否する。
 - `ubuntu-latest`は将来のrunner OS切替で挙動が変わるため使用しない。GitHub Actions dependencyはDependabotでも監視する。
-- `npm run runtime:check`でNode majorを検証し、`npm run check`の先頭でも実行する。
+- `pnpm run runtime:check`でNode majorを検証し、`pnpm run check`の先頭でも実行する。
 - `@types/node`は24系に固定し、Node 25/26向け型定義へ先行更新しない。
 - `tests/unit/node24-runtime-regression.test.ts`でNode 24固定がCI/engines/Dependabotから外れないことを回帰確認する。
 
 ```bash
-npm ci --ignore-scripts
-npm run check
-npm run test:coverage
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm run check
+pnpm run test:coverage
 ```
 
 ## 必須回帰観点
@@ -69,8 +69,8 @@ npm run test:coverage
 ## Migration
 空DBへ`0001`〜`0025`を順番に適用できることを確認する。既存DBを想定し、ALTER/UPSERTの再適用方針も確認する。
 ## Documentation / release governance
-- `npm run docs:check`でREADME肥大化、`docs/INDEX.md`未登録文書、主要Markdownのリンク切れを検出する。
-- `npm run release:policy`で`changes/*.json`とmajor向けSYSTEMお知らせmigrationを検証する。
+- `pnpm run docs:check`でREADME肥大化、`docs/INDEX.md`未登録文書、主要Markdownのリンク切れを検出する。
+- `pnpm run release:policy`で`changes/*.json`とmajor向けSYSTEMお知らせmigrationを検証する。
 - PR / direct pushのCIでは差分を見て、利用者向けコード変更に`changes/*.json`が伴うことを検証する。
 - `tests/unit/release-governance.test.ts`で上記ガードが通常チェックから外れないことを回帰確認する。
 
@@ -88,10 +88,10 @@ npm run test:coverage
 - `scripts/client-source-check.ts`は`sw.js`以外の`public/*.{js,mjs,cjs}`が残っていれば失敗する。
 - `tests/unit/client-source-policy-regression.test.ts`でこの例外とbuild前cleanupが外れないことを回帰確認する。
 - 参照用・旧画像は`public/`へ置かず`docs/assets/reference-unused/`へ退避し、配信画像だけをimage budgetの対象にする。
-- LPの大きな写真素材は表示サイズに合わせて縮小・WebP再圧縮し、`npm run tooling:check`の1画像160 KiB / 合計1200 KiB制限を維持する。
+- LPの大きな写真素材は表示サイズに合わせて縮小・WebP再圧縮し、`pnpm run tooling:check`の1画像160 KiB / 合計1200 KiB制限を維持する。
 
 ## Static asset cleanup
-- `npm run build:client`の前に`scripts/clean-client-artifacts.ts`を実行し、旧Vite直書きJS、過去版の重量PNG、未使用の旧WebP/参考画像を削除する。
+- `pnpm run build:client`の前に`scripts/clean-client-artifacts.ts`を実行し、旧Vite直書きJS、過去版の重量PNG、未使用の旧WebP/参考画像を削除する。
 - 現行配信画像はWebP/JPEG等の軽量版を正とし、重量PNGに加えて旧install結合WebP、旧recommend/ref画像など現在のページから参照されない画像をpublicへ戻さない。ZIPを既存Git作業ツリーへ上書きしてもcleanupがこれらを除去する。
 - `scripts/image-budget-check.ts`で1画像160 KiB、public画像合計1.2 MiB以下を回帰確認する。
 
@@ -99,3 +99,43 @@ npm run test:coverage
 - UI文言・共有component・Node/runtime方針を変更した場合、実装を旧仕様へ戻してテストを通すのではなく、現行の正本に合わせて回帰テストのfixture/期待値を更新する。
 - `render-vite-pages.ts`のunit fixtureは`pages/components/`の共有componentも用意し、本番render条件と同じ前提で確認する。
 - CSP回帰テストは`pages/`/`client/`のinline styleを禁止するため、余白などはCSS classで指定する。
+
+## Playwright E2E regression tests
+
+ブラウザで実際のWorkerを通して確認する回帰テストはPlaywrightで行う。Unit testの文字列確認だけでは見つけにくい「ページの生成漏れ」「Worker routeと静的HTMLの不整合」「LP内リンク切れ」「build後assetの404」「共有ナビゲーションの動作不良」「モバイルでの横はみ出し」を対象にする。
+
+Playwright Testは`@playwright/test`を固定バージョンでdevDependencyに置き、`pnpm-lock.yaml`にも固定する。`pnpm install --frozen-lockfile`のあと、初回またはブラウザ更新時にChromiumを導入する。
+
+```bash
+# Node 24 / pnpm 12
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm run e2e:install
+pnpm run typecheck:e2e
+pnpm run test:e2e
+
+# 画面を見ながら確認
+pnpm run test:e2e:headed
+
+# HTML reportを開く
+pnpm run test:e2e:report
+```
+
+通常はPlaywrightが`http://127.0.0.1:8787`で専用の`wrangler dev --env dev`を自動起動する。起動前に`.wrangler/e2e-state`を作り直してD1 migrationを適用し、E2E専用の固定テストSecretをCLI変数として注入するため、普段のローカルD1や`.dev.vars`を汚さない。既存サーバーの再利用もしない。
+
+`PLAYWRIGHT_BASE_URL`を指定するとPlaywright側のlocal webServer起動を行わず、公開ページの確認を外部環境へ向けられる。ただし、システム管理・チーム管理のE2Eはチーム作成や更新などデータ変更を伴うため、**`PLAYWRIGHT_BASE_URL`を指定した時点で自動skip**する（localhost指定でもskip）。管理E2EはPlaywright自身が起動した隔離サーバー＋専用D1でのみ実行し、外部dev/staging/productionや普段のローカルDBへテストデータを作らない。
+
+CIでは通常の`checks` job成功後にE2E jobを実行し、Chromiumを導入してdesktop 1440px / mobile 390pxの2条件を確認する。失敗時はPlaywrightのtrace・screenshot・videoを`test-results/`、HTML reportを`playwright-report/`へ生成し、GitHub Actionsでは14日間のfailure artifactとして保存する。
+
+### E2Eで固定する回帰条件
+
+- `/`, `/plans`, `/install`, `/support`と法務系LPが実Worker経由でHTTP 200かつHTMLを返す。
+- `/plans/`・`/plans.html`、`/install/`・`/install.html`も含め、過去障害の「ページを読み込めませんでした。」を再発させない。
+- LPから見える同一originリンクを巡回し、4xx/5xxや存在しないfragmentを検出する。
+- 各LPが参照する同一originの画像・CSS・JS・manifest等に4xx/5xxがない。
+- uncaught JavaScript error、`console.error`、同一originのHTTP 4xx/5xxをテスト失敗にする。
+- desktop共有ナビゲーション、mobile hamburger navigation、トップの共有ダイアログ、料金比較表、FAQ展開が実ブラウザで動く。
+- desktop/mobileともbody全体の意図しない横スクロールを許可しない。料金比較表など局所的な横スクロール領域は可。
+- SYSTEM管理はログイン、チーム新規登録、プラン変更、退会・復活、お知らせ公開・削除、データ保護ステータス表示を実ブラウザ＋ローカルD1で確認する。
+- チーム管理はログイン後の`dashboard/activity/groups/signs/share/admins/plan-auth/notices/settings`を巡回し、セッション維持と表示崩れを確認する。
+- ProテストチームをE2E内で作成し、サイングループ／サインの作成・編集・削除、動画の編集・複数追加・削除・開始秒指定、チーム名設定変更を実APIまで通して確認する。
+- mobileではSYSTEM管理とチーム管理のハンバーガーメニューから実際に画面遷移でき、横スクロールが発生しないことを確認する。

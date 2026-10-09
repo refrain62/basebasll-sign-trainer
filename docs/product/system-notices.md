@@ -35,13 +35,13 @@ SYSTEMお知らせは、利用者が「何が変わったか」「何を知っ�
 通常の新規お知らせ:
 
 ```bash
-npm run release:notice -- --slug feature-name --title "新機能のお知らせ" --body "利用者向け説明"
+pnpm run release:notice -- --slug feature-name --title "新機能のお知らせ" --body "利用者向け説明"
 ```
 
 過去分を追加する必要がある場合:
 
 ```bash
-npm run release:notice -- --slug historical-feature --title "過去のお知らせ" --body "利用者向け説明" --publish-at "2026-09-26T00:00:00Z"
+pnpm run release:notice -- --slug historical-feature --title "過去のお知らせ" --body "利用者向け説明" --publish-at "2026-09-26T00:00:00Z"
 ```
 
 過去分は、既存のお知らせと内容が重複しないかこのファイルとSYSTEM管理画面を確認してから追加します。

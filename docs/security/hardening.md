@@ -2,9 +2,9 @@
 
 ## Addressed
 
-- Exact pin: `wrangler@4.141.0`
-- `.npmrc`: exact versions, lockfile required, lifecycle scripts disabled
-- Deploy preflight blocks deployment without `package-lock.json`
+- Exact pin: `wrangler@4.148.0`
+- `pnpm-workspace.yaml`: exact versions, lockfile required, lifecycle scripts disabled, and the audited `sharp` override
+- Deploy preflight blocks deployment without `pnpm-lock.yaml`
 - `.dev.vars*` excluded from source distribution
 - Local QR generation; no runtime QR API/CDN
 - PBKDF2-SHA256: 100,000 iterations for new hashes (Cloudflare Workers Web Crypto upper limit); transparent rehash on successful login for supported legacy hashes
@@ -17,12 +17,12 @@
 - Team/sign/video soft delete
 - D1 audit log for admin mutations
 - Cloudflare Access gate required for the entire remote dev/staging environment; production system-admin routes use SYSTEM_ADMIN_SECRET + application session and do not require Cloudflare Access
-- Dependabot + npm audit CI configuration
+- Dependabot + pnpm audit CI configuration
 
 ## Operational requirements
 
-1. Generate and commit `package-lock.json` from a trusted network before deployment.
-2. Use `npm ci --ignore-scripts`, not `npm install`, after the lockfile exists.
+1. Generate and commit `pnpm-lock.yaml` from a trusted network before deployment.
+2. Use `pnpm install --frozen-lockfile --ignore-scripts` after the lockfile exists; do not use a mutable install in CI or deploy.
 3. Configure Cloudflare Access for the entire dev/staging Worker. Production SYSTEM admin uses `SYSTEM_ADMIN_SECRET` + application session and does not require Cloudflare Access.
 4. Use unique SESSION_SECRET and SYSTEM_ADMIN_SECRET values for every environment.
 5. Apply `0003_security_hardening.sql` to every environment before deploying build 58.

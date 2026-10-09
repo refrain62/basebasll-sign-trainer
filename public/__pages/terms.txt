@@ -1,5 +1,5 @@
 <!doctype html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#082844"><title>利用規約 | SIGN TRAINER</title><meta name="description" content="SIGN TRAINERの利用規約です。"><link rel="icon" href="/favicon-32.png?v=__ASSET_VERSION__" sizes="32x32" type="image/png"><link rel="stylesheet" href="/styles.css?v=__ASSET_VERSION__"><link rel="stylesheet" href="/lp-refresh.css?v=__ASSET_VERSION__">
-    <script src="/build/test-legal.js" type="module"></script></head><body class="legal-page"><div class="site-shell lp-v2 lp-refresh secondary-page legal-lp"><!-- SITE_HEADER_START -->
+    <script src="/build/assets/legal-DjwcEhDn.js" type="module"></script></head><body class="legal-page"><div class="site-shell lp-v2 lp-refresh secondary-page legal-lp"><!-- SITE_HEADER_START -->
 <header class="site-header lp-site-header">
   <div class="container header-inner">
     <a class="brand" href="/" data-nav aria-label="SIGN TRAINER トップページ">

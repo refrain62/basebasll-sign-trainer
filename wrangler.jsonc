@@ -3,6 +3,10 @@
   "name": "basebasll-sign-trainer",
   "main": "./src/index.ts",
   "compatibility_date": "2026-09-22",
+  "build": {
+    "command": "pnpm run build:client && node --experimental-strip-types scripts/client-source-check.ts",
+    "watch_dir": ["client", "pages"]
+  },
   "workers_dev": true,
   "assets": {
     "directory": "./public",
