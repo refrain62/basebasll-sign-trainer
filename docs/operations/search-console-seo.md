@@ -48,4 +48,4 @@ SEO対象ページを追加・削除するときは次を同じ変更で更新�
 4. 必要に応じて`public/robots.txt`
 5. `scripts/seo-check.ts`と回帰テスト
 
-`npm run check`の`seo:check`が、Google確認ファイル・canonical・SNS metadata・robots・sitemapの不整合を検出します。
+`pnpm run check`の`seo:check`が、Google確認ファイル・canonical・SNS metadata・robots・sitemapの不整合を検出します。

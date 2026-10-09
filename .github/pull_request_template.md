@@ -18,4 +18,4 @@ majorの場合:
 
 ## 確認
 
-- [ ] `npm run check`
+- [ ] `pnpm run check`

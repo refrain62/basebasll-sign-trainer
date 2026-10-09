@@ -62,7 +62,7 @@ export function validateViteManifest(rootDir = process.cwd()): string[] {
   const failures: string[] = [];
 
   if (!fs.existsSync(manifestPath)) {
-    return ["Vite manifest is missing. Run `npm run build:client` first."];
+    return ["Vite manifest is missing. Run `pnpm run build:client` first."];
   }
 
   let manifest: Manifest;

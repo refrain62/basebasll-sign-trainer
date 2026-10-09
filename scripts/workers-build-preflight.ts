@@ -54,7 +54,7 @@ const baseline = String(baselines[target] || "");
 if (baseline !== latestMigration) {
   failures.push(
     `D1 migration gate is not ready for ${target}: repository latest=${latestMigration}, acknowledged=${baseline || "(none)"}. ` +
-    `Apply the remote D1 migration with local Wrangler OAuth, then run npm run db:baseline:${target === "production" ? "prod" : target} -- --confirm-applied and commit the baseline change before deploy.`
+    `Apply the remote D1 migration with local Wrangler OAuth, then run pnpm run db:baseline:${target === "production" ? "prod" : target} -- --confirm-applied and commit the baseline change before deploy.`
   );
 }
 

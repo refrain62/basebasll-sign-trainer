@@ -11,30 +11,67 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          install: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-          cache: npm
+          cache: pnpm
       - name: Require committed lockfile
         shell: bash
         run: |
-          test -f package-lock.json || {
-            echo "package-lock.json is required. Run: npm install --package-lock-only --ignore-scripts" >&2
+          test -f pnpm-lock.yaml || {
+            echo "pnpm-lock.yaml is required. Run: pnpm install --lockfile-only --ignore-scripts" >&2
             exit 1
           }
       - name: Install locked dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Dependency policy
+        run: pnpm run dependency:policy
       - name: TypeScript, route parity, architecture and unit tests
-        run: npm run check
+        run: pnpm run check
       - name: Release policy diff guard
         if: github.event_name == 'pull_request'
         env:
           RELEASE_BASE_REF: origin/${{ github.base_ref }}
-        run: npm run release:policy:ci
+        run: pnpm run release:policy:ci
       - name: Release policy diff guard for direct pushes
         if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
         env:
           RELEASE_BASE_REF: ${{ github.event.before }}
-        run: npm run release:policy:ci
+        run: pnpm run release:policy:ci
       - name: Audit high severity vulnerabilities
-        run: npm audit --audit-level=high
+        run: pnpm audit --audit-level=high
+
+  e2e:
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          install: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install pinned Playwright and Chromium
+        run: pnpm run e2e:install:ci
+      - name: Type-check Playwright E2E tests
+        run: pnpm run typecheck:e2e
+      - name: Playwright E2E regression tests
+        run: pnpm run test:e2e
+      - name: Upload Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14

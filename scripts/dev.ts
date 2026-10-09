@@ -9,7 +9,7 @@ function launch(label: string, command: string, args: string[], env: NodeJS.Proc
   const child = spawn(command, args, { stdio: "inherit", env, windowsHide: false });
   children.push(child);
   child.on("error", (error: Error) => {
-    console.error(`${label}を起動できませんでした。先に npm install を実行してください。`, error.message);
+    console.error(`${label}を起動できませんでした。先に pnpm install を実行してください。`, error.message);
     shutdown(1);
   });
   child.on("exit", (code, signal) => {

@@ -9,7 +9,7 @@
 | Plus / Pro・将来の課金設計 | [`product/plans.md`](product/plans.md) | プラン/Entitlement/価格方針が変わるとき |
 | Route / Controller / Service / Repository設計 | [`engineering/architecture.md`](engineering/architecture.md) | 技術境界や主要構成が変わるとき |
 | テスト戦略・必須回帰 | [`engineering/testing.md`](engineering/testing.md) | テスト方針・重要回帰条件が変わるとき |
-| 依存関係・Node.js更新 | [`engineering/dependencies.md`](engineering/dependencies.md) | npm/Node/Dependabot/GitHub Actionsの依存方針が変わるとき |
+| 依存関係・Node.js更新 | [`engineering/dependencies.md`](engineering/dependencies.md) | pnpm/Node/Dependabot/GitHub Actionsの依存方針が変わるとき |
 | 変更影響判定・SYSTEMお知らせmigration | [`engineering/change-policy.md`](engineering/change-policy.md) | **利用者向け変更を行うたび確認** |
 | 環境構成・初回セットアップ | [`operations/environment-overview.md`](operations/environment-overview.md) | Worker/D1構成や初回準備が変わるとき |
 | Secret・Google / LINE OAuth | [`operations/secrets-oauth.md`](operations/secrets-oauth.md) | Secret/OAuth設定が変わるとき |
@@ -50,5 +50,5 @@
 2. 同じ事実を複数ファイルへ重複記載しない。必要ならリンクする。
 3. 利用者向け仕様変更では`product/spec.md`を更新する。
 4. セキュリティ/運用だけの変更では、関係する文書だけ更新する。
-5. 新しいMarkdown文書を追加したら、このINDEXへ必ず登録する。`npm run docs:check`が未登録文書を検出する。
+5. 新しいMarkdown文書を追加したら、このINDEXへ必ず登録する。`pnpm run docs:check`が未登録文書を検出する。
 6. 古い履歴は`history/`へ移し、現行仕様文書に混ぜない。

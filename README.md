@@ -21,11 +21,11 @@
 ## 開発開始
 
 ```bash
-# Node.js 24.x / npm 11.x を使用
-npm run runtime:check
-npm ci --ignore-scripts
-npm run db:migrate:local
-npm run dev
+# Node.js 24.x / pnpm 12.x を使用
+pnpm run runtime:check
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm run db:migrate:local
+pnpm run dev
 ```
 
 WindowsでWranglerのローカルD1が`spawn UNKNOWN` / `UV_HANDLE_CLOSING`になる場合も、Node 24のままWrangler側を確認してください。環境固有の手順は [`docs/operations/local-development.md`](docs/operations/local-development.md) にあります。
@@ -33,18 +33,18 @@ WindowsでWranglerのローカルD1が`spawn UNKNOWN` / `UV_HANDLE_CLOSING`に�
 ## 必須チェック
 
 ```bash
-npm run check
+pnpm run check
 ```
 
-`npm run check`には型チェック、Vite build、ルート/アーキテクチャ、ドキュメント構成、リリースルール、Unit testが含まれます。
+`pnpm run check`には型チェック、Vite build、ルート/アーキテクチャ、ドキュメント構成、リリースルール、Unit testが含まれます。
 
 ## D1 migration
 
 ```bash
-npm run db:migrate:local
-npm run db:migrate:dev
-npm run db:migrate:staging
-npm run db:migrate:prod
+pnpm run db:migrate:local
+pnpm run db:migrate:dev
+pnpm run db:migrate:staging
+pnpm run db:migrate:prod
 ```
 
 migrationは番号順に追加し、既存migrationを後から書き換えないでください。最新の既存migrationは`0025_notice_history_backfill.sql`です。
@@ -66,8 +66,8 @@ D1 migrationがある場合だけ、対象branchへ反映する前に手元のWr
 利用者に見える変更を行う場合は、変更影響を`changes/*.json`へ宣言します。**大きな利用者向けアップデートは、同じ変更内に公開済みSYSTEMお知らせを追加するD1 migrationが必須**です。
 
 ```bash
-npm run release:policy
-npm run release:notice -- --slug feature-name --title "新機能のお知らせ" --body "変更内容を日本語で説明します"
+pnpm run release:policy
+pnpm run release:notice -- --slug feature-name --title "新機能のお知らせ" --body "変更内容を日本語で説明します"
 ```
 
 CIではPR差分を見て、利用者向けコードが変わったのに変更宣言がない場合や、`major`なのにSYSTEMお知らせmigrationがない場合に失敗します。判断基準とJSON形式は [`docs/engineering/change-policy.md`](docs/engineering/change-policy.md) を参照してください。

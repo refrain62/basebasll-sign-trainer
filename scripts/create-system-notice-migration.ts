@@ -13,7 +13,7 @@ const kind = arg("kind") || "update";
 const publishAt = arg("publish-at");
 
 if (!slug || !title || !body) {
-  console.error('Usage: npm run release:notice -- --slug feature-name --title "お知らせタイトル" --body "利用者向け説明" [--kind update|important] [--publish-at 2026-09-26T00:00:00Z]');
+  console.error('Usage: pnpm run release:notice -- --slug feature-name --title "お知らせタイトル" --body "利用者向け説明" [--kind update|important] [--publish-at 2026-09-26T00:00:00Z]');
   process.exit(1);
 }
 if (!new Set(["update", "important"]).has(kind)) {

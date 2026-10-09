@@ -23,37 +23,37 @@ LINE_CHANNEL_SECRET
 候補値は以下で生成できます。
 
 ```bash
-npm run security:generate-secrets
+pnpm run security:generate-secrets
 ```
 
 ### dev
 
 ```bash
-npx wrangler secret put SESSION_SECRET --env dev
-npx wrangler secret put SYSTEM_ADMIN_SECRET --env dev
-npx wrangler secret put PASSWORD_PEPPER --env dev
-npx wrangler secret put DATA_ENCRYPTION_KEY --env dev
-npx wrangler secret put DATA_LOOKUP_KEY --env dev
+pnpm exec wrangler secret put SESSION_SECRET --env dev
+pnpm exec wrangler secret put SYSTEM_ADMIN_SECRET --env dev
+pnpm exec wrangler secret put PASSWORD_PEPPER --env dev
+pnpm exec wrangler secret put DATA_ENCRYPTION_KEY --env dev
+pnpm exec wrangler secret put DATA_LOOKUP_KEY --env dev
 ```
 
 ### staging
 
 ```bash
-npx wrangler secret put SESSION_SECRET --env staging
-npx wrangler secret put SYSTEM_ADMIN_SECRET --env staging
-npx wrangler secret put PASSWORD_PEPPER --env staging
-npx wrangler secret put DATA_ENCRYPTION_KEY --env staging
-npx wrangler secret put DATA_LOOKUP_KEY --env staging
+pnpm exec wrangler secret put SESSION_SECRET --env staging
+pnpm exec wrangler secret put SYSTEM_ADMIN_SECRET --env staging
+pnpm exec wrangler secret put PASSWORD_PEPPER --env staging
+pnpm exec wrangler secret put DATA_ENCRYPTION_KEY --env staging
+pnpm exec wrangler secret put DATA_LOOKUP_KEY --env staging
 ```
 
 ### production
 
 ```bash
-npx wrangler secret put SESSION_SECRET
-npx wrangler secret put SYSTEM_ADMIN_SECRET
-npx wrangler secret put PASSWORD_PEPPER
-npx wrangler secret put DATA_ENCRYPTION_KEY
-npx wrangler secret put DATA_LOOKUP_KEY
+pnpm exec wrangler secret put SESSION_SECRET
+pnpm exec wrangler secret put SYSTEM_ADMIN_SECRET
+pnpm exec wrangler secret put PASSWORD_PEPPER
+pnpm exec wrangler secret put DATA_ENCRYPTION_KEY
+pnpm exec wrangler secret put DATA_LOOKUP_KEY
 ```
 
 ### Secretの要件
@@ -91,16 +91,16 @@ Google Secret:
 
 ```bash
 # dev
-npx wrangler secret put GOOGLE_CLIENT_ID --env dev
-npx wrangler secret put GOOGLE_CLIENT_SECRET --env dev
+pnpm exec wrangler secret put GOOGLE_CLIENT_ID --env dev
+pnpm exec wrangler secret put GOOGLE_CLIENT_SECRET --env dev
 
 # staging
-npx wrangler secret put GOOGLE_CLIENT_ID --env staging
-npx wrangler secret put GOOGLE_CLIENT_SECRET --env staging
+pnpm exec wrangler secret put GOOGLE_CLIENT_ID --env staging
+pnpm exec wrangler secret put GOOGLE_CLIENT_SECRET --env staging
 
 # production
-npx wrangler secret put GOOGLE_CLIENT_ID
-npx wrangler secret put GOOGLE_CLIENT_SECRET
+pnpm exec wrangler secret put GOOGLE_CLIENT_ID
+pnpm exec wrangler secret put GOOGLE_CLIENT_SECRET
 ```
 
 ### LINE callback
@@ -115,16 +115,16 @@ LINE Secret:
 
 ```bash
 # dev
-npx wrangler secret put LINE_CHANNEL_ID --env dev
-npx wrangler secret put LINE_CHANNEL_SECRET --env dev
+pnpm exec wrangler secret put LINE_CHANNEL_ID --env dev
+pnpm exec wrangler secret put LINE_CHANNEL_SECRET --env dev
 
 # staging
-npx wrangler secret put LINE_CHANNEL_ID --env staging
-npx wrangler secret put LINE_CHANNEL_SECRET --env staging
+pnpm exec wrangler secret put LINE_CHANNEL_ID --env staging
+pnpm exec wrangler secret put LINE_CHANNEL_SECRET --env staging
 
 # production
-npx wrangler secret put LINE_CHANNEL_ID
-npx wrangler secret put LINE_CHANNEL_SECRET
+pnpm exec wrangler secret put LINE_CHANNEL_ID
+pnpm exec wrangler secret put LINE_CHANNEL_SECRET
 ```
 
 本番と非本番でOAuthアプリを分けられる場合は、production用とdev/staging用を分離すると誤設定を減らせます。

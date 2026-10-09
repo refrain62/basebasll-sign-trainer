@@ -12,7 +12,7 @@ D1そのもののプラットフォーム保護に加え、DBダンプやD1読�
 - `DATA_ENCRYPTION_KEY` — 32文字以上。AES-256-GCM用。内部でSHA-256から256-bit鍵を導出。
 - `DATA_LOOKUP_KEY` — 32文字以上。OAuth provider subjectの検索用HMAC-SHA256。
 
-候補値は `npm run security:generate-secrets` で生成できる。
+候補値は `pnpm run security:generate-secrets` で生成できる。
 
 ## Password hashing
 
