@@ -58,6 +58,7 @@ describe("dependency governance", () => {
   test("keeps the audited Wrangler version aligned with the security preflight", () => {
     const pkg = JSON.parse(read("package.json"));
     const preflight = read("scripts/security-preflight.ts");
+    expect(pkg.scripts.check).toContain("pnpm run security:preflight");
     const workspaceConfig = read("pnpm-workspace.yaml");
     expect(pkg.devDependencies.wrangler).toBe("4.148.0");
     expect(pkg.overrides).toEqual({ sharp: "0.35.5", "source-map-js": "1.2.2" });
@@ -68,5 +69,14 @@ describe("dependency governance", () => {
     expect(workspaceConfig).toContain("engineStrict: true");
     expect(preflight).toContain('const requiredWranglerVersion = "4.148.0";');
     expect(preflight).toContain("pnpm-workspace.yaml must pin overrides.sharp exactly to 0.35.5");
+  });
+
+  test("allows only reviewed Vite patches and keeps the third-party notice accurate", () => {
+    const preflight = read("scripts/security-preflight.ts");
+    const notices = read("THIRD_PARTY_NOTICES.md");
+    expect(preflight).toContain('new Set(["8.3.1", "8.3.3"])');
+    expect(preflight).toContain("vite must be pinned exactly to one of:");
+    expect(notices).toContain("Backend HTTP routing uses Hono 4.13.x.");
+    expect(notices).toContain("Browser TypeScript bundling uses Vite 8.3.x.");
   });
 });
