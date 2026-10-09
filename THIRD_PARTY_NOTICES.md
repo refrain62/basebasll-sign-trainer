@@ -12,7 +12,7 @@ QR generation uses `qrcode` 1.5.4 from npm, with TypeScript declarations supplie
 
 ## Hono
 
-Backend HTTP routing uses Hono 4.13.8.
+Backend HTTP routing uses Hono 4.13.x.
 
 - License: MIT
 - Project: Hono (honojs/hono)

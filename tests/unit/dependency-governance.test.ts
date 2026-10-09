@@ -76,6 +76,7 @@ describe("dependency governance", () => {
     const notices = read("THIRD_PARTY_NOTICES.md");
     expect(preflight).toContain('new Set(["8.3.1", "8.3.3"])');
     expect(preflight).toContain("vite must be pinned exactly to one of:");
+    expect(notices).toContain("Backend HTTP routing uses Hono 4.13.x.");
     expect(notices).toContain("Browser TypeScript bundling uses Vite 8.3.x.");
   });
 });
