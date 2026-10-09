@@ -7,11 +7,11 @@
 ### STEP 1: local
 
 ```bash
-npm ci --ignore-scripts
-npm run db:migrate:local
-npm run check
-npm run security:check
-npm run dev
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm run db:migrate:local
+pnpm run check
+pnpm run security:check
+pnpm run dev
 ```
 
 最低限、以下を確認します。
@@ -40,11 +40,11 @@ PR / CI成功
 D1 migrationがある場合は、branchへ反映する前に手元のWrangler OAuthでdev DBへ適用してbaselineを更新します。
 
 ```bash
-npx wrangler login
-npm run db:list:dev
-npm run db:migrate:dev
-npm run db:list:dev
-npm run db:baseline:dev -- --confirm-applied
+pnpm exec wrangler login
+pnpm run db:list:dev
+pnpm run db:migrate:dev
+pnpm run db:list:dev
+pnpm run db:baseline:dev -- --confirm-applied
 ```
 
 `config/deployment-migrations.json`の変更もcommitしたうえで`dev`へ反映します。
@@ -68,11 +68,11 @@ https://basebasll-sign-trainer-dev.refrain62.workers.dev/api/account/providers
 migrationがある場合は、staging branchへ反映する前に次を実行します。
 
 ```bash
-npx wrangler login
-npm run db:list:staging
-npm run db:migrate:staging
-npm run db:list:staging
-npm run db:baseline:staging -- --confirm-applied
+pnpm exec wrangler login
+pnpm run db:list:staging
+pnpm run db:migrate:staging
+pnpm run db:list:staging
+pnpm run db:baseline:staging -- --confirm-applied
 ```
 
 その後、baseline変更を含めて`staging`へ反映します。
@@ -111,11 +111,11 @@ productionは`main` branchへのmergeでCloudflare Workers Buildsがdeployしま
 migrationがある場合は、mainへmergeする前にproduction DBへ適用してbaselineを更新します。
 
 ```bash
-npx wrangler login
-npm run db:list:prod
-npm run db:migrate:prod
-npm run db:list:prod
-npm run db:baseline:prod -- --confirm-applied
+pnpm exec wrangler login
+pnpm run db:list:prod
+pnpm run db:migrate:prod
+pnpm run db:list:prod
+pnpm run db:baseline:prod -- --confirm-applied
 ```
 
 productionのbaseline変更を含めてmainへmergeするとWorkers Buildsがdeployします。

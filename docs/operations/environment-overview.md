@@ -29,7 +29,7 @@ production bdd534e9-1c42-4db7-adbe-c62e35e123b5
 2. 同じGit commitを `dev → staging → production` の順で昇格させる
 3. D1 / Secret / OAuth callback / Cloudflare Access は環境ごとに分ける
 4. migrationがあるリリースは、各環境で **migration → deploy → 動作確認** の順に進める
-5. productionへ進める前に `npm run check` を成功させる
+5. productionへ進める前に `pnpm run check` を成功させる
 6. `SESSION_SECRET`、暗号鍵、pepperは環境間で使い回さない
 7. `wrangler.jsonc` やGitへSecret値を書かない
 
@@ -37,33 +37,33 @@ production bdd534e9-1c42-4db7-adbe-c62e35e123b5
 
 ## 3. 初回セットアップ
 
-### 3-1. Node / npm
+### 3-1. Node / pnpm
 
 このプロジェクトは以下を前提にしています。
 
 ```text
 Node.js >=24 <25
-npm >=11 <12
+pnpm >=12 <13
 ```
 
 Node.jsは24系だけをサポートします。`.nvmrc` / `.node-version`も`24`に固定し、CIもNode 24で実行します。`@types/node`も24系を使用し、DependabotではNode型定義のメジャー更新を自動提案しない設定です。
 
-依存関係はlockfileを使って復元します。Node 24へ切り替える初回だけ、**Node 24 / npm 11で**lockfileのルート情報も更新してコミットしてください。
+依存関係はlockfileを使って復元します。Node 24へ切り替える初回だけ、**Node 24 / pnpm 12で**lockfileのルート情報も更新してコミットしてください。
 
 ```bash
 node -v   # v24.x
-npm -v    # 11.x
-npm install --package-lock-only --ignore-scripts
-npm ci --ignore-scripts
+pnpm -v    # 12.x
+pnpm install --lockfile-only --ignore-scripts
+pnpm install --frozen-lockfile --ignore-scripts
 ```
 
-`security-preflight`は`package.json`と`package-lock.json`の依存関係・devDependency・Node/npm engineが一致していることも検査します。
+`security-preflight`は`package.json`と`pnpm-lock.yaml`の依存関係・devDependency・Node/pnpm engineが一致していることも検査します。
 
 ### 3-2. Cloudflareへログイン
 
 ```bash
-npx wrangler login
-npx wrangler whoami
+pnpm exec wrangler login
+pnpm exec wrangler whoami
 ```
 
 `whoami` で対象のCloudflareアカウントが表示されることを確認してください。

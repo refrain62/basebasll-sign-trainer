@@ -8,8 +8,8 @@ describe("dependency governance", () => {
   test("keeps runtime, Node types and Vitest companion packages aligned with Node 24", () => {
     const pkg = JSON.parse(read("package.json"));
     expect(pkg.engines.node).toBe(">=24 <25");
-    expect(pkg.engines.npm).toBe(">=11 <12");
-    expect(pkg.packageManager).toBe("npm@11.6.2");
+    expect(pkg.engines.pnpm).toBe(">=12 <13");
+    expect(pkg.packageManager).toBe("pnpm@12.10.0");
     expect(pkg.devDependencies["@types/node"]).toMatch(/^24\./);
     expect(pkg.devDependencies.vitest).toBe(pkg.devDependencies["@vitest/coverage-v8"]);
     for (const version of [...Object.values(pkg.dependencies || {}), ...Object.values(pkg.devDependencies || {})]) {
@@ -58,9 +58,15 @@ describe("dependency governance", () => {
   test("keeps the audited Wrangler version aligned with the security preflight", () => {
     const pkg = JSON.parse(read("package.json"));
     const preflight = read("scripts/security-preflight.ts");
+    const workspaceConfig = read("pnpm-workspace.yaml");
     expect(pkg.devDependencies.wrangler).toBe("4.148.0");
     expect(pkg.overrides).toEqual({ sharp: "0.35.5", "source-map-js": "1.2.2" });
+    expect(workspaceConfig).toMatch(/^overrides:\s*$[\s\S]*^\s+sharp:\s*0\.35\.5\s*$/m);
+    expect(workspaceConfig).toContain("saveExact: true");
+    expect(workspaceConfig).toContain("lockfile: true");
+    expect(workspaceConfig).toContain("ignoreScripts: true");
+    expect(workspaceConfig).toContain("engineStrict: true");
     expect(preflight).toContain('const requiredWranglerVersion = "4.148.0";');
-    expect(preflight).toContain("wrangler must be pinned exactly to ${requiredWranglerVersion}");
+    expect(preflight).toContain("pnpm-workspace.yaml must pin overrides.sharp exactly to 0.35.5");
   });
 });

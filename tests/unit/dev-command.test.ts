@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createDevCommand } from "../../scripts/dev-command.ts";
 
-test("Windows uses cmd.exe instead of spawning npx.cmd directly", () => {
+test("Windows uses cmd.exe instead of spawning pnpm.cmd directly", () => {
   const command = createDevCommand({
     platform: "win32",
     env: { ComSpec: "C:\\Windows\\System32\\cmd.exe" }
@@ -14,7 +14,7 @@ test("Windows uses cmd.exe instead of spawning npx.cmd directly", () => {
     "/d",
     "/s",
     "/c",
-    "npx --no-install wrangler dev --env dev"
+    "pnpm exec wrangler dev --env dev"
   ]);
   assert.ok(!command.command.endsWith(".cmd"));
 });
@@ -24,10 +24,10 @@ test("Windows falls back to cmd.exe when ComSpec is unavailable", () => {
   assert.equal(command.command, "cmd.exe");
 });
 
-test("macOS/Linux launches npx directly", () => {
+test("macOS/Linux launches pnpm directly", () => {
   const command = createDevCommand({ platform: "linux", env: {} });
-  assert.equal(command.command, "npx");
-  assert.deepEqual(command.args, ["--no-install", "wrangler", "dev", "--env", "dev"]);
+  assert.equal(command.command, "pnpm");
+  assert.deepEqual(command.args, ["exec", "wrangler", "dev", "--env", "dev"]);
 });
 
 test("default dev runner leaves client builds to Wrangler custom builds", () => {

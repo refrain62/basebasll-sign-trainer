@@ -21,7 +21,7 @@ describe("documentation and release governance", () => {
   test("CI checks change declarations on pull requests and direct pushes", () => {
     const workflow = read(".github/workflows/ci.yml");
     expect(workflow).toContain("fetch-depth: 0");
-    expect(workflow).toContain("npm run release:policy:ci");
+    expect(workflow).toContain("pnpm run release:policy:ci");
     expect(workflow).toContain("github.event.before");
   });
 

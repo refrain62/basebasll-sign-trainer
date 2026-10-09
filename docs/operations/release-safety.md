@@ -13,7 +13,7 @@
 特に以下は `--env` を付け忘れるとproduction対象になるので注意してください。
 
 ```bash
-npx wrangler secret put ...
+pnpm exec wrangler secret put ...
 wrangler deploy
 wrangler d1 migrations apply DB --remote
 ```
@@ -21,13 +21,13 @@ wrangler d1 migrations apply DB --remote
 通常は直接Wranglerコマンドを打つより、package.jsonに用意した以下を使ってください。
 
 ```bash
-npm run deploy:dev
-npm run deploy:staging
-npm run deploy:prod
+pnpm run deploy:dev
+pnpm run deploy:staging
+pnpm run deploy:prod
 
-npm run db:migrate:dev
-npm run db:migrate:staging
-npm run db:migrate:prod
+pnpm run db:migrate:dev
+pnpm run db:migrate:staging
+pnpm run db:migrate:prod
 ```
 
 ---
@@ -66,9 +66,9 @@ production deploy: OK
 
 ### 共通
 
-- [ ] `npm ci --ignore-scripts` 済み
-- [ ] `npm run check` 成功
-- [ ] `npm run security:check` 確認
+- [ ] `pnpm install --frozen-lockfile --ignore-scripts` 済み
+- [ ] `pnpm run check` 成功
+- [ ] `pnpm run security:check` 確認
 - [ ] migrationの有無を確認
 - [ ] Secretをコード/Gitへ書いていない
 
@@ -140,27 +140,27 @@ D1 migrationはWorkers Buildsから自動適用せず、手元のWrangler OAuth�
 
 ```bash
 # ローカル
-npm run db:migrate:local
-npm run dev
+pnpm run db:migrate:local
+pnpm run dev
 
 # チェック
-npm run check
-npm run security:check
+pnpm run check
+pnpm run security:check
 
 # dev
-npm run db:list:dev
-npm run db:migrate:dev
-npm run deploy:dev
+pnpm run db:list:dev
+pnpm run db:migrate:dev
+pnpm run deploy:dev
 
 # staging
-npm run db:list:staging
-npm run db:migrate:staging
-npm run deploy:staging
+pnpm run db:list:staging
+pnpm run db:migrate:staging
+pnpm run deploy:staging
 
 # production
-npm run db:list:prod
-npm run db:migrate:prod
-npm run deploy:prod
+pnpm run db:list:prod
+pnpm run db:migrate:prod
+pnpm run deploy:prod
 ```
 
 ---
