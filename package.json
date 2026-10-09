@@ -72,7 +72,7 @@
   },
   "packageManager": "pnpm@12.10.0",
   "dependencies": {
-    "hono": "4.13.12",
+    "hono": "4.13.13",
     "zod": "4.6.5",
     "qrcode": "1.5.4"
   },
