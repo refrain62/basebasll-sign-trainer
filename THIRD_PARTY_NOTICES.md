@@ -24,7 +24,7 @@ Backend HTTP routing uses Hono 4.13.8.
 
 ## Vite
 
-Browser TypeScript bundling uses Vite 8.3.1.
+Browser TypeScript bundling uses Vite 8.3.x.
 
 - License: MIT
 - Purpose: TypeScript/browser bundling, code splitting and content-hashed production assets.

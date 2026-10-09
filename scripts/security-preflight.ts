@@ -26,6 +26,7 @@ const root = process.cwd();
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as PackageJson;
 const failures: string[] = [];
 const requiredWranglerVersion = "4.148.0";
+const allowedViteVersions = new Set(["8.3.1", "8.3.3"]);
 
 if (pkg.devDependencies?.wrangler !== requiredWranglerVersion) failures.push(`wrangler must be pinned exactly to ${requiredWranglerVersion}`);
 if (!/^4\.13\.\d+$/.test(pkg.dependencies?.hono || "")) failures.push("hono must stay on the exact 4.13.x patch line");
@@ -36,7 +37,7 @@ if (pkg.devDependencies?.["@playwright/test"] !== "1.57.0") failures.push("@play
 if (pkg.dependencies?.["@synapxlab/qrcode"]) failures.push("legacy @synapxlab/qrcode dependency must be removed");
 if (pkg.devDependencies?.typescript !== "7.0.2") failures.push("typescript must be pinned exactly to 7.0.2");
 if (!/^24\./.test(pkg.devDependencies?.["@types/node"] || "")) failures.push("@types/node must stay on the Node 24 major");
-if (pkg.devDependencies?.vite !== "8.3.1") failures.push("vite must be pinned exactly to 8.3.1");
+if (!allowedViteVersions.has(pkg.devDependencies?.vite || "")) failures.push(`vite must be pinned exactly to one of: ${[...allowedViteVersions].join(", ")}`);
 const vitestVersion = pkg.devDependencies?.vitest || "";
 const coverageVersion = pkg.devDependencies?.["@vitest/coverage-v8"] || "";
 if (!/^5\.0\.\d+$/.test(vitestVersion)) failures.push("vitest must stay on the exact 5.0.x patch line");
