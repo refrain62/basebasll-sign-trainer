@@ -6,7 +6,7 @@
 - Wrangler は **`4.147.0`** に完全固定します。
 - Windows + Node.js 24 で発生する `spawn UNKNOWN` / `UV_HANDLE_CLOSING` を避けるため、脆弱性修正版の4.147.0を使用しています。
 - `version_metadata` は named environment に継承されないため、productionだけでなく `env.dev` / `env.staging` にも `CF_VERSION_METADATA` binding を設定しています。
-- ローカルmigrationは `npm run db:migrate:local` を使用してください。
+- ローカルmigrationは `pnpm run db:migrate:local` を使用してください。
 
 最終更新: 2026-10-03
 
@@ -17,8 +17,8 @@
 3. Dev / StagingはWorker全体をCloudflare Accessで保護する。ProductionのSYSTEM管理はCloudflare Accessを使わず、`SYSTEM_ADMIN_SECRET` + SYSTEM管理セッションで保護する。
 4. Secret（SESSION_SECRET / SYSTEM_ADMIN_SECRET / PASSWORD_PEPPER / DATA_ENCRYPTION_KEY / DATA_LOOKUP_KEY / GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / LINE_CHANNEL_ID / LINE_CHANNEL_SECRET）を環境ごとに設定する。Google / LINE OAuthは全環境で必須。
 5. **`0025_notice_history_backfill.sql`まで全migrationを適用する。**
-6. `package-lock.json`をGit管理し、`npm ci --ignore-scripts`で再現可能にする。
-7. `npm run check`, `npm run security:preflight`, `npm run ops:preflight`を通す。
+6. `pnpm-lock.yaml`をGit管理し、`pnpm install --frozen-lockfile --ignore-scripts`で再現可能にする。
+7. `pnpm run check`, `pnpm run security:preflight`, `pnpm run ops:preflight`を通す。
 
 ## Dev / Staging 非公開運用
 
@@ -70,11 +70,11 @@ D1 migrationがある場合だけ、対象branchへ反映する前に手元のWr
 
 ```bash
 # 例: staging
-npx wrangler login
-npm run db:list:staging
-npm run db:migrate:staging
-npm run db:list:staging
-npm run db:baseline:staging -- --confirm-applied
+pnpm exec wrangler login
+pnpm run db:list:staging
+pnpm run db:migrate:staging
+pnpm run db:list:staging
+pnpm run db:baseline:staging -- --confirm-applied
 ```
 
 `config/deployment-migrations.json`がrepository最新migrationと一致しない環境はWorkers Builds preflightでdeployを止める。詳細は[`cloudflare-workers-builds.md`](cloudflare-workers-builds.md)を参照する。

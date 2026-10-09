@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
 
-const read = (file: string) => readFileSync(file, "utf8");
+const read = (file: string) => readFileSync(file, "utf8").replace(/\r\n/g, "\n");
 
 describe("Cloudflare Workers Builds deployment", () => {
   test("keeps direct Cloudflare deployment and API credentials out of GitHub Actions", () => {
@@ -23,15 +23,19 @@ describe("Cloudflare Workers Builds deployment", () => {
     expect(pkg.scripts["workers:build:dev"]).toContain("workers-build-preflight.ts dev");
     expect(pkg.scripts["workers:build:staging"]).toContain("workers-build-preflight.ts staging");
     expect(pkg.scripts["workers:build:prod"]).toContain("workers-build-preflight.ts production");
-    expect(pkg.scripts["workers:build:dev"]).toContain("npm ci --ignore-scripts");
-    expect(pkg.scripts["workers:build:prod"]).toContain("npm run ops:preflight");
+    expect(pkg.scripts["workers:build:dev"]).toContain("pnpm install --frozen-lockfile --ignore-scripts");
+    expect(pkg.scripts["workers:build:prod"]).toContain("pnpm run ops:preflight");
   });
 
   test("builds generated pages before direct deployment", () => {
     const pkg = JSON.parse(read("package.json"));
-    expect(pkg.scripts["deploy:dev"]).toMatch(/^npm run predeploy:dev && wrangler deploy --env dev$/);
-    expect(pkg.scripts["deploy:staging"]).toMatch(/^npm run predeploy:staging && wrangler deploy --env staging$/);
-    expect(pkg.scripts["deploy:prod"]).toMatch(/^npm run predeploy:prod && wrangler deploy$/);
+    const wrangler = JSON.parse(read("wrangler.jsonc"));
+    expect(pkg.scripts["deploy:dev"]).toMatch(/^pnpm run predeploy:dev && wrangler deploy --env dev$/);
+    expect(pkg.scripts["deploy:staging"]).toMatch(/^pnpm run predeploy:staging && wrangler deploy --env staging$/);
+    expect(pkg.scripts["deploy:prod"]).toMatch(/^pnpm run predeploy:prod && wrangler deploy$/);
+    expect(wrangler.build.command).toContain("pnpm run build:client");
+    expect(wrangler.build.command).toContain("scripts/client-source-check.ts");
+    expect(wrangler.build.watch_dir).toEqual(["client", "pages"]);
   });
 
   test("guards Workers Builds branch mapping and D1 migration baselines", () => {
@@ -64,9 +68,9 @@ describe("Cloudflare Workers Builds deployment", () => {
     expect(docs).toContain("Required reviewers");
     expect(docs).toContain("Prevent self-review");
     expect(docs).toContain("production用`CLOUDFLARE_DEPLOY_HOOK`にもアクセスできません");
-    expect(docs).toContain("npm run workers:build:dev");
-    expect(docs).toContain("npm run workers:build:staging");
-    expect(docs).toContain("npm run workers:build:prod");
-    expect(docs).toContain("npm run db:baseline:prod -- --confirm-applied");
+    expect(docs).toContain("pnpm run workers:build:dev");
+    expect(docs).toContain("pnpm run workers:build:staging");
+    expect(docs).toContain("pnpm run workers:build:prod");
+    expect(docs).toContain("pnpm run db:baseline:prod -- --confirm-applied");
   });
 });

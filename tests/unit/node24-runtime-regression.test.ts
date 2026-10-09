@@ -7,8 +7,8 @@ describe("Node 24 runtime baseline", () => {
   test("pins local, CI, engines and type definitions to Node 24", () => {
     const pkg = JSON.parse(read("package.json"));
     expect(pkg.engines.node).toBe(">=24 <25");
-    expect(pkg.engines.npm).toBe(">=11 <12");
-    expect(pkg.packageManager).toBe("npm@11.6.2");
+    expect(pkg.engines.pnpm).toBe(">=12 <13");
+    expect(pkg.packageManager).toBe("pnpm@12.10.0");
     expect(pkg.devDependencies["@types/node"]).toMatch(/^24\./);
     expect(read(".nvmrc").trim()).toBe("24");
     expect(read(".node-version").trim()).toBe("24");
@@ -25,17 +25,18 @@ describe("Node 24 runtime baseline", () => {
     expect(dependabot).toContain("package-ecosystem: github-actions");
   });
 
-  test("requires the lockfile root metadata to match the Node 24 package baseline", () => {
+  test("requires pnpm lockfile metadata to match the Node 24 package baseline", () => {
     const preflight = read("scripts/security-preflight.ts");
-    expect(preflight).toContain("package-lock.json engines are out of sync");
-    expect(preflight).toContain("package-lock.json devDependencies are out of sync");
-    expect(preflight).toContain("regenerate the lockfile with Node 24");
+    expect(preflight).toContain("pnpm-lock.yaml devDependencies are out of sync");
+    expect(preflight).toContain("pnpm-lock.yaml dependencies are out of sync");
+    expect(preflight).toContain("pnpm install --lockfile-only --ignore-scripts");
+    expect(preflight).toContain("with Node 24 / pnpm 12");
   });
 
   test("runs the runtime guard before normal checks and deploys", () => {
     const pkg = JSON.parse(read("package.json"));
-    expect(pkg.scripts.check).toMatch(/^npm run runtime:check/);
-    expect(pkg.scripts["predeploy:prod"]).toMatch(/^npm run runtime:check/);
+    expect(pkg.scripts.check).toMatch(/^pnpm run runtime:check/);
+    expect(pkg.scripts["predeploy:prod"]).toMatch(/^pnpm run runtime:check/);
     expect(read("scripts/runtime-version-check.ts")).toContain("major !== 24");
   });
 });

@@ -14,9 +14,9 @@ D1 migrationはWorkers Buildsから自動適用しません。Cloudflareが自�
 
 | 環境 | Cloudflare Worker | Git branch | Build command | Deploy command |
 | --- | --- | --- | --- | --- |
-| dev | `basebasll-sign-trainer-dev` | `dev` | `npm run workers:build:dev` | `npm run deploy:dev` |
-| staging | `basebasll-sign-trainer-staging` | `staging` | `npm run workers:build:staging` | `npm run deploy:staging` |
-| production | `basebasll-sign-trainer` | `main` | `npm run workers:build:prod` | `npm run deploy:prod` |
+| dev | `basebasll-sign-trainer-dev` | `dev` | `pnpm run workers:build:dev` | `pnpm run deploy:dev` |
+| staging | `basebasll-sign-trainer-staging` | `staging` | `pnpm run workers:build:staging` | `pnpm run deploy:staging` |
+| production | `basebasll-sign-trainer` | `main` | `pnpm run workers:build:prod` | `pnpm run deploy:prod` |
 
 それぞれのWorkerを同じGitHub repositoryへ接続し、Cloudflare Dashboardの **Workers & Pages → 対象Worker → Settings → Builds** でbranchとコマンドを設定します。
 
@@ -32,21 +32,23 @@ D1 migrationはWorkers Buildsから自動適用しません。Cloudflareが自�
 6. Preview builds: この3環境運用では原則OFF
 7. Build variable: `SKIP_DEPENDENCY_INSTALL=1`
 
-`SKIP_DEPENDENCY_INSTALL=1`にする理由は、依存インストールをCloudflareの自動処理と二重化せず、repository側のbuild scriptが`npm ci --ignore-scripts`を明示的に実行するためです。
+`SKIP_DEPENDENCY_INSTALL=1`にする理由は、依存インストールをCloudflareの自動処理と二重化せず、repository側のbuild scriptが`pnpm install --frozen-lockfile --ignore-scripts`を明示的に実行するためです。
+
+`wrangler.jsonc`にも`build.command`を定義し、直接`wrangler deploy`した場合もViteの生成物と全ページのasset整合性を検査してからWorkerをbundleします。Workers BuildsはWrangler設定のCustom Buildsを使わないため、Cloudflare DashboardのBuild commandには上表の`workers:build:*`を設定し、Deploy commandには上表の`deploy:*`を設定してください。
 
 Nodeはrepository rootの`.nvmrc` / `.node-version`で24系を指定しています。
 
-初回接続前に、Node 24 + npm 11.6.2でlockfileを同期してcommitします。
+初回接続前に、Node 24 + pnpm 12.10.0でlockfileを同期してcommitします。
 
 ```bash
 node -v
-npm -v
-npm install --package-lock-only --ignore-scripts
-git add package-lock.json
+pnpm -v
+pnpm install --lockfile-only --ignore-scripts
+git add pnpm-lock.yaml
 git commit -m "chore: sync lockfile for Node 24"
 ```
 
-Workers Buildsのbuild scriptは`npm ci --ignore-scripts`を使うため、`package.json`と`package-lock.json`が不一致ならdeployしません。
+Workers Buildsのbuild scriptは`pnpm install --frozen-lockfile --ignore-scripts`を使うため、`package.json`と`pnpm-lock.yaml`が不一致ならdeployしません。
 
 ## GitHub Actionsの役割
 
@@ -55,10 +57,10 @@ Workers Buildsのbuild scriptは`npm ci --ignore-scripts`を使うため、`pack
 ```text
 push / Pull Request
   → Node 24
-  → npm ci
-  → npm run check
+  → pnpm install --frozen-lockfile --ignore-scripts
+  → pnpm run check
   → release policy diff guard
-  → npm audit
+  → pnpm audit
 ```
 
 任意タイミングで再デプロイしたい場合は`.github/workflows/manual-deploy.yml`を手動実行し、選択した環境のCloudflare Deploy HookをPOSTします。
@@ -120,11 +122,11 @@ Workers Builds内では`WORKERS_CI_BRANCH`を検査し、dev Workerが`dev`以�
 例: stagingへ`0026_xxx.sql`を出す場合。
 
 ```bash
-npx wrangler login
-npm run db:list:staging
-npm run db:migrate:staging
-npm run db:list:staging
-npm run db:baseline:staging -- --confirm-applied
+pnpm exec wrangler login
+pnpm run db:list:staging
+pnpm run db:migrate:staging
+pnpm run db:list:staging
+pnpm run db:baseline:staging -- --confirm-applied
 ```
 
 `config/deployment-migrations.json`の`staging`が`0026`になったことを確認し、この変更を含めて`staging` branchへ反映します。
@@ -132,11 +134,11 @@ npm run db:baseline:staging -- --confirm-applied
 productionなら同様です。
 
 ```bash
-npx wrangler login
-npm run db:list:prod
-npm run db:migrate:prod
-npm run db:list:prod
-npm run db:baseline:prod -- --confirm-applied
+pnpm exec wrangler login
+pnpm run db:list:prod
+pnpm run db:migrate:prod
+pnpm run db:list:prod
+pnpm run db:baseline:prod -- --confirm-applied
 ```
 
 migration fileの最新番号と対象環境のbaselineが一致しない場合、`workers-build-preflight.ts`がCloudflare deployを止めます。これにより「新コードだけ先に出てDBが古い」状態を防ぎます。

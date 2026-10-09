@@ -16,7 +16,7 @@ function walk(dir: string): void {
 
 walk(root);
 if (!files.length) {
-  console.error("Vite build output JS was not found under public/build/. Run `npm run build:client` first.");
+  console.error("Vite build output JS was not found under public/build/. Run `pnpm run build:client` first.");
   process.exit(1);
 }
 
