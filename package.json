@@ -8,7 +8,7 @@
     "deploy:dev": "pnpm run predeploy:dev && wrangler deploy --env dev",
     "deploy:staging": "pnpm run predeploy:staging && wrangler deploy --env staging",
     "deploy:prod": "pnpm run predeploy:prod && wrangler deploy",
-    "check": "pnpm run runtime:check && pnpm run typecheck && pnpm run build:client && pnpm run tooling:check && pnpm run test:unit",
+    "check": "pnpm run runtime:check && pnpm run security:preflight && pnpm run typecheck && pnpm run build:client && pnpm run tooling:check && pnpm run test:unit",
     "db:migrate:local": "wrangler d1 migrations apply DB --local --env dev",
     "db:migrate:dev": "wrangler d1 migrations apply DB --remote --env dev",
     "db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
