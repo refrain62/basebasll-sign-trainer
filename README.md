@@ -36,7 +36,7 @@ WindowsでWranglerのローカルD1が`spawn UNKNOWN` / `UV_HANDLE_CLOSING`に�
 pnpm run check
 ```
 
-`pnpm run check`には型チェック、Vite build、ルート/アーキテクチャ、ドキュメント構成、リリースルール、Unit testが含まれます。
+`pnpm run check`にはsecurity preflight、型チェック、Vite build、ルート/アーキテクチャ、ドキュメント構成、リリースルール、Unit testが含まれます。
 
 ## D1 migration
 
