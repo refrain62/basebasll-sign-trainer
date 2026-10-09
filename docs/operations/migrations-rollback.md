@@ -1,5 +1,7 @@
 # D1 migration・ロールバック
 
+Workers Builds運用では、remote migrationを適用した後に`config/deployment-migrations.json`の対象環境baselineを更新します。baselineがrepository最新migrationと一致しない環境はdeployできません。詳細は[`cloudflare-workers-builds.md`](cloudflare-workers-builds.md)を参照してください。
+
 利用者向け大規模更新のSYSTEMお知らせmigrationルールは [`../engineering/change-policy.md`](../engineering/change-policy.md) を参照してください。
 
 ## 10. migration運用

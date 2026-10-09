@@ -8,20 +8,16 @@ export interface DevCommand {
   args: string[];
 }
 
-function createNpxCommand(toolArgs: string[], { platform = process.platform, env = process.env }: DevCommandOptions = {}): DevCommand {
+function createPnpmCommand(toolArgs: string[], { platform = process.platform, env = process.env }: DevCommandOptions = {}): DevCommand {
   if (platform === "win32") {
     return {
       command: env.ComSpec || "cmd.exe",
-      args: ["/d", "/s", "/c", `npx --no-install ${toolArgs.join(" ")}`]
+      args: ["/d", "/s", "/c", `pnpm exec ${toolArgs.join(" ")}`]
     };
   }
-  return { command: "npx", args: ["--no-install", ...toolArgs] };
+  return { command: "pnpm", args: ["exec", ...toolArgs] };
 }
 
 export function createDevCommand(options: DevCommandOptions = {}): DevCommand {
-  return createNpxCommand(["wrangler", "dev", "--env", "dev"], options);
-}
-
-export function createViteWatchCommand(options: DevCommandOptions = {}): DevCommand {
-  return createNpxCommand(["vite", "build", "--watch"], options);
+  return createPnpmCommand(["wrangler", "dev", "--env", "dev"], options);
 }

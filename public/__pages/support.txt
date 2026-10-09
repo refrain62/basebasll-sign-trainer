@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#082844" />
     <meta name="description" content="SIGN TRAINERのよくある質問。料金プラン、共有、サイン登録、チームページのホーム画面への追加など、よくいただく質問をまとめています。" />
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="ja_JP" />
+  <meta property="og:site_name" content="SIGN TRAINER" />
+  <meta property="og:title" content="よくある質問 | SIGN TRAINER" />
+  <meta property="og:description" content="料金プラン、共有、サイン登録、ホーム画面への追加など、SIGN TRAINERのよくある質問をまとめています。" />
+  <meta property="og:url" content="https://basebasll-sign-trainer.refrain62.workers.dev/support" />
+  <meta property="og:image" content="https://basebasll-sign-trainer.refrain62.workers.dev/og.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="SIGN TRAINER - 野球のサイン練習・共有" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="よくある質問 | SIGN TRAINER" />
+  <meta name="twitter:description" content="料金プラン、共有、サイン登録、ホーム画面への追加など、SIGN TRAINERのよくある質問をまとめています。" />
+  <meta name="twitter:image" content="https://basebasll-sign-trainer.refrain62.workers.dev/og.jpg" />
+  <meta name="twitter:image:alt" content="SIGN TRAINER - 野球のサイン練習・共有" />
+  <link rel="canonical" href="https://basebasll-sign-trainer.refrain62.workers.dev/support" />
     <title>よくある質問 | SIGN TRAINER</title>
     <link rel="icon" href="/favicon-32.png?v=__ASSET_VERSION__" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=__ASSET_VERSION__" />
@@ -79,6 +97,7 @@
                   <details><summary>YouTubeやYouTube Shortsの動画を登録できますか？</summary><p>はい。YouTubeの通常URL、短縮URL、ShortsのURLなどを登録できます。登録した動画は練習画面で再生し、サインの動きを確認できます。</p></details>
                   <details><summary>1つのサインに複数の動画を登録できますか？</summary><p>Plus / Proでは1つのサインに複数動画を登録できます。Freeでは1サインにつき1動画です。角度違い・担当者違いなど、複数パターンを覚えさせたい場合に便利です。</p></details>
                   <details><summary>サインをグループ分けできますか？</summary><p>はい。バッティングサイン、走塁サイン、守備サインなど、チームの運用に合わせてグループ化できます。Freeは1グループ、Plusは最大3グループ、Proは無制限で利用できます。</p></details>
+                  <details><summary>サイン以外の「動き方」の確認にも使えますか？</summary><p>はい。SIGN TRAINERはサイン練習を中心としたサービスですが、サイングループには自由に名前を付けられるため、チーム独自の使い方として「二塁手のカバー・中継」「バント守備」「けん制時の各ポジションの動き」など、守備連携や状況別の動きを動画で確認する用途にも応用できます。</p></details>
                   <details><summary>グループごとに説明動画を付けられますか？</summary><p>はい。サイングループに説明用のYouTube動画を設定できます。選手は練習前にグループ全体の考え方や共通ルールを見直せます。</p></details>
                   <details><summary>動画の途中から見せることはできますか？</summary><p>Plus / Proでは動画プレビューの開始位置を設定できます。サインが出る直前など、確認してほしい場面から見せる運用ができます。</p></details>
                 </div>
@@ -181,6 +200,6 @@
 </footer>
 <!-- SITE_FOOTER_END -->
     </div>
-    <script src="/build/test-landing.js" type="module"></script>
+    <script src="/build/assets/landing-BT-ABR7A.js" type="module"></script>
   </body>
 </html>

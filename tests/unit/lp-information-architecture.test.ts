@@ -17,9 +17,9 @@ describe("LP information architecture regression", () => {
     expect(index).toContain('id="for-team"');
     expect(index).toContain('id="for-player"');
     expect(index).toContain("こんな選手におすすめ");
-    expect(index).toContain("サインを早く覚えたい");
-    expect(index).toContain("試合で迷わず動けるようになりたい");
-    expect(index).toContain("もっと野球を楽しみたい");
+    expect(index).toContain("サインを<br>早く覚えたい選手");
+    expect(index).toContain("試合で迷わず<br>動けるようになりたい選手");
+    expect(index).toContain("もっと野球を<br>楽しみたい選手");
     expect(index).toContain('href="/plans"');
     expect(index).toContain('href="/install"');
     expect(index).toContain("共有されたチームページを、そのままホーム画面へ");
@@ -39,14 +39,14 @@ describe("LP information architecture regression", () => {
 
   test("LP pages use the shared hamburger navigation component", () => {
     for (const page of [index, plans, install]) {
-      expect(page).toContain("<!-- SITE_HEADER -->");
+      expect(page).toContain("<!-- SITE_HEADER_START -->");
     }
     expect(sharedHeader).toContain('id="mobile-menu-button"');
     expect(sharedHeader).toContain('id="mobile-nav"');
   });
 
   test("footer is shared, logo-icon-free, and mobile secondary CTA stays readable", () => {
-    expect(index).toContain("<!-- SITE_FOOTER -->");
+    expect(index).toContain("<!-- SITE_FOOTER_START -->");
     expect(sharedFooter).toContain('class="site-footer reference-footer lp-footer"');
     expect(sharedFooter).not.toContain('brand-icon-img');
     expect(css).toContain('.mobile-nav .button.button-secondary { color:#082844 !important; background:#fff !important;');

@@ -3,10 +3,13 @@ import { readFileSync } from "node:fs";
 
 const adminSource = readFileSync("client/admin.ts", "utf8");
 const styles = readFileSync("public/styles.css", "utf8");
+const systemHeaderSource = readFileSync("client/components/system-admin-header.ts", "utf8");
+const teamHeaderSource = readFileSync("client/components/team-admin-header.ts", "utf8");
 
 describe("admin header and navigation icon regression", () => {
   test("white admin header carries the product tagline", () => {
-    expect(adminSource).toContain("野球のサインを、チームの力に。");
+    expect(systemHeaderSource).toContain("野球のサインを、チームの力に。");
+    expect(teamHeaderSource).toContain("野球のサインを、チームの力に。");
   });
 
   test("system and team admin headers expose notices beside the hamburger menu", () => {

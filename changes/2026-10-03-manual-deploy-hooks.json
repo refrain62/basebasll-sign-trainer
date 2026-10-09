@@ -1,0 +1,12 @@
+{
+  "id": "2026-10-03-manual-deploy-hooks",
+  "summary": "GitHub Actionsからdev/staging/productionのCloudflare Deploy Hookを任意実行できる手動デプロイworkflowを追加し、productionはGitHub Environment承認後のみ実行する運用に変更",
+  "impact": "none",
+  "docs": [
+    "docs/operations/cloudflare-workers-builds.md",
+    "docs/operations/release-safety.md",
+    "docs/operations/checklist.md",
+    "docs/engineering/testing.md"
+  ],
+  "noticeMigration": null
+}

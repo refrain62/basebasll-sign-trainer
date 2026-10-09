@@ -66,15 +66,15 @@ INSERT INTO system_notices(
 生成コマンド:
 
 ```bash
-npm run release:notice -- --slug feature-name --title "新機能のお知らせ" --body "変更内容"
+pnpm run release:notice -- --slug feature-name --title "新機能のお知らせ" --body "変更内容"
 
 # 過去分を登録するときだけ公開日時を明示
-npm run release:notice -- --slug historical-feature --title "過去のお知らせ" --body "変更内容" --publish-at "2026-09-26T00:00:00Z"
+pnpm run release:notice -- --slug historical-feature --title "過去のお知らせ" --body "変更内容" --publish-at "2026-09-26T00:00:00Z"
 ```
 
 ## 自動チェック
 
-`npm run release:policy`は全`changes/*.json`を検証する。
+`pnpm run release:policy`は全`changes/*.json`を検証する。
 
 PRのCIではさらに差分を確認し、以下を失敗させる。
 

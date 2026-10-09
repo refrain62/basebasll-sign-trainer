@@ -1,0 +1,11 @@
+{
+  "id": "2026-10-03-cloudflare-workers-builds",
+  "summary": "GitHub ActionsをCI専用にし、dev/staging/productionのデプロイをCloudflare Workers Buildsへ移行",
+  "impact": "none",
+  "docs": [
+    "docs/operations/cloudflare-workers-builds.md",
+    "docs/operations/deploy.md",
+    "docs/operations/release-safety.md"
+  ],
+  "noticeMigration": null
+}

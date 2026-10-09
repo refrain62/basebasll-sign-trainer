@@ -1,5 +1,18 @@
 # ローカル開発・PBKDF2注意事項
 
+## Node.js
+
+ローカル開発は**Node.js 24.x / pnpm 12.x**に統一します。`node -v`が`v24.`で始まることを確認してください。`.nvmrc`と`.node-version`はどちらも`24`です。
+
+```bash
+node -v
+pnpm -v
+pnpm run runtime:check
+```
+
+Node 22や26では開発・migration・deployを行いません。WindowsでWranglerの`spawn UNKNOWN`等が出ても、NodeのメジャーをずらさずWrangler/Windows側を切り分けます。
+
+
 ## 7. ローカル開発
 
 初回のみ `.dev.vars.example` をコピーします。
@@ -13,14 +26,16 @@ Copy-Item .dev.vars.example .dev.vars.dev
 ローカルDB migration:
 
 ```bash
-npm run db:migrate:local
+pnpm run db:migrate:local
 ```
 
 起動:
 
 ```bash
-npm run dev
+pnpm run dev
 ```
+
+`pnpm run dev`のクライアント生成はWranglerのCustom Buildが担当します。`client/`または`pages/`を変更すると、`wrangler.jsonc`の`build.watch_dir`により生成HTML・Worker snapshot・ハッシュ付きassetがまとめて更新されます。
 
 確認URL:
 
@@ -39,9 +54,9 @@ SYSTEM管理      http://localhost:8787/admin
 `0022_cloudflare_pbkdf2_compat.sql` は、旧seedのまま残っているサンプルチーム `6BnWv2K3zo` の選手用合言葉「ホームラン」を100,000回のlegacy hashへ修復する。STAGING/DEVで以下を適用する。
 
 ```powershell
-npm run db:migrate:staging
+pnpm run db:migrate:staging
 # または
-npm run db:migrate:dev
+pnpm run db:migrate:dev
 ```
 
 100,000回を超える既存PBKDF2 hashはWorkersでは検証できないため、該当チームはSYSTEM管理またはチーム管理から合言葉/旧管理者パスワードを再設定する。

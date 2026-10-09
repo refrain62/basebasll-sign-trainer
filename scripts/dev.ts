@@ -1,8 +1,7 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { createDevCommand, createViteWatchCommand } from "./dev-command.ts";
+import { createDevCommand } from "./dev-command.ts";
 
 const workerCommand = createDevCommand();
-const viteCommand = createViteWatchCommand();
 const children: ChildProcess[] = [];
 let shuttingDown = false;
 
@@ -10,7 +9,7 @@ function launch(label: string, command: string, args: string[], env: NodeJS.Proc
   const child = spawn(command, args, { stdio: "inherit", env, windowsHide: false });
   children.push(child);
   child.on("error", (error: Error) => {
-    console.error(`${label}を起動できませんでした。先に npm install を実行してください。`, error.message);
+    console.error(`${label}を起動できませんでした。先に pnpm install を実行してください。`, error.message);
     shutdown(1);
   });
   child.on("exit", (code, signal) => {
@@ -32,7 +31,6 @@ function shutdown(code = 0): void {
   process.exitCode = code;
 }
 
-launch("Vite", viteCommand.command, viteCommand.args, process.env);
 launch("Wrangler", workerCommand.command, workerCommand.args, {
   ...process.env,
   CLOUDFLARE_CF_FETCH_ENABLED: process.env.CLOUDFLARE_CF_FETCH_ENABLED || "false"

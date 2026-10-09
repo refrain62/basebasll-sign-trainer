@@ -1,0 +1,10 @@
+# pnpm 12 project settings. Registry and authentication settings belong in .npmrc.
+overrides:
+  sharp: 0.35.5
+saveExact: true
+lockfile: true
+ignoreScripts: true
+engineStrict: true
+
+# npm's audit=true and fund=false have no pnpm workspace equivalents.
+# CI runs `pnpm audit --audit-level=high` explicitly.

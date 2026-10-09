@@ -13,7 +13,7 @@
 特に以下は `--env` を付け忘れるとproduction対象になるので注意してください。
 
 ```bash
-npx wrangler secret put ...
+pnpm exec wrangler secret put ...
 wrangler deploy
 wrangler d1 migrations apply DB --remote
 ```
@@ -21,13 +21,13 @@ wrangler d1 migrations apply DB --remote
 通常は直接Wranglerコマンドを打つより、package.jsonに用意した以下を使ってください。
 
 ```bash
-npm run deploy:dev
-npm run deploy:staging
-npm run deploy:prod
+pnpm run deploy:dev
+pnpm run deploy:staging
+pnpm run deploy:prod
 
-npm run db:migrate:dev
-npm run db:migrate:staging
-npm run db:migrate:prod
+pnpm run db:migrate:dev
+pnpm run db:migrate:staging
+pnpm run db:migrate:prod
 ```
 
 ---
@@ -66,9 +66,9 @@ production deploy: OK
 
 ### 共通
 
-- [ ] `npm ci --ignore-scripts` 済み
-- [ ] `npm run check` 成功
-- [ ] `npm run security:check` 確認
+- [ ] `pnpm install --frozen-lockfile --ignore-scripts` 済み
+- [ ] `pnpm run check` 成功
+- [ ] `pnpm run security:check` 確認
 - [ ] migrationの有無を確認
 - [ ] Secretをコード/Gitへ書いていない
 
@@ -77,8 +77,8 @@ production deploy: OK
 - [ ] Dev Worker全体のCloudflare Access Application / Allow Policyを設定
 - [ ] `REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true` を確認
 - [ ] `CF_ACCESS_TEAM_DOMAIN` / Dev用 `CF_ACCESS_POLICY_AUD` を設定
-- [ ] dev D1へmigration
-- [ ] dev deploy
+- [ ] migrationがある場合、dev D1へ先に適用してbaseline更新
+- [ ] dev branchのWorkers Build成功
 - [ ] 未許可ユーザーがWorker全体へアクセスできないことを確認
 - [ ] OAuth確認
 - [ ] ホーム画面追加確認
@@ -88,8 +88,8 @@ production deploy: OK
 - [ ] Staging Worker全体のCloudflare Access Application / Allow Policyを設定
 - [ ] `REQUIRE_CF_ACCESS_FOR_ENVIRONMENT=true` を確認
 - [ ] `CF_ACCESS_TEAM_DOMAIN` / Staging用 `CF_ACCESS_POLICY_AUD` を設定
-- [ ] staging D1へmigration
-- [ ] staging deploy
+- [ ] migrationがある場合、staging D1へ先に適用してbaseline更新
+- [ ] staging branchのWorkers Build成功
 - [ ] 未許可ユーザーがWorker全体へアクセスできないことを確認
 - [ ] Google / LINEログイン確認
 - [ ] チーム管理確認
@@ -98,37 +98,41 @@ production deploy: OK
 ### production
 
 - [ ] stagingと同じcommitである
-- [ ] production D1 migration内容確認
-- [ ] production deploy
+- [ ] migrationがある場合、production D1へ先に適用してbaseline更新
+- [ ] main branchのproduction Workers Build成功
 - [ ] deploy後スモークテスト
 - [ ] 問題時に戻す直前versionを把握
 
 ---
 
-## 15. 将来GitHub Actions化する場合
+## 15. Cloudflare Workers Builds deploy
 
-手動運用が安定してからCI/CD化します。
-
-推奨イメージ:
+GitHub Actionsは通常`.github/workflows/ci.yml`でCIを担当し、任意デプロイ時だけ`.github/workflows/manual-deploy.yml`からCloudflare Deploy Hookを呼びます。実build/deployはdev / staging / productionすべてWorkers Buildsへ統一します。
 
 ```text
-Pull Request
-  → npm ci
-  → npm run check
+GitHub push / Pull Request
+  → ci.ymlでcheck / audit
 
-開発用ブランチ
-  → dev deploy
+dev branch
+  → Workers Builds → dev Worker
 
-staging実行
-  → staging deploy
+staging branch
+  → Workers Builds → staging Worker
 
-main + 手動承認
-  → production deploy
+main branch
+  → Workers Builds → production Worker
+
+Actions / manual-deploy
+  → 環境選択
+  → Deploy Hook
+  → Workers Builds
 ```
 
-GitHub側のSecretsにはCloudflare API Token等を置き、アプリ用SecretはCloudflare Worker Secretとして保持します。
+productionを手動実行するjobはGitHub Environment `production`を参照し、Required reviewers承認後だけ開始します。DEV / STAGINGは承認なしで任意実行できます。
 
-最初からproductionまで完全自動化せず、productionだけ手動承認を残す構成が安全です。
+GitHubには`CLOUDFLARE_API_TOKEN`や`CLOUDFLARE_ACCOUNT_ID`を保存しません。Deploy Hook URLだけを各GitHub Environmentの`CLOUDFLARE_DEPLOY_HOOK` Secretとして保存します。Cloudflare側のGit integrationとBuild用tokenでWorker deployを実行します。
+
+D1 migrationはWorkers Buildsから自動適用せず、手元のWrangler OAuthで対象DBへ適用します。適用後に`config/deployment-migrations.json`のbaselineを更新しない限り、対象環境のWorkers Build preflightがdeployを拒否します。詳細は[`cloudflare-workers-builds.md`](cloudflare-workers-builds.md)を参照してください。
 
 ---
 
@@ -136,27 +140,27 @@ GitHub側のSecretsにはCloudflare API Token等を置き、アプリ用Secret�
 
 ```bash
 # ローカル
-npm run db:migrate:local
-npm run dev
+pnpm run db:migrate:local
+pnpm run dev
 
 # チェック
-npm run check
-npm run security:check
+pnpm run check
+pnpm run security:check
 
 # dev
-npm run db:list:dev
-npm run db:migrate:dev
-npm run deploy:dev
+pnpm run db:list:dev
+pnpm run db:migrate:dev
+pnpm run deploy:dev
 
 # staging
-npm run db:list:staging
-npm run db:migrate:staging
-npm run deploy:staging
+pnpm run db:list:staging
+pnpm run db:migrate:staging
+pnpm run deploy:staging
 
 # production
-npm run db:list:prod
-npm run db:migrate:prod
-npm run deploy:prod
+pnpm run db:list:prod
+pnpm run db:migrate:prod
+pnpm run deploy:prod
 ```
 
 ---

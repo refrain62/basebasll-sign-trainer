@@ -11,7 +11,7 @@ describe("practice header and history", () => {
   test("practice and LP share the current brand tagline", () => {
     expect(teamSource).toContain("practiceHeader");
     expect(sharedHeader).toContain("野球のサインを、チームの力に。");
-    expect(lpSource).toContain("<!-- SITE_HEADER -->");
+    expect(lpSource).toContain("<!-- SITE_HEADER_START -->");
     expect(practiceHeaderSource).toContain('id="practice-menu-button"');
     expect(practiceHeaderSource).toContain('id="practice-header-menu"');
   });

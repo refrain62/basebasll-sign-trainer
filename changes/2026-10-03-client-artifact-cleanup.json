@@ -1,0 +1,9 @@
+{
+  "id": "2026-10-03-client-artifact-cleanup",
+  "summary": "Vite移行後の古いpublic直下JavaScriptをbuild前に削除し、PWA用sw.jsだけを明示的に許可",
+  "impact": "none",
+  "docs": [
+    "docs/engineering/testing.md"
+  ],
+  "noticeMigration": null
+}

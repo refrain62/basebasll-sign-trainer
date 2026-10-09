@@ -9,8 +9,8 @@ describe("public LP site chrome", () => {
   test("all LP pages and legal subpages consume the same header/footer components", () => {
     for (const pageName of pages) {
       const page = readFileSync(`pages/${pageName}.html`, "utf8");
-      expect(page).toContain("<!-- SITE_HEADER -->");
-      expect(page).toContain("<!-- SITE_FOOTER -->");
+      expect(page).toContain("<!-- SITE_HEADER_START -->");
+      expect(page).toContain("<!-- SITE_FOOTER_START -->");
     }
   });
 
@@ -19,19 +19,19 @@ describe("public LP site chrome", () => {
     expect(header).toContain('href="/plans">料金プラン</a>');
     expect(header).toContain('href="/install">はじめ方</a>');
     expect(header).toContain('href="/support">よくある質問</a>');
-    expect(header).toContain('class="header-login" href="/account">ログイン</a>');
+    expect(header).toContain('class="header-login" href="/account">チーム管理者ログイン</a>');
     expect(header).toContain('id="mobile-menu-button"');
   });
 
   test("team member practice pages also consume the shared footer", () => {
     const team = readFileSync("pages/team.html", "utf8");
-    expect(team).toContain("<!-- SITE_FOOTER -->");
+    expect(team).toContain("<!-- SITE_FOOTER_START -->");
   });
 
   test("shared footer matches LP navigation", () => {
     expect(footer).toContain('href="/plans">料金プラン</a>');
     expect(footer).toContain('href="/install">はじめ方</a>');
-    expect(footer).toContain('href="/support">FAQ</a>');
+    expect(footer).toContain('href="/support">よくある質問</a>');
     expect(footer).toContain('href="/terms">利用規約</a>');
     expect(footer).toContain('href="/privacy">プライバシーポリシー</a>');
   });
