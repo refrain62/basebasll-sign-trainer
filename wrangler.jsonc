@@ -85,7 +85,7 @@
         "ACCOUNT_SESSION_DAYS": "30",
         "LINE_REQUEST_EMAIL": "false",
         "CF_ACCESS_TEAM_DOMAIN": "https://refrain62.cloudflareaccess.com",
-        "CF_ACCESS_POLICY_AUD": "",
+        "CF_ACCESS_POLICY_AUD": "f438a146ebad1436df1cca01bd045612f6aee4a465f02410e1d5e577b7f4365a",
         "PUBLIC_OPERATOR_NAME": "SIGN TRAINER 運営者",
         "PUBLIC_SUPPORT_URL": "https://forms.gle/n9qume9WF3KNGkPP6",
         "ACCOUNT_TEAM_CREATE_LIMIT": "3",
