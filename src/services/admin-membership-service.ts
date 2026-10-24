@@ -37,7 +37,9 @@ export function createAdminMembershipService({
       }
       return 0;
     } catch {
-      return MAX_SUB_ADMINS;
+      // Entitlement取得失敗時は明示的な503で拒否する。一時的な課金/DB障害で
+      // Freeや不明なプランに管理者枠を追加付与せず、プラン制限とも区別する。
+      throw new ServiceError("entitlement_unavailable", "プラン情報を確認できないため、管理者設定を一時的に利用できません。時間をおいてもう一度お試しください。", 503);
     }
   }
   function subAdminLimitError(maxSubAdmins) {

@@ -73,11 +73,12 @@
   "packageManager": "pnpm@12.10.0",
   "dependencies": {
     "hono": "4.13.13",
-    "zod": "4.6.5",
-    "qrcode": "1.5.4"
+    "qrcode": "1.5.4",
+    "zod": "4.6.6"
   },
   "overrides": {
     "sharp": "0.35.5",
-    "source-map-js": "1.2.2"
+    "source-map-js": "1.2.2",
+    "undici": "7.30.1"
   }
 }
