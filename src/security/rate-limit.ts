@@ -33,15 +33,19 @@ export async function enforceRateLimit({ db, sessionSecret, request, scope, iden
   const key = await limiterKey(request, scope, identity, sessionSecret || "local");
   const now = nowSeconds();
   await maybePruneRateLimits(db, now);
-  const row = await db.prepare("SELECT window_start,count FROM auth_rate_limits WHERE key=?").bind(key).first();
-  if (!row || now - Number(row.window_start) >= windowSeconds) {
-    await db.prepare("INSERT INTO auth_rate_limits(key,window_start,count) VALUES(?,?,1) ON CONFLICT(key) DO UPDATE SET window_start=excluded.window_start,count=1").bind(key, now).run();
-    return null;
-  }
-  const next = Number(row.count || 0) + 1;
-  await db.prepare("UPDATE auth_rate_limits SET count=? WHERE key=?").bind(next, key).run();
-  if (next > maxAttempts) {
-    const retryAfter = Math.max(1, windowSeconds - (now - Number(row.window_start)));
+  // 認証試行回数の加算を1つのSQLite文で行う。読取と更新を分けると、
+  // 並列試行が同じ回数を読み互いに上書きするため、レート制限を回避できる。
+  const row = await db.prepare(`
+    INSERT INTO auth_rate_limits(key,window_start,count) VALUES(?,?,1)
+    ON CONFLICT(key) DO UPDATE SET
+      window_start=CASE WHEN auth_rate_limits.window_start <= ? THEN excluded.window_start ELSE auth_rate_limits.window_start END,
+      count=CASE WHEN auth_rate_limits.window_start <= ? THEN 1 ELSE auth_rate_limits.count + 1 END
+    RETURNING window_start,count
+  `).bind(key, now, now - windowSeconds, now - windowSeconds).first();
+  const count = Number(row?.count || 1);
+  const windowStart = Number(row?.window_start || now);
+  if (count > maxAttempts) {
+    const retryAfter = Math.max(1, windowSeconds - (now - windowStart));
     return apiJson({ error: "rate_limited", message: "試行回数が多すぎます。しばらく待ってからお試しください。" }, 429, { "retry-after": String(retryAfter) });
   }
   return null;

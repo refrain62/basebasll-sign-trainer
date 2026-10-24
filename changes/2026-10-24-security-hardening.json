@@ -1,0 +1,9 @@
+{
+  "id": "2026-10-24-security-hardening",
+  "summary": "認証レート制限の並列試行回避を防ぎ、プラン情報を取得できない場合の管理者招待を安全側で停止し、依存脆弱性を修正",
+  "impact": "minor",
+  "docs": [
+    "docs/security/hardening.md"
+  ],
+  "noticeMigration": null
+}

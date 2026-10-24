@@ -4,6 +4,7 @@ import path from "node:path";
 type PackageJson = {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
+  overrides?: Record<string, string>;
   engines?: Record<string, string>;
 };
 
@@ -70,6 +71,9 @@ if (!fs.existsSync(lockPath)) {
   }
   if (!/(?:^|\n)\s+sharp:\s*0\.35\.5\s*(?:\n|$)/m.test(lock)) {
     failures.push("pnpm-lock.yaml must record pnpm.overrides.sharp as 0.35.5");
+  }
+  if (!/(?:^|\n)\s+undici:\s*7\.30\.1\s*(?:\n|$)/m.test(lock)) {
+    failures.push("pnpm-lock.yaml must record pnpm.overrides.undici as 7.30.1");
   }
 }
 
