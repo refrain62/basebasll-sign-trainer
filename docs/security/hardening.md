@@ -81,3 +81,9 @@ CF_ACCESS_POLICY_AUD=<Access Application AUD tag>
 - New audit details are redacted before storage; legacy audit details can be rewritten through the system-admin data-protection maintenance action.
 - `PASSWORD_PEPPER`, `DATA_ENCRYPTION_KEY`, and `DATA_LOOKUP_KEY` are required per environment and are not stored in D1.
 - Apply `0010_data_protection.sql` before deploying build 75, then run the `/admin` data-protection maintenance action until the remaining count is zero.
+
+## Build 76: authentication and dependency hardening
+
+- Authentication rate-limit increments use one atomic D1 statement, so concurrent attempts cannot overwrite each other's count and bypass the configured limit.
+- Administrator invitation and ownership-transfer operations fail with a temporary error when entitlement lookup fails; a billing or database failure cannot grant administrator capacity.
+- `zod` is pinned to `4.6.6`, and Wrangler's transitive `undici` dependency is overridden to `7.30.1` to address known high-severity advisories.
