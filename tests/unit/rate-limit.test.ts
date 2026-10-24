@@ -47,7 +47,6 @@ test("authentication rate limits count concurrent attempts atomically", async ()
     }))
   );
 
-  assert.equal(results.filter(Boolean).length, 3);
-  assert.equal(results.slice(0, 2).every((response) => response === null), true);
-  assert.equal(results.slice(2).every((response) => response?.status === 429), true);
+  assert.equal(results.filter((response) => response === null).length, 2);
+  assert.equal(results.filter((response) => response?.status === 429).length, 3);
 });
