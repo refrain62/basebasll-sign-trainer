@@ -10,7 +10,7 @@ type TestMembershipRow = {
   display_name?: string;
 };
 
-function fixture() {
+function fixture({ entitlementService = null } = {}) {
   const members = new Map<string, TestMembershipRow>([
     ["owner", { team_id: "T1", user_id: "owner", role: "owner" }],
     ["admin", { team_id: "T1", user_id: "admin", role: "admin" }]
@@ -50,6 +50,7 @@ function fixture() {
     transitionRepository,
     teamRepository,
     auditRepository,
+    entitlementService,
     createInviteId: () => "inv_12345678",
     createRawToken: () => "raw-secret-token",
     now: () => 1000
@@ -162,4 +163,24 @@ test("owner transfer that keeps the previous owner refuses a sixth sub administr
   const fx = fixture();
   for (let i = 2; i <= 5; i += 1) fx.members.set(`admin${i}`, { team_id: "T1", user_id: `admin${i}`, role: "admin" });
   await expect(fx.service.createInvite("T1", "owner", { kind: "transfer", creatorExit: false })).rejects.toMatchObject({ code: "sub_admin_limit_transfer" });
+});
+
+test("entitlement lookup failure fails closed for invite issuance", async () => {
+  const fx = fixture({ entitlementService: { async summary() { throw new Error("db unavailable"); } } });
+  await expect(fx.service.createInvite("T1", "owner", { kind: "admin" })).rejects.toMatchObject({ code: "entitlement_unavailable", status: 503 });
+  assert.equal(fx.calls.some(([name]) => name === "invite.create"), false);
+});
+
+test("entitlement lookup failure fails closed for invite acceptance", async () => {
+  const fx = fixture({ entitlementService: { async summary() { throw new Error("db unavailable"); } } });
+  fx.members.delete("admin");
+  fx.setInvite({ id: "inv_admin", team_id: "T1", team_name: "Team", kind: "admin", created_by_user_id: "owner", creator_name: "Owner", status: "pending", expires_at: 2000 });
+  await expect(fx.service.acceptInvite("token", "new-admin")).rejects.toMatchObject({ code: "entitlement_unavailable", status: 503 });
+  assert.equal(fx.calls.some(([name]) => name === "acceptAdmin"), false);
+});
+
+test("entitlement lookup failure fails closed for owner transfer that keeps the owner", async () => {
+  const fx = fixture({ entitlementService: { async summary() { throw new Error("db unavailable"); } } });
+  await expect(fx.service.createInvite("T1", "owner", { kind: "transfer", creatorExit: false })).rejects.toMatchObject({ code: "entitlement_unavailable", status: 503 });
+  assert.equal(fx.calls.some(([name]) => name === "invite.create"), false);
 });
