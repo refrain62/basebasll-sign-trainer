@@ -5,6 +5,7 @@ import { findInvalidGitHubActionUses } from "./github-action-pin-policy.ts";
 interface PackageJson {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
+  overrides?: Record<string, string>;
   engines?: { node?: string; pnpm?: string };
   packageManager?: string;
 }
@@ -26,11 +27,13 @@ const root = process.cwd();
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as PackageJson;
 const failures: string[] = [];
 const requiredWranglerVersion = "4.148.0";
+const requiredUndiciVersion = "7.30.1";
 const allowedViteVersions = new Set(["8.3.1", "8.3.3"]);
 
 if (pkg.devDependencies?.wrangler !== requiredWranglerVersion) failures.push(`wrangler must be pinned exactly to ${requiredWranglerVersion}`);
 if (!/^4\.13\.\d+$/.test(pkg.dependencies?.hono || "")) failures.push("hono must stay on the exact 4.13.x patch line");
-if (pkg.dependencies?.zod !== "4.6.5") failures.push("zod must be pinned exactly to 4.6.5");
+if (pkg.dependencies?.zod !== "4.6.6") failures.push("zod must be pinned exactly to 4.6.6");
+if (pkg.overrides?.undici !== requiredUndiciVersion) failures.push(`package.json must override undici to ${requiredUndiciVersion}`);
 if (pkg.dependencies?.qrcode !== "1.5.4") failures.push("qrcode must be pinned exactly to 1.5.4");
 if (pkg.devDependencies?.["@types/qrcode"] !== "1.5.6") failures.push("@types/qrcode must be pinned exactly to 1.5.6");
 if (pkg.devDependencies?.["@playwright/test"] !== "1.57.0") failures.push("@playwright/test must be pinned exactly to 1.57.0");
@@ -55,6 +58,7 @@ if (!fs.existsSync(workspaceConfigPath)) {
   if (!/^overrides:\s*$/m.test(workspaceConfig) || !/^\s+sharp:\s*["']?0\.35\.5["']?\s*$/m.test(workspaceConfig)) {
     failures.push("pnpm-workspace.yaml must pin overrides.sharp exactly to 0.35.5");
   }
+  if (!/^\s+undici:\s*["']?7\.30\.1["']?\s*$/m.test(workspaceConfig)) failures.push("pnpm-workspace.yaml must pin overrides.undici exactly to 7.30.1");
   for (const setting of ["saveExact", "lockfile", "ignoreScripts", "engineStrict"]) {
     if (!new RegExp(`^${setting}:\\s*true\\s*$`, "m").test(workspaceConfig)) {
       failures.push(`pnpm-workspace.yaml must set ${setting}: true`);
@@ -146,6 +150,9 @@ if (!fs.existsSync(pnpmLockPath)) {
   }
   if (!/(?:^|\n)\s+sharp:\s*0\.35\.5\s*(?:\n|$)/m.test(lock)) {
     failures.push("pnpm-lock.yaml must record pnpm.overrides.sharp as 0.35.5");
+  }
+  if (!/(?:^|\n)\s+undici:\s*7\.30\.1\s*(?:\n|$)/m.test(lock)) {
+    failures.push("pnpm-lock.yaml must record pnpm.overrides.undici as 7.30.1");
   }
 }
 
