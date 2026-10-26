@@ -160,6 +160,22 @@ test("safeJson parses JSON and rejects payloads over 64KiB", async () => {
   assert.deepEqual(await safeJson(large), { __error: "payload_too_large" });
 });
 
+test("safeJson stops reading a chunked body after the 64KiB limit", async () => {
+  let cancelled = false;
+  const stream = new ReadableStream({
+    pull(controller) {
+      controller.enqueue(new Uint8Array(65 * 1024));
+      controller.enqueue(new Uint8Array(65 * 1024));
+    },
+    cancel() {
+      cancelled = true;
+    }
+  });
+  const request = new Request("https://example.com", { method: "POST", body: stream, duplex: "half" } as RequestInit);
+  assert.deepEqual(await safeJson(request), { __error: "payload_too_large" });
+  assert.equal(cancelled, true);
+});
+
 test("security headers keep inline script/style execution disabled", async () => {
   const response = withHeaders(new Response("ok"), { noIndex: true, noCache: true });
   const csp = response.headers.get("content-security-policy");

@@ -1,14 +1,42 @@
 import { MAX_JSON_BYTES } from "../config/constants.ts";
 
-const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+async function readJsonText(request) {
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_JSON_BYTES) {
+        await reader.cancel();
+        return { __error: "payload_too_large" };
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return decoder.decode(bytes);
+}
 
 export async function safeJson(request) {
   try {
     const len = Number(request.headers.get("content-length") || 0);
     if (len > MAX_JSON_BYTES) return { __error: "payload_too_large" };
-    const text = await request.text();
-    if (encoder.encode(text).byteLength > MAX_JSON_BYTES) return { __error: "payload_too_large" };
-    return text ? JSON.parse(text) : {};
+    const text = await readJsonText(request);
+    if (text && typeof text === "object" && text.__error === "payload_too_large") return text;
+    return text ? JSON.parse(String(text)) : {};
   } catch {
     return null;
   }
