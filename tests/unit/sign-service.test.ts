@@ -16,7 +16,7 @@ function makeService() {
   const groupRepository = { validId: async () => 7 };
   const videoRepository = { create: async (value) => calls.push(["video.create", value]) };
   const auditRepository = { record: async (...args) => calls.push(["audit", ...args]) };
-  return { calls, service: createSignService({ signRepository, groupRepository, videoRepository, auditRepository }) };
+  return { calls, signRepository, service: createSignService({ signRepository, groupRepository, videoRepository, auditRepository }) };
 }
 
 test("sign service assigns validated group and delegates persistence", async () => {
@@ -31,4 +31,12 @@ test("sign service rolls back newly created sign when initial video URL is inval
   const { service, calls } = makeService();
   await expect(service.create("team1", { name: "サイン", youtubeUrl: "not youtube" })).rejects.toMatchObject({ code: "invalid_youtube" });
   assert.deepEqual(calls[1], ["sign.hardDelete", "team1", 42]);
+});
+
+test("sign service rejects when the database-side limit guard wins a race", async () => {
+  const fx = makeService();
+  fx.signRepository.create = async () => null;
+  await expect(fx.service.create("team1", { name: "サイン" }, null, { maxItems: 10, planName: "Free" }))
+    .rejects.toMatchObject({ code: "plan_limit_reached", status: 403 });
+  assert.equal(fx.calls.some(([name]) => name === "audit"), false);
 });

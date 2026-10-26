@@ -1,0 +1,6 @@
+{
+  "id": "2026-10-26-concurrent-limit-hardening",
+  "summary": "並行リクエスト時の利用上限適用とJSON入力上限を強化",
+  "impact": "minor",
+  "docs": ["docs/security/hardening.md"]
+}

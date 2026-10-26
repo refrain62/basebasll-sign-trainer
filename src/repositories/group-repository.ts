@@ -23,15 +23,22 @@ export function createGroupRepository(db, protector = null) {
       const row = await db.prepare("SELECT COALESCE(MAX(sort_order),0) AS max_order FROM sign_groups WHERE team_id=? AND deleted_at IS NULL").bind(teamId).first();
       return Number(row?.max_order || 0) + 10;
     },
-    async create({ teamId, name, description, youtubeUrl, videoId, sortOrder }) {
+    async create({ teamId, name, description, youtubeUrl, videoId, sortOrder, maxItems = null }) {
       const values = protector ? {
         name: await protector.encrypt(name, "sign_groups.name"),
         description: await protector.encrypt(description, "sign_groups.description"),
         youtubeUrl: await protector.encrypt(youtubeUrl, "sign_groups.explanation_youtube_url"),
         videoId: await protector.encrypt(videoId, "sign_groups.explanation_youtube_video_id")
       } : { name, description, youtubeUrl, videoId };
-      const result = await db.prepare("INSERT INTO sign_groups(team_id,name,description,explanation_youtube_url,explanation_youtube_video_id,sort_order,enabled) VALUES(?,?,?,?,?,?,1)")
-        .bind(teamId, values.name, values.description, values.youtubeUrl, values.videoId, sortOrder).run();
+      const limit = maxItems === null || maxItems === undefined ? null : (Number.isFinite(Number(maxItems)) ? Math.max(0, Math.trunc(Number(maxItems))) : 0);
+      const result = limit === null
+        ? await db.prepare("INSERT INTO sign_groups(team_id,name,description,explanation_youtube_url,explanation_youtube_video_id,sort_order,enabled) VALUES(?,?,?,?,?,?,1)")
+          .bind(teamId, values.name, values.description, values.youtubeUrl, values.videoId, sortOrder).run()
+        : await db.prepare(`INSERT INTO sign_groups(team_id,name,description,explanation_youtube_url,explanation_youtube_video_id,sort_order,enabled)
+          SELECT ?,?,?,?,?,?,1
+          WHERE (SELECT COUNT(*) FROM sign_groups WHERE team_id=? AND deleted_at IS NULL) < ?`)
+          .bind(teamId, values.name, values.description, values.youtubeUrl, values.videoId, sortOrder, teamId, limit).run();
+      if (limit !== null && Number(result?.meta?.changes || 0) === 0) return null;
       return Number(result.meta.last_row_id);
     },
     async update({ teamId, groupId, name, description, youtubeUrl, videoId, sortOrder, enabled }) {
