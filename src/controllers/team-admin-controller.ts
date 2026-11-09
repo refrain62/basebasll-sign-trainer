@@ -237,11 +237,11 @@ export async function teamAdminCreateGroup(request, env, url) {
     const groupEntitlement = entitlementState.entitlements?.[FEATURE_KEYS.MULTIPLE_SIGN_GROUPS];
     const groupLimit = groupEntitlement?.limit == null ? null : Number(groupEntitlement.limit);
     const groupCount = await services.repositories.groupRepository.count(teamId);
+    const planName = entitlementState.plan?.name || "現在のプラン";
     if (groupLimit != null && groupCount >= groupLimit) {
-      const planName = entitlementState.plan?.name || "現在のプラン";
       throw new ServiceError("plan_limit_reached", `${planName}ではサイングループは最大${groupLimit}個までです。`, 403, { feature: FEATURE_KEYS.MULTIPLE_SIGN_GROUPS, limit: groupLimit });
     }
-    const group = await services.groups.create(teamId, body, auditActorFromAuth(auth));
+    const group = await services.groups.create(teamId, body, auditActorFromAuth(auth), { maxItems: groupLimit, planName });
     return apiJson({ ok: true, group }, 201);
   } catch (error) {
     return serviceErrorResponse(error);
@@ -288,11 +288,11 @@ export async function teamAdminCreateSign(request, env, url) {
     const signEntitlement = entitlementState.entitlements?.[FEATURE_KEYS.SIGN_COUNT];
     const signLimit = signEntitlement?.limit == null ? null : Number(signEntitlement.limit);
     const signCount = await services.repositories.signRepository.count(teamId);
+    const planName = entitlementState.plan?.name || "現在のプラン";
     if (signLimit != null && signCount >= signLimit) {
-      const planName = entitlementState.plan?.name || "現在のプラン";
       throw new ServiceError("plan_limit_reached", `${planName}ではサイン登録は最大${signLimit}個までです。`, 403, { feature: FEATURE_KEYS.SIGN_COUNT, limit: signLimit });
     }
-    const sign = await services.signs.create(teamId, body, auditActorFromAuth(auth));
+    const sign = await services.signs.create(teamId, body, auditActorFromAuth(auth), { maxItems: signLimit, planName });
     return apiJson({ ok: true, sign }, 201);
   } catch (error) {
     return serviceErrorResponse(error);
@@ -337,13 +337,17 @@ export async function teamAdminCreateVideo(request, env, url, signId) {
     const services = createServices(env.DB, env);
     const currentSign = await getSignWithVideos(env.DB, teamId, signId, createDataProtectorFromEnv(env));
     if (!currentSign) return apiJson({ error: "not_found" }, 404);
+    let maxVideoItems = 1;
     if ((currentSign.videoItems || []).length >= 1) {
       await services.entitlements.assertFeature(teamId, FEATURE_KEYS.MULTIPLE_SIGN_VIDEOS, "1つのサインに複数動画を登録する機能は現在、Plus / Pro機能です。Freeでは1サイン1動画まで利用できます。");
+      maxVideoItems = null;
+    } else if (await services.entitlements.canUseFeature(teamId, FEATURE_KEYS.MULTIPLE_SIGN_VIDEOS)) {
+      maxVideoItems = null;
     }
     if (Math.max(0, Number(body.thumbnailTimeSeconds) || 0) > 0) {
       await services.entitlements.assertFeature(teamId, FEATURE_KEYS.CUSTOM_VIDEO_THUMBNAIL, "サムネイル確認位置の時間指定は現在、Plus / Pro機能です。");
     }
-    const result = await services.videos.create(teamId, signId, body, auditActorFromAuth(auth));
+    const result = await services.videos.create(teamId, signId, body, auditActorFromAuth(auth), { maxItems: maxVideoItems });
     return apiJson({ ok: true, videoId: result.videoId, sign: result.sign }, 201);
   } catch (error) {
     return serviceErrorResponse(error);

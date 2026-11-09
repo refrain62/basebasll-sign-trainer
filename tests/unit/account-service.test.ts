@@ -63,7 +63,7 @@ function serviceFixture(overrides = {}) {
     createTeamId: () => "TeamABC123",
     ...overrides
   });
-  return { service, users, identities, calls, userRepository, membershipRepository };
+  return { service, users, identities, calls, userRepository, membershipRepository, provisioningRepository };
 }
 
 test("account service creates OAuth identity atomically and does not auto-link by email", async () => {
@@ -122,6 +122,15 @@ test("team creation is limited to three owned teams while invited sub-admin team
   assert.equal(dashboard.teamCreation.ownedTeamCount, 3);
   assert.equal(dashboard.teamCreation.canCreate, false);
   await expect(fx.service.createTeam("u_owner123", { name: "Fourth", passphrase: "secret" })).rejects.toMatchObject({ code: "team_create_limit_reached", status: 409 });
+});
+
+test("team creation rejects when the database-side ownership limit guard wins a race", async () => {
+  const fx = serviceFixture({ teamCreationLimit: 3 });
+  fx.users.set("u_owner123", { id: "u_owner123", display_name: "Owner", status: "active" });
+  (fx.provisioningRepository as any).createOwnedTeam = async () => [{ meta: { changes: 0 } }, { meta: { changes: 0 } }];
+  await expect(fx.service.createTeam("u_owner123", { name: "Raced", passphrase: "secret" }))
+    .rejects.toMatchObject({ code: "team_create_limit_reached", status: 409 });
+  assert.equal(fx.calls.some(([name]) => name === "audit"), false);
 });
 
 test("account deletion is blocked while the user owns a team", async () => {

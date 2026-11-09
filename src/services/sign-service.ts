@@ -3,12 +3,17 @@ import { ServiceError } from "./errors.ts";
 
 export function createSignService({ signRepository, groupRepository, videoRepository, auditRepository }) {
   return {
-    async create(teamId, input, auditActor = null) {
+    async create(teamId, input, auditActor = null, { maxItems = null, planName = "現在のプラン" } = {}) {
       const name = cleanName(input?.name, 80);
       if (!name) throw new ServiceError("invalid_name", "サイン名を入力してください。", 400);
       const groupId = await groupRepository.validId(teamId, input?.groupId);
       const sortOrder = await signRepository.nextSortOrder(teamId);
-      const signId = await signRepository.create({ teamId, name, sortOrder, groupId });
+      const createInput: any = { teamId, name, sortOrder, groupId };
+      if (maxItems !== null && maxItems !== undefined) createInput.maxItems = maxItems;
+      const signId = await signRepository.create(createInput);
+      if (signId === null) {
+        throw new ServiceError("plan_limit_reached", `${planName}ではサイン登録は最大${maxItems}個までです。`, 403, { feature: "sign_count", limit: maxItems });
+      }
       if (input?.youtubeUrl) {
         const parsed = parseYouTubeUrl(input.youtubeUrl);
         if (!parsed) {

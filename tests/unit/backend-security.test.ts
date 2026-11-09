@@ -160,6 +160,60 @@ test("safeJson parses JSON and rejects payloads over 64KiB", async () => {
   assert.deepEqual(await safeJson(large), { __error: "payload_too_large" });
 });
 
+test("safeJson stops reading a chunked body after the 64KiB limit", async () => {
+  let cancelled = false;
+  const stream = new ReadableStream({
+    pull(controller) {
+      controller.enqueue(new Uint8Array(65 * 1024));
+      controller.enqueue(new Uint8Array(65 * 1024));
+    },
+    cancel() {
+      cancelled = true;
+      return new Promise(() => {});
+    }
+  });
+  const request = new Request("https://example.com", { method: "POST", body: stream, duplex: "half" } as RequestInit);
+  assert.deepEqual(await safeJson(request), { __error: "payload_too_large" });
+  assert.equal(cancelled, true);
+  assert.equal(request.body?.locked, false);
+});
+
+test("safeJson rejects an oversized body when Content-Length understates its size", async () => {
+  let cancelled = false;
+  const stream = new ReadableStream({
+    pull(controller) {
+      controller.enqueue(new Uint8Array(65 * 1024));
+    },
+    cancel() {
+      cancelled = true;
+      throw new Error("cancel failed");
+    }
+  });
+  const request = new Request("https://example.com", {
+    method: "POST",
+    headers: { "content-length": "1" },
+    body: stream,
+    duplex: "half"
+  } as RequestInit);
+  assert.deepEqual(await safeJson(request), { __error: "payload_too_large" });
+  assert.equal(cancelled, true);
+  assert.equal(request.body?.locked, false);
+});
+
+test("safeJson preserves UTF-8 characters split across stream chunks", async () => {
+  const bytes = new TextEncoder().encode(JSON.stringify({ name: "サイン" }));
+  const splitAt = bytes.findIndex((byte, index) => index > 0 && (byte & 0xc0) === 0x80);
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(bytes.slice(0, splitAt));
+      controller.enqueue(bytes.slice(splitAt));
+      controller.close();
+    }
+  });
+  const request = new Request("https://example.com", { method: "POST", body: stream, duplex: "half" } as RequestInit);
+  assert.deepEqual(await safeJson(request), { name: "サイン" });
+});
+
 test("security headers keep inline script/style execution disabled", async () => {
   const response = withHeaders(new Response("ok"), { noIndex: true, noCache: true });
   const csp = response.headers.get("content-security-policy");
