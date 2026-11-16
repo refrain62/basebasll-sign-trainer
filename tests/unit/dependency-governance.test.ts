@@ -17,6 +17,16 @@ describe("dependency governance", () => {
     }
   });
 
+  test("pins Hono to the patched release in both the manifest and lockfile", () => {
+    const pkg = JSON.parse(read("package.json"));
+    const lock = read("pnpm-lock.yaml").replace(/\r\n/g, "\n");
+    expect(pkg.dependencies.hono).toBe("4.13.18");
+    expect(lock).toContain("specifier: 4.13.18\n        version: 4.13.18");
+    expect(lock).toContain("hono@4.13.18:");
+    expect(lock).toContain("sha512-H9q/E1XizaWstJxUW881dmLxEj+t/TrGGnyxINkm4+sK0qUwsMtFdo2BWI9Vs3cIS19MU6b6iCijoUoEf4f3DA==");
+    expect(lock).not.toContain("hono@4.13.13");
+  });
+
   test("prevents Dependabot from separating Node types and Vitest companion packages", () => {
     const config = read(".github/dependabot.yml");
     expect(config).toContain('dependency-name: "@types/node"');
