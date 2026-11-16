@@ -23,6 +23,10 @@ DevのCloudflare Build `8b19467b-4e32-4f52-b31e-0708cb92a2e0`は、Workerに必�
 
 Dev側のSecret設定と再デプロイ確認が残っているため、停止条件と再開手順を[作業再開リスト](resume-task-list.md)に残す。
 
+### 後続確認
+
+- 2026-10-24以降の昇格作業でDev Workerの必要なSecret設定とデプロイ成功を確認した。Dev Version `e852d857-48f9-412a-a7d6-fe97f723abc5`まで反映済みのため、旧停止条件を作業再開リストから削除した。
+
 ## 2026-10-24 セキュリティ監査と対策
 
 ### 確認結果
@@ -43,3 +47,41 @@ Dev側のSecret設定と再デプロイ確認が残っているため、停止�
 
 - PR #65はレビュー用Draftとして作成した。CIと人間のレビュー後に`develop`へマージする。
 - 実D1での並列レート制限テストは低優先の追加検証候補とする。現行のSQL構文と境界条件はレビュー済み。
+
+## 2026-11-09 週次セキュリティ監査
+
+### 確認結果
+
+- JSON入力を全文バッファへ読み込んだ後に上限判定しており、chunked bodyでメモリ枯渇を誘発できる問題を確認した。
+- チーム、グループ、サイン、動画の作成上限が読取と作成に分かれ、同時実行時に上限を超え得る問題を確認した。
+- 初期チーム作成のmembership追加が今回のteam INSERT成功と結び付いておらず、同一ID競合時に既存チームへownerを追加し得る問題を確認した。
+
+### 対策と検証
+
+- 実装Draft PR #77で、JSONをストリーム読取中に64KiBで打ち切り、停止・失敗するキャンセルを待たずreaderを解放するようにした。
+- 作成上限をD1の原子的な条件付きINSERTへ変更し、初期owner追加を直前のteam INSERT成功時だけに限定した。削除済みチームは所有上限から除外した。
+- unit test 281件、TypeScript 4構成、Vite build、security/toolingチェックが成功した。PR #77のCIとE2Eも成功した。
+- 独立した敵対的再レビューで、Critical / High / Mediumの残存指摘がないことを確認した。
+
+### 継続条件
+
+- PR #77はレビュー用Draftであり、マージ、環境昇格、デプロイは実施していない。人間レビュー後に通常手順で判断する。
+
+## 2026-11-16 週次セキュリティ監査
+
+### 確認結果
+
+- SYSTEMによる利用停止・論理削除後も、既存OAuth管理者セッションからチーム管理APIを操作できる状態遷移バイパスを確認した。
+- OAuthによる旧管理者からownerへの移行や所有権移譲で、処理中の利用停止をD1更新時に再確認しない競合を確認した。
+- Hono `4.13.13`に、特定のencoded pathでwildcard middlewareが欠落する`GHSA-h7mg-cq63-vhpq`を確認した。環境Access gateとAPI guardがwildcard middlewareを使うため対策対象とした。
+
+### 対策と検証
+
+- 実装Draft PR #79で、account・legacy・owner認可、招待承認、owner claim・transferをactiveかつ非削除のチームに限定し、D1更新時にも状態を再確認するようにした。
+- 実装Draft PR #80でHonoを`4.13.18`へ更新し、encoded line terminatorでも環境Access gateとAPI guardが実行される回帰テストを追加した。
+- PR #79はunit 69ファイル277件、PR #80はfresh install後のCIで新規回帰を含むtest・build・checkが成功した。両PRのCIとE2Eはすべて成功した。
+- 各実装を独立して敵対的再レビューし、Critical / High / Mediumの残存指摘がないことを確認した。
+
+### 継続条件
+
+- PR #77、#79、#80はレビュー用Draftであり、マージ、環境昇格、デプロイは実施していない。記録はDraft PR #78へ追記した。
