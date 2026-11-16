@@ -66,3 +66,22 @@ Dev側のSecret設定と再デプロイ確認が残っているため、停止�
 ### 継続条件
 
 - PR #77はレビュー用Draftであり、マージ、環境昇格、デプロイは実施していない。人間レビュー後に通常手順で判断する。
+
+## 2026-11-16 週次セキュリティ監査
+
+### 確認結果
+
+- SYSTEMによる利用停止・論理削除後も、既存OAuth管理者セッションからチーム管理APIを操作できる状態遷移バイパスを確認した。
+- OAuthによる旧管理者からownerへの移行や所有権移譲で、処理中の利用停止をD1更新時に再確認しない競合を確認した。
+- Hono `4.13.13`に、特定のencoded pathでwildcard middlewareが欠落する`GHSA-h7mg-cq63-vhpq`を確認した。環境Access gateとAPI guardがwildcard middlewareを使うため対策対象とした。
+
+### 対策と検証
+
+- 実装Draft PR #79で、account・legacy・owner認可、招待承認、owner claim・transferをactiveかつ非削除のチームに限定し、D1更新時にも状態を再確認するようにした。
+- 実装Draft PR #80でHonoを`4.13.18`へ更新し、encoded line terminatorでも環境Access gateとAPI guardが実行される回帰テストを追加した。
+- PR #79はunit 69ファイル277件、PR #80はfresh install後のCIで新規回帰を含むtest・build・checkが成功した。両PRのCIとE2Eはすべて成功した。
+- 各実装を独立して敵対的再レビューし、Critical / High / Mediumの残存指摘がないことを確認した。
+
+### 継続条件
+
+- PR #77、#79、#80はレビュー用Draftであり、マージ、環境昇格、デプロイは実施していない。記録はDraft PR #78へ追記した。
