@@ -87,3 +87,7 @@ CF_ACCESS_POLICY_AUD=<Access Application AUD tag>
 - Authentication rate-limit increments use one atomic D1 statement, so concurrent attempts cannot overwrite each other's count and bypass the configured limit.
 - Administrator invitation and ownership-transfer operations fail with a temporary error when entitlement lookup fails; a billing or database failure cannot grant administrator capacity.
 - `zod` is pinned to `4.6.6`, and Wrangler's transitive `undici` dependency is overridden to `7.30.1` to address known high-severity advisories.
+
+## Build 78: team-status authorization
+
+- Team-admin authorization requires the team to be active and not soft-deleted for account sessions, legacy-password sessions, and owner-only operations. Existing account cookies no longer authorize mutations after SYSTEM suspension or withdrawal.

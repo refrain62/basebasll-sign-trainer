@@ -101,6 +101,7 @@ export async function teamAdminAuth(request, env, url) {
   const teams = createTeamRepository(env.DB, createDataProtectorFromEnv(env));
   const team = await teams.findById(teamId);
   if (!team) return apiJson({ error: "team_not_found", message: "チームが見つかりません。" }, 404);
+  if (team.status !== "active") return apiJson({ error: "team_inactive", message: "このチームは現在利用停止中です。" }, 403);
   const limited = await enforceRateLimit({ db: env.DB, sessionSecret: env.SESSION_SECRET, request, scope: "team-admin-auth", identity: teamId, maxAttempts: 8, windowSeconds: 900 });
   if (limited) return limited;
   if (!team.admin_password_enabled) return apiJson({ error: "legacy_password_disabled", message: "このチームはGoogle / LINEアカウントで管理しています。アカウントでログインしてください。" }, 403);

@@ -77,6 +77,24 @@ test("admin invite acceptance includes a database-side five-sub-admin guard", as
   await repository.acceptAdminInvite({ inviteId: "inv_1", teamId: "Team1234", userId: "u_newadmin", maxSubAdmins: 5 });
   const [insertAdmin, acceptInvite] = db.batches[0];
   assert.match(insertAdmin.sql, /COUNT\(\*\).*role='admin'/s);
+  assert.match(insertAdmin.sql, /status='active' AND deleted_at IS NULL/);
   assert.equal(insertAdmin.args.at(-1), 5);
   assert.match(acceptInvite.sql, /EXISTS \(SELECT 1 FROM team_admin_memberships/);
+  assert.match(acceptInvite.sql, /status='active' AND deleted_at IS NULL/);
+});
+
+test("owner transfer invite mutations require an active, non-deleted team", async () => {
+  const db = fakeD1();
+  const repository = createAdminTransitionRepository(db);
+  await repository.acceptTransferInvite({
+    inviteId: "inv_1",
+    teamId: "Team1234",
+    currentOwnerUserId: "u_owner12345678",
+    nextOwnerUserId: "u_admin12345678",
+    currentOwnerExit: false,
+    maxSubAdmins: 5
+  });
+  for (const statement of db.batches[0]) {
+    assert.match(statement.sql, /status='active' AND (?:t\.)?deleted_at IS NULL/);
+  }
 });

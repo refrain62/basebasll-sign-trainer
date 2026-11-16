@@ -18,6 +18,8 @@ function fixture({ entitlementService = null } = {}) {
   const calls = [];
   let pending = [];
   let tokenInvite = null;
+  let teamStatus = "active";
+  let teamDeleted = false;
   const membershipRepository = {
     async find(_teamId, userId) { return members.get(userId) || null; },
     async hasAny() { return members.size > 0; },
@@ -40,7 +42,7 @@ function fixture({ entitlementService = null } = {}) {
     async transferToExisting(input) { calls.push(["transferExisting", input]); return true; }
   };
   const teamRepository = {
-    async findById() { return { id: "T1", name: "Team", admin_password_enabled: 1 }; },
+    async findById() { return teamDeleted ? null : { id: "T1", name: "Team", status: teamStatus, admin_password_enabled: 1 }; },
     async disableAdminPassword() { calls.push(["disableLegacy"]); }
   };
   const auditRepository = { async record(...args) { calls.push(["audit", ...args]); } };
@@ -55,7 +57,7 @@ function fixture({ entitlementService = null } = {}) {
     createRawToken: () => "raw-secret-token",
     now: () => 1000
   });
-  return { service, members, calls, setPending: (value) => { pending = value; }, setInvite: (value) => { tokenInvite = value; } };
+  return { service, members, calls, setPending: (value) => { pending = value; }, setInvite: (value) => { tokenInvite = value; }, setTeamStatus: (value) => { teamStatus = value; }, setTeamDeleted: (value) => { teamDeleted = value; } };
 }
 
 
@@ -95,6 +97,18 @@ test("user cannot accept an invitation they issued themselves", async () => {
   const fx = fixture();
   fx.setInvite({ id: "inv_self", team_id: "T1", team_name: "Team", kind: "admin", created_by_user_id: "owner", creator_name: "Owner", status: "pending", expires_at: 2000 });
   await expect(fx.service.acceptInvite("token", "owner")).rejects.toMatchObject({ code: "cannot_accept_own_invite" });
+});
+
+test.each([
+  ["suspended", (fx) => fx.setTeamStatus("suspended")],
+  ["soft-deleted", (fx) => fx.setTeamDeleted(true)]
+])("admin invite acceptance is rejected for a %s team", async (_state, setState) => {
+  const fx = fixture();
+  fx.setInvite({ id: "inv_admin", team_id: "T1", team_name: "Team", kind: "admin", created_by_user_id: "owner", creator_name: "Owner", status: "pending", expires_at: 2000 });
+  setState(fx);
+  await expect(fx.service.acceptInvite("token", "new-admin")).rejects.toMatchObject({ code: "team_inactive", status: 403 });
+  assert.equal(fx.calls.some(([name]) => name === "acceptAdmin"), false);
+  assert.equal(fx.calls.some(([name]) => name === "acceptTransfer"), false);
 });
 
 test("owner transfer to an existing admin delegates atomically and can remove the old owner", async () => {

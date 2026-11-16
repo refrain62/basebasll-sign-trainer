@@ -1,0 +1,11 @@
+{
+  "id": "2026-11-16-team-status-authorization",
+  "summary": "利用停止中・退会済みのチームへの管理操作を制限",
+  "impact": "major",
+  "docs": [
+    "docs/product/spec.md",
+    "docs/security/hardening.md",
+    "docs/product/system-notices.md"
+  ],
+  "noticeMigration": "migrations/0026_notice_team-status-authorization.sql"
+}

@@ -10,7 +10,7 @@ export function createAdminInviteRepository(db, protector = null) {
       const row = await db.prepare(`
         SELECT i.*,t.name AS team_name,m.display_name AS team_creator_name,u.display_name AS account_creator_name
         FROM team_admin_invites i
-        JOIN teams t ON t.id=i.team_id AND t.deleted_at IS NULL
+        JOIN teams t ON t.id=i.team_id AND t.status='active' AND t.deleted_at IS NULL
         JOIN app_users u ON u.id=i.created_by_user_id
         LEFT JOIN team_admin_memberships m ON m.team_id=i.team_id AND m.user_id=i.created_by_user_id
         WHERE i.token_hash=?

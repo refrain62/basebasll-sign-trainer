@@ -18,6 +18,11 @@ async function teamFeatureEnabled(env, teamId, featureKey) {
   return Boolean(rows.find((row) => row.featureKey === featureKey)?.enabled);
 }
 
+async function activeTeam(env, teamId) {
+  const team = await getTeam(env.DB, teamId, createDataProtectorFromEnv(env));
+  return team?.status === "active" ? team : null;
+}
+
 export async function requireUser(request, env) {
   const session = await readRoleSession(request, env, USER_COOKIE, "account");
   if (!session?.userId) return null;
@@ -29,7 +34,7 @@ export async function requireUser(request, env) {
 export async function requireLegacyTeamAdmin(request, env, teamId) {
   const session = await readRoleSession(request, env, TEAM_ADMIN_COOKIE, "team-admin");
   if (!session || session.teamId !== teamId) return null;
-  const team = await getTeam(env.DB, teamId, createDataProtectorFromEnv(env));
+  const team = await activeTeam(env, teamId);
   if (!team || !team.admin_password_enabled || Number(session.ver || 0) !== Number(team.admin_session_version || 1)) return null;
   return { ...session, authType: "legacy-password", teamRole: "legacy" };
 }
@@ -37,6 +42,7 @@ export async function requireLegacyTeamAdmin(request, env, teamId) {
 export async function requireTeamAdmin(request, env, teamId) {
   const account = await requireUser(request, env);
   if (account) {
+    if (!(await activeTeam(env, teamId))) return null;
     const membership = await createAdminMembershipRepository(env.DB, createDataProtectorFromEnv(env)).find(teamId, account.userId);
     if (membership) {
       if (membership.role === "admin" && !(await teamFeatureEnabled(env, teamId, FEATURE_KEYS.SUB_ADMIN_MANAGEMENT))) return null;
@@ -50,6 +56,7 @@ export async function requireTeamAdmin(request, env, teamId) {
 export async function requireTeamOwner(request, env, teamId) {
   const account = await requireUser(request, env);
   if (!account) return null;
+  if (!(await activeTeam(env, teamId))) return null;
   const membership = await createAdminMembershipRepository(env.DB, createDataProtectorFromEnv(env)).find(teamId, account.userId);
   if (!membership || membership.role !== "owner") return null;
   return { ...account, authType: "account", teamId, teamRole: "owner", teamDisplayName: membership.display_name || account.user.display_name };
