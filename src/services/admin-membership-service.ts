@@ -51,6 +51,8 @@ export function createAdminMembershipService({
     if (!invite) throw new ServiceError("invite_not_found", "招待リンクが見つかりません。", 404);
     if (invite.status !== "pending") throw new ServiceError("invite_used", "この招待リンクはすでに使用済みです。", 409);
     if (Number(invite.expires_at) <= now()) throw new ServiceError("invite_expired", "この招待リンクは期限切れです。", 410);
+    const team = await teamRepository.findById(invite.team_id);
+    if (!team || team.status !== "active") throw new ServiceError("team_inactive", "このチームは現在利用停止中です。", 403);
     return invite;
   }
 
@@ -89,6 +91,7 @@ export function createAdminMembershipService({
     async claimLegacyTeam(teamId, userId) {
       const team = await teamRepository.findById(teamId);
       if (!team) throw new ServiceError("team_not_found", "チームが見つかりません。", 404);
+      if (team.status !== "active") throw new ServiceError("team_inactive", "このチームは現在利用停止中です。", 403);
       const current = await membershipRepository.find(teamId, userId);
       if (current) {
         if (current.role === "owner" && team.admin_password_enabled) await teamRepository.disableAdminPassword(teamId);

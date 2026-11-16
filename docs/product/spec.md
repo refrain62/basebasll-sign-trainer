@@ -116,7 +116,7 @@ SYSTEM管理で登録した公開中かつ掲載期間内のお知らせをチ�
 - `suspended`: SYSTEM管理による利用停止
 - `deleted`: 退会済み（論理削除）
 
-退会済みでも関連データを保持し、SYSTEM管理から復活すると`active`へ戻す。退会・復活は監査ログへ記録する。
+`suspended` / `deleted`のチームでは、選手・チーム管理者の認証と管理操作を拒否する。退会済みでも関連データを保持し、SYSTEM管理から復活すると`active`へ戻す。退会・復活は監査ログへ記録する。
 
 ## 11. 認証・セキュリティ
 
@@ -135,7 +135,7 @@ D1: チーム、サイン、動画、グループ、管理者、プラン、Enti
 
 ## 13. 最新migration
 
-`0025_notice_history_backfill.sql`まで適用する。
+`0026_notice_team-status-authorization.sql`まで適用する。
 
 
 ## v1.5.30 UI / 操作仕様

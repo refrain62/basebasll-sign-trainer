@@ -6,14 +6,16 @@ export function createAdminTransitionRepository(db) {
   return {
 
     async claimLegacyTeam({ teamId, userId }) {
-      const guard = "NOT EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=?)";
+      const guard = `EXISTS (SELECT 1 FROM teams WHERE id=? AND status='active' AND deleted_at IS NULL)
+        AND NOT EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=?)`;
+      // D1 batch内で直前のowner INSERTが成功した場合だけ、共有パスワードを無効化する。
       const results = await db.batch([
         db.prepare(`INSERT INTO team_admin_memberships(team_id,user_id,role)
           SELECT ?,?,'owner' WHERE ${guard}`)
-          .bind(teamId, userId, teamId),
+          .bind(teamId, userId, teamId, teamId),
         db.prepare(`UPDATE teams
           SET admin_password_enabled=0,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP
-          WHERE id=? AND deleted_at IS NULL
+          WHERE id=? AND status='active' AND deleted_at IS NULL AND changes() > 0
             AND EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role='owner')`)
           .bind(teamId, teamId, userId)
       ]);
@@ -24,22 +26,26 @@ export function createAdminTransitionRepository(db) {
         db.prepare(`INSERT INTO team_admin_memberships(team_id,user_id,role)
           SELECT ?,?,'admin'
           WHERE EXISTS (SELECT 1 FROM team_admin_invites WHERE id=? AND team_id=? AND status='pending')
+            AND EXISTS (SELECT 1 FROM teams WHERE id=? AND status='active' AND deleted_at IS NULL)
             AND (
               EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=?)
               OR (SELECT COUNT(*) FROM team_admin_memberships WHERE team_id=? AND role='admin') < ?
             )
           ON CONFLICT(team_id,user_id) DO UPDATE SET role=CASE WHEN team_admin_memberships.role='owner' THEN 'owner' ELSE 'admin' END,updated_at=CURRENT_TIMESTAMP`)
-          .bind(teamId, userId, inviteId, teamId, teamId, userId, teamId, maxSubAdmins),
+          .bind(teamId, userId, inviteId, teamId, teamId, teamId, userId, teamId, maxSubAdmins),
         db.prepare(`UPDATE team_admin_invites SET status='accepted',accepted_by_user_id=?,accepted_at=CURRENT_TIMESTAMP
           WHERE id=? AND team_id=? AND status='pending'
+            AND EXISTS (SELECT 1 FROM teams WHERE id=? AND status='active' AND deleted_at IS NULL)
             AND EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role IN ('admin','owner'))`)
-          .bind(userId, inviteId, teamId, teamId, userId)
+          .bind(userId, inviteId, teamId, teamId, teamId, userId)
       ]);
       return changed(results?.[1]) > 0;
     },
 
     async acceptTransferInvite({ inviteId, teamId, currentOwnerUserId, nextOwnerUserId, currentOwnerExit, maxSubAdmins = 5 }) {
-      const pendingGuard = "EXISTS (SELECT 1 FROM team_admin_invites WHERE id=? AND team_id=? AND status='pending')";
+      const pendingGuard = `EXISTS (SELECT 1 FROM team_admin_invites i
+        JOIN teams t ON t.id=i.team_id AND t.status='active' AND t.deleted_at IS NULL
+        WHERE i.id=? AND i.team_id=? AND i.status='pending')`;
       const statements = [];
       if (currentOwnerExit) {
         statements.push(db.prepare(`DELETE FROM team_admin_memberships
@@ -58,12 +64,12 @@ export function createAdminTransitionRepository(db) {
         SELECT ?,?,'owner' WHERE ${pendingGuard}
         ON CONFLICT(team_id,user_id) DO UPDATE SET role='owner',updated_at=CURRENT_TIMESTAMP`)
         .bind(teamId, nextOwnerUserId, inviteId, teamId));
-      statements.push(db.prepare("UPDATE teams SET admin_password_enabled=0,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL AND EXISTS (SELECT 1 FROM team_admin_invites WHERE id=? AND team_id=? AND status='pending')")
+      statements.push(db.prepare("UPDATE teams SET admin_password_enabled=0,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='active' AND deleted_at IS NULL AND EXISTS (SELECT 1 FROM team_admin_invites WHERE id=? AND team_id=? AND status='pending')")
         .bind(teamId, inviteId, teamId));
-      statements.push(db.prepare("UPDATE team_admin_invites SET status='revoked' WHERE team_id=? AND status='pending' AND id<>?")
-        .bind(teamId, inviteId));
-      statements.push(db.prepare("UPDATE team_admin_invites SET status='accepted',accepted_by_user_id=?,accepted_at=CURRENT_TIMESTAMP WHERE id=? AND team_id=? AND status='pending'")
-        .bind(nextOwnerUserId, inviteId, teamId));
+      statements.push(db.prepare("UPDATE team_admin_invites SET status='revoked' WHERE team_id=? AND status='pending' AND id<>? AND EXISTS (SELECT 1 FROM teams WHERE id=? AND status='active' AND deleted_at IS NULL)")
+        .bind(teamId, inviteId, teamId));
+      statements.push(db.prepare("UPDATE team_admin_invites SET status='accepted',accepted_by_user_id=?,accepted_at=CURRENT_TIMESTAMP WHERE id=? AND team_id=? AND status='pending' AND EXISTS (SELECT 1 FROM teams WHERE id=? AND status='active' AND deleted_at IS NULL)")
+        .bind(nextOwnerUserId, inviteId, teamId, teamId));
       const results = await db.batch(statements);
       return changed(results?.[results.length - 1]) > 0;
     },
@@ -73,21 +79,24 @@ export function createAdminTransitionRepository(db) {
       // condition, a concurrent target removal could demote/delete the only owner and
       // then make the promotion a no-op.
       const targetGuard = "EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role='admin')";
+      const activeTeamGuard = "EXISTS (SELECT 1 FROM teams WHERE id=? AND status='active' AND deleted_at IS NULL)";
       const statements = [];
       if (currentOwnerExit) {
         statements.push(db.prepare(`DELETE FROM team_admin_memberships
-          WHERE team_id=? AND user_id=? AND role='owner' AND ${targetGuard}`)
-          .bind(teamId, currentOwnerUserId, teamId, nextOwnerUserId));
+          WHERE team_id=? AND user_id=? AND role='owner' AND ${targetGuard} AND ${activeTeamGuard}`)
+          .bind(teamId, currentOwnerUserId, teamId, nextOwnerUserId, teamId));
       } else {
         statements.push(db.prepare(`UPDATE team_admin_memberships SET role='admin',updated_at=CURRENT_TIMESTAMP
-          WHERE team_id=? AND user_id=? AND role='owner' AND ${targetGuard}`)
-          .bind(teamId, currentOwnerUserId, teamId, nextOwnerUserId));
+          WHERE team_id=? AND user_id=? AND role='owner' AND ${targetGuard} AND ${activeTeamGuard}`)
+          .bind(teamId, currentOwnerUserId, teamId, nextOwnerUserId, teamId));
       }
-      statements.push(db.prepare("UPDATE team_admin_memberships SET role='owner',updated_at=CURRENT_TIMESTAMP WHERE team_id=? AND user_id=? AND role='admin'").bind(teamId, nextOwnerUserId));
-      statements.push(db.prepare("UPDATE teams SET admin_password_enabled=0,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL AND EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role='owner')")
+      statements.push(db.prepare(`UPDATE team_admin_memberships SET role='owner',updated_at=CURRENT_TIMESTAMP
+        WHERE team_id=? AND user_id=? AND role='admin' AND ${activeTeamGuard}`)
+        .bind(teamId, nextOwnerUserId, teamId));
+      statements.push(db.prepare("UPDATE teams SET admin_password_enabled=0,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='active' AND deleted_at IS NULL AND EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role='owner')")
         .bind(teamId, teamId, nextOwnerUserId));
-      statements.push(db.prepare("UPDATE team_admin_invites SET status='revoked' WHERE team_id=? AND status='pending' AND EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role='owner')")
-        .bind(teamId, teamId, nextOwnerUserId));
+      statements.push(db.prepare("UPDATE team_admin_invites SET status='revoked' WHERE team_id=? AND status='pending' AND EXISTS (SELECT 1 FROM teams WHERE id=? AND status='active' AND deleted_at IS NULL) AND EXISTS (SELECT 1 FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role='owner')")
+        .bind(teamId, teamId, teamId, nextOwnerUserId));
       const results = await db.batch(statements);
       return changed(results?.[1]) > 0;
     }

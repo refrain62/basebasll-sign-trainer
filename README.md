@@ -47,7 +47,7 @@ pnpm run db:migrate:staging
 pnpm run db:migrate:prod
 ```
 
-migrationは番号順に追加し、既存migrationを後から書き換えないでください。最新の既存migrationは`0025_notice_history_backfill.sql`です。
+migrationは番号順に追加し、既存migrationを後から書き換えないでください。最新の既存migrationは`0026_notice_team-status-authorization.sql`です。
 
 ## デプロイ
 

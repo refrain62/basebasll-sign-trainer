@@ -102,14 +102,18 @@ export function createAdminMembershipRepository(db, protector = null) {
     },
 
     async transferOwner({ teamId, currentOwnerUserId, nextOwnerUserId, currentOwnerExit = false }) {
+      const activeTeamGuard = "EXISTS (SELECT 1 FROM teams WHERE id=? AND status='active' AND deleted_at IS NULL)";
       const statements = [];
       if (currentOwnerExit) {
-        statements.push(db.prepare("DELETE FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role='owner'").bind(teamId, currentOwnerUserId));
+        statements.push(db.prepare(`DELETE FROM team_admin_memberships WHERE team_id=? AND user_id=? AND role='owner' AND ${activeTeamGuard}`)
+          .bind(teamId, currentOwnerUserId, teamId));
       } else {
-        statements.push(db.prepare("UPDATE team_admin_memberships SET role='admin',updated_at=CURRENT_TIMESTAMP WHERE team_id=? AND user_id=? AND role='owner'").bind(teamId, currentOwnerUserId));
+        statements.push(db.prepare(`UPDATE team_admin_memberships SET role='admin',updated_at=CURRENT_TIMESTAMP WHERE team_id=? AND user_id=? AND role='owner' AND ${activeTeamGuard}`)
+          .bind(teamId, currentOwnerUserId, teamId));
       }
-      statements.push(db.prepare(`INSERT INTO team_admin_memberships(team_id,user_id,role) VALUES(?,?,'owner')
-        ON CONFLICT(team_id,user_id) DO UPDATE SET role='owner',updated_at=CURRENT_TIMESTAMP`).bind(teamId, nextOwnerUserId));
+      statements.push(db.prepare(`INSERT INTO team_admin_memberships(team_id,user_id,role)
+        SELECT ?,?,'owner' WHERE ${activeTeamGuard}
+        ON CONFLICT(team_id,user_id) DO UPDATE SET role='owner',updated_at=CURRENT_TIMESTAMP`).bind(teamId, nextOwnerUserId, teamId));
       return db.batch(statements);
     }
   };
