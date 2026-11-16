@@ -28,9 +28,13 @@ test("legacy-team claim adds the first owner and disables shared admin password 
   const repository = createAdminTransitionRepository(db);
   assert.equal(await repository.claimLegacyTeam({ teamId: "Team1234", userId: "u_owner12345678" }), true);
   const [createOwner, disableLegacy] = batches[0];
+  assert.match(createOwner.sql, /status='active' AND deleted_at IS NULL/);
   assert.match(createOwner.sql, /NOT EXISTS \(SELECT 1 FROM team_admin_memberships WHERE team_id=\?\)/);
+  assert.deepEqual(createOwner.args, ["Team1234", "u_owner12345678", "Team1234", "Team1234"]);
   assert.match(disableLegacy.sql, /admin_password_enabled=0/);
   assert.match(disableLegacy.sql, /admin_session_version=admin_session_version\+1/);
+  assert.match(disableLegacy.sql, /status='active' AND deleted_at IS NULL AND changes\(\) > 0/);
+  assert.deepEqual(disableLegacy.args, ["Team1234", "Team1234", "u_owner12345678"]);
 });
 
 test("direct owner transfer guards the old owner mutation with the target still being an admin", async () => {
@@ -48,10 +52,17 @@ test("direct owner transfer guards the old owner mutation with the target still 
   assert.equal(db.batches.length, 1);
   const [demoteOwner, promoteTarget, disableLegacy, revokeInvites] = db.batches[0];
   assert.match(demoteOwner.sql, /EXISTS \(SELECT 1 FROM team_admin_memberships WHERE team_id=\? AND user_id=\? AND role='admin'\)/);
-  assert.deepEqual(demoteOwner.args, ["Team1234", "u_owner12345678", "Team1234", "u_admin12345678"]);
+  assert.match(demoteOwner.sql, /status='active' AND deleted_at IS NULL/);
+  assert.deepEqual(demoteOwner.args, ["Team1234", "u_owner12345678", "Team1234", "u_admin12345678", "Team1234"]);
   assert.match(promoteTarget.sql, /role='owner'/);
+  assert.match(promoteTarget.sql, /status='active' AND deleted_at IS NULL/);
+  assert.deepEqual(promoteTarget.args, ["Team1234", "u_admin12345678", "Team1234"]);
   assert.match(disableLegacy.sql, /EXISTS \(SELECT 1 FROM team_admin_memberships/);
+  assert.match(disableLegacy.sql, /status='active' AND deleted_at IS NULL/);
+  assert.deepEqual(disableLegacy.args, ["Team1234", "Team1234", "u_admin12345678"]);
   assert.match(revokeInvites.sql, /EXISTS \(SELECT 1 FROM team_admin_memberships/);
+  assert.match(revokeInvites.sql, /status='active' AND deleted_at IS NULL/);
+  assert.deepEqual(revokeInvites.args, ["Team1234", "Team1234", "Team1234", "u_admin12345678"]);
 });
 
 test("direct owner transfer uses the same race guard when the previous owner exits", async () => {
@@ -68,6 +79,7 @@ test("direct owner transfer uses the same race guard when the previous owner exi
   const [removeOwner] = db.batches[0];
   assert.match(removeOwner.sql, /^DELETE FROM team_admin_memberships/m);
   assert.match(removeOwner.sql, /role='admin'/);
+  assert.match(removeOwner.sql, /status='active' AND deleted_at IS NULL/);
 });
 
 

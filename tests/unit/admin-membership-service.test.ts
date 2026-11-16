@@ -71,6 +71,18 @@ test("claiming a legacy team atomically creates the owner and disables legacy pa
   assert.ok(fx.calls.some(([name]) => name === "audit"));
 });
 
+test.each([
+  ["suspended", (fx) => fx.setTeamStatus("suspended"), "team_inactive", 403],
+  ["soft-deleted", (fx) => fx.setTeamDeleted(true), "team_not_found", 404]
+])("legacy claim after OAuth is rejected when the team became %s", async (_state, setState, code, status) => {
+  const fx = fixture();
+  fx.members.clear();
+  // OAuth開始時はactiveでも、callbackに届く前にSYSTEMが状態を変えたケースを再現する。
+  setState(fx);
+  await expect(fx.service.claimLegacyTeam("T1", "new-owner")).rejects.toMatchObject({ code, status });
+  assert.equal(fx.calls.some(([name]) => name === "claimLegacy"), false);
+});
+
 test("owner invite stores only a token hash in the repository boundary", async () => {
   const fx = fixture();
   const result = await fx.service.createInvite("T1", "owner", { kind: "admin", expiresHours: 24 });

@@ -217,7 +217,7 @@ export function createTeamRepository(db, protector = null) {
         .bind(teamId, protectedName, passphraseHash, adminHash, adminPasswordEnabled ? 1 : 0).run();
     },
     async disableAdminPassword(teamId) {
-      return db.prepare("UPDATE teams SET admin_password_enabled=0,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND deleted_at IS NULL")
+      return db.prepare("UPDATE teams SET admin_password_enabled=0,admin_session_version=admin_session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='active' AND deleted_at IS NULL")
         .bind(teamId).run();
     },
     async updateFromSystem({ teamId, name, status, passphraseHash, adminHash, invalidatePlayer, invalidateAdmin }) {

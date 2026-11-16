@@ -91,6 +91,7 @@ export function createAdminMembershipService({
     async claimLegacyTeam(teamId, userId) {
       const team = await teamRepository.findById(teamId);
       if (!team) throw new ServiceError("team_not_found", "チームが見つかりません。", 404);
+      if (team.status !== "active") throw new ServiceError("team_inactive", "このチームは現在利用停止中です。", 403);
       const current = await membershipRepository.find(teamId, userId);
       if (current) {
         if (current.role === "owner" && team.admin_password_enabled) await teamRepository.disableAdminPassword(teamId);
