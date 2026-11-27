@@ -87,3 +87,9 @@ CF_ACCESS_POLICY_AUD=<Access Application AUD tag>
 - Authentication rate-limit increments use one atomic D1 statement, so concurrent attempts cannot overwrite each other's count and bypass the configured limit.
 - Administrator invitation and ownership-transfer operations fail with a temporary error when entitlement lookup fails; a billing or database failure cannot grant administrator capacity.
 - `zod` is pinned to `4.6.6`, and Wrangler's transitive `undici` dependency is overridden to `7.30.1` to address known high-severity advisories.
+
+## Build 77: concurrent-limit and request-body hardening
+
+- Group, sign and video creation rechecks the current plan limit inside the D1 `INSERT` statement, so concurrent requests cannot exceed Free / Plus content limits after a preflight count.
+- Account team creation applies the owned-team limit inside the same D1 provisioning batch as the owner membership.
+- JSON request bodies are read in bounded chunks and cancelled as soon as the 64KiB limit is exceeded, including when `Content-Length` is absent.

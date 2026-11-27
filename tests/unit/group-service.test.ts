@@ -43,3 +43,11 @@ test("group service rejects invalid YouTube URL before repository mutation", asy
   await expect(service.create("team1", { name: "A", youtubeUrl: "https://evil.example/video" })).rejects.toMatchObject({ code: "invalid_youtube", status: 400 });
   assert.equal(calls.length, 0);
 });
+
+test("group service rejects when the database-side limit guard wins a race", async () => {
+  const fx = fixture();
+  fx.groupRepository.create = async () => null;
+  await expect(fx.service.create("team1", { name: "B" }, null, { maxItems: 1, planName: "Free" }))
+    .rejects.toMatchObject({ code: "plan_limit_reached", status: 403 });
+  assert.equal(fx.calls.some(([name]) => name === "audit"), false);
+});

@@ -18,14 +18,22 @@ export function createVideoRepository(db, protector = null) {
       const row = await db.prepare("SELECT COALESCE(MAX(sort_order),0) AS max_order FROM sign_videos WHERE sign_id=?").bind(signId).first();
       return Number(row?.max_order || 0) + 10;
     },
-    async create({ signId, youtubeUrl, videoId, sortOrder, comment, thumbnailTimeSeconds = 0 }) {
+    async create({ signId, youtubeUrl, videoId, sortOrder, comment, thumbnailTimeSeconds = 0, maxItems = null }) {
       const values = protector ? {
         youtubeUrl: await protector.encrypt(youtubeUrl, "sign_videos.youtube_url"),
         videoId: await protector.encrypt(videoId, "sign_videos.youtube_video_id"),
         comment: await protector.encrypt(comment, "sign_videos.comment")
       } : { youtubeUrl, videoId, comment };
-      const result = await db.prepare("INSERT INTO sign_videos(sign_id,youtube_url,youtube_video_id,sort_order,enabled,comment,thumbnail_time_seconds) VALUES(?,?,?,?,1,?,?)")
-        .bind(signId, values.youtubeUrl, values.videoId, sortOrder, values.comment, Math.max(0, Math.trunc(Number(thumbnailTimeSeconds) || 0))).run();
+      const limit = maxItems === null || maxItems === undefined ? null : (Number.isFinite(Number(maxItems)) ? Math.max(0, Math.trunc(Number(maxItems))) : 0);
+      const thumbnail = Math.max(0, Math.trunc(Number(thumbnailTimeSeconds) || 0));
+      const result = limit === null
+        ? await db.prepare("INSERT INTO sign_videos(sign_id,youtube_url,youtube_video_id,sort_order,enabled,comment,thumbnail_time_seconds) VALUES(?,?,?,?,1,?,?)")
+          .bind(signId, values.youtubeUrl, values.videoId, sortOrder, values.comment, thumbnail).run()
+        : await db.prepare(`INSERT INTO sign_videos(sign_id,youtube_url,youtube_video_id,sort_order,enabled,comment,thumbnail_time_seconds)
+          SELECT ?,?,?,?,1,?,?
+          WHERE (SELECT COUNT(*) FROM sign_videos WHERE sign_id=? AND deleted_at IS NULL) < ?`)
+          .bind(signId, values.youtubeUrl, values.videoId, sortOrder, values.comment, thumbnail, signId, limit).run();
+      if (limit !== null && Number(result?.meta?.changes || 0) === 0) return null;
       return Number(result.meta.last_row_id);
     },
     async update({ id, youtubeUrl, videoId, sortOrder, enabled, comment, thumbnailTimeSeconds = 0 }) {

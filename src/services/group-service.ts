@@ -12,13 +12,18 @@ function explanationFromInput(value, current = { youtubeUrl: "", videoId: "" }) 
 
 export function createGroupService({ groupRepository, auditRepository }) {
   return {
-    async create(teamId, input, auditActor = null) {
+    async create(teamId, input, auditActor = null, { maxItems = null, planName = "現在のプラン" } = {}) {
       const name = cleanName(input?.name, 80);
       if (!name) throw new ServiceError("invalid_name", "グループ名を入力してください。", 400);
       const description = String(input?.description || "").trim().slice(0, 1200);
       const explanation = explanationFromInput(input?.youtubeUrl);
       const sortOrder = await groupRepository.nextSortOrder(teamId);
-      const groupId = await groupRepository.create({ teamId, name, description, ...explanation, sortOrder });
+      const createInput: any = { teamId, name, description, ...explanation, sortOrder };
+      if (maxItems !== null && maxItems !== undefined) createInput.maxItems = maxItems;
+      const groupId = await groupRepository.create(createInput);
+      if (groupId === null) {
+        throw new ServiceError("plan_limit_reached", `${planName}ではサイングループは最大${maxItems}個までです。`, 403, { feature: "multiple_sign_groups", limit: maxItems });
+      }
       await auditRepository.record(auditActor?.role || "team-admin", teamId, "group.create", "group", groupId, { name }, auditActor?.userId || null);
       return groupRepository.getPublicById(teamId, groupId);
     },

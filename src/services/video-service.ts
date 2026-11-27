@@ -3,14 +3,19 @@ import { ServiceError } from "./errors.ts";
 
 export function createVideoService({ signRepository, videoRepository, auditRepository }) {
   return {
-    async create(teamId, signId, input, auditActor = null) {
+    async create(teamId, signId, input, auditActor = null, { maxItems = null } = {}) {
       const sign = await signRepository.findById(teamId, signId);
       if (!sign) throw new ServiceError("not_found", "", 404);
       const parsed = parseYouTubeUrl(input?.youtubeUrl);
       if (!parsed) throw new ServiceError("invalid_youtube", "YouTube URLを確認してください。", 400);
       const sortOrder = await videoRepository.nextSortOrder(signId);
       const thumbnailTimeSeconds = Math.max(0, Math.trunc(Number(input?.thumbnailTimeSeconds) || 0));
-      const videoId = await videoRepository.create({ signId, youtubeUrl: parsed.url, videoId: parsed.videoId, sortOrder, comment: cleanComment(input?.comment), thumbnailTimeSeconds });
+      const createInput: any = { signId, youtubeUrl: parsed.url, videoId: parsed.videoId, sortOrder, comment: cleanComment(input?.comment), thumbnailTimeSeconds };
+      if (maxItems !== null && maxItems !== undefined) createInput.maxItems = maxItems;
+      const videoId = await videoRepository.create(createInput);
+      if (videoId === null) {
+        throw new ServiceError("feature_not_available", "Freeプランでは1サイン1動画まで利用できます。", 403, { feature: "multiple_sign_videos" });
+      }
       await auditRepository.record(auditActor?.role || "team-admin", teamId, "video.create", "video", videoId, { signId }, auditActor?.userId || null);
       return { videoId, sign: await signRepository.getWithVideos(teamId, signId) };
     },
