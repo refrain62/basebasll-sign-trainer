@@ -60,17 +60,21 @@ describe("dependency governance", () => {
     const preflight = read("scripts/security-preflight.ts");
     expect(pkg.scripts.check).toContain("pnpm run security:preflight");
     const workspaceConfig = read("pnpm-workspace.yaml");
+    const lockfile = read("pnpm-lock.yaml");
     expect(pkg.devDependencies.wrangler).toBe("4.148.0");
-    expect(pkg.overrides).toEqual({ sharp: "0.35.5", "source-map-js": "1.2.2", undici: "7.30.1" });
+    expect(pkg.overrides).toEqual({ sharp: "0.35.5", "source-map-js": "1.2.2", undici: "7.30.2" });
     expect(workspaceConfig).toMatch(/^overrides:\s*$[\s\S]*^\s+sharp:\s*0\.35\.5\s*$/m);
-    expect(workspaceConfig).toMatch(/^overrides:\s*$[\s\S]*^\s+undici:\s*7\.30\.1\s*$/m);
+    expect(workspaceConfig).toMatch(/^overrides:\s*$[\s\S]*^\s+undici:\s*7\.30\.2\s*$/m);
     expect(workspaceConfig).toContain("saveExact: true");
     expect(workspaceConfig).toContain("lockfile: true");
     expect(workspaceConfig).toContain("ignoreScripts: true");
     expect(workspaceConfig).toContain("engineStrict: true");
     expect(preflight).toContain('const requiredWranglerVersion = "4.148.0";');
-    expect(preflight).toContain('const requiredUndiciVersion = "7.30.1";');
+    expect(preflight).toContain('const requiredUndiciVersion = "7.30.2";');
     expect(preflight).toContain("pnpm-workspace.yaml must pin overrides.sharp exactly to 0.35.5");
+    expect(lockfile).toContain("undici@7.30.2:");
+    expect(lockfile).not.toContain("undici@7.30.1");
+    expect(lockfile).not.toContain("undici: 7.30.1");
   });
 
   test("allows only reviewed Vite patches and keeps the third-party notice accurate", () => {
