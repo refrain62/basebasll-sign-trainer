@@ -4,9 +4,9 @@
 
 ## 継続タスク
 
-### Dev WorkerのSecret設定後にデプロイを再実行
+### 週次セキュリティ監査PRのレビュー
 
-- 停止条件: Cloudflareの`basebasll-sign-trainer-dev`に不足している実行時Secretが設定されるまで、デプロイを再試行しない。
-- 再開後の作業: Build `8b19467b-4e32-4f52-b31e-0708cb92a2e0`を再試行するか、新しい`dev` buildを起動し、Workerのデプロイ成功を確認する。
-- 完了条件: `dev` branchのコードがDev Workerへ正常にデプロイされ、Cloudflare上のVersionを確認できる。
-- 詳細記録: [2026-10-09 E2E・pnpm対応の昇格](resume-task-history.md#2026-10-09-e2e-pnpm対応の昇格)
+- 停止条件: 実装Draft PR #77、#79、#80の人間レビューと必要なCIが完了するまでマージしない。
+- 再開後の作業: 各PRの差分、独立レビュー結果、CI結果と依存関係を確認し、承認後に通常のマージ手順へ進む。
+- 完了条件: 対象実装PRが`develop`へマージされ、記録Draft PR #78のレビューとCIも完了する。
+- 詳細記録: [2026-11-09 週次セキュリティ監査](resume-task-history.md#2026-11-09-週次セキュリティ監査)、[2026-11-16 週次セキュリティ監査](resume-task-history.md#2026-11-16-週次セキュリティ監査)
