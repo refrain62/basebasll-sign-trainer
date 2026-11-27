@@ -27,7 +27,7 @@ const root = process.cwd();
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")) as PackageJson;
 const failures: string[] = [];
 const requiredWranglerVersion = "4.148.0";
-const requiredUndiciVersion = "7.30.1";
+const requiredUndiciVersion = "7.30.2";
 const allowedViteVersions = new Set(["8.3.1", "8.3.3"]);
 
 if (pkg.devDependencies?.wrangler !== requiredWranglerVersion) failures.push(`wrangler must be pinned exactly to ${requiredWranglerVersion}`);
@@ -58,7 +58,7 @@ if (!fs.existsSync(workspaceConfigPath)) {
   if (!/^overrides:\s*$/m.test(workspaceConfig) || !/^\s+sharp:\s*["']?0\.35\.5["']?\s*$/m.test(workspaceConfig)) {
     failures.push("pnpm-workspace.yaml must pin overrides.sharp exactly to 0.35.5");
   }
-  if (!/^\s+undici:\s*["']?7\.30\.1["']?\s*$/m.test(workspaceConfig)) failures.push("pnpm-workspace.yaml must pin overrides.undici exactly to 7.30.1");
+  if (!/^\s+undici:\s*["']?7\.30\.2["']?\s*$/m.test(workspaceConfig)) failures.push("pnpm-workspace.yaml must pin overrides.undici exactly to 7.30.2");
   for (const setting of ["saveExact", "lockfile", "ignoreScripts", "engineStrict"]) {
     if (!new RegExp(`^${setting}:\\s*true\\s*$`, "m").test(workspaceConfig)) {
       failures.push(`pnpm-workspace.yaml must set ${setting}: true`);
@@ -151,8 +151,8 @@ if (!fs.existsSync(pnpmLockPath)) {
   if (!/(?:^|\n)\s+sharp:\s*0\.35\.5\s*(?:\n|$)/m.test(lock)) {
     failures.push("pnpm-lock.yaml must record pnpm.overrides.sharp as 0.35.5");
   }
-  if (!/(?:^|\n)\s+undici:\s*7\.30\.1\s*(?:\n|$)/m.test(lock)) {
-    failures.push("pnpm-lock.yaml must record pnpm.overrides.undici as 7.30.1");
+  if (!/(?:^|\n)\s+undici:\s*7\.30\.2\s*(?:\n|$)/m.test(lock)) {
+    failures.push("pnpm-lock.yaml must record pnpm.overrides.undici as 7.30.2");
   }
 }
 
