@@ -126,7 +126,10 @@ export function createAccountService({
       if (!teamId) throw new ServiceError("id_generation_failed", "チームIDを作成できませんでした。", 500);
       const passphraseHash = await hashPassword(passphrase);
       const adminHash = await hashPassword(randomToken(48));
-      await provisioningRepository.createOwnedTeam({ teamId, name, passphraseHash, adminHash, userId });
+      const provisioned = await provisioningRepository.createOwnedTeam({ teamId, name, passphraseHash, adminHash, userId, maxOwnedTeams });
+      if (Array.isArray(provisioned) && Number(provisioned?.[0]?.meta?.changes || 0) === 0) {
+        throw new ServiceError("team_create_limit_reached", `1つの管理者アカウントで新規作成できるチームは最大${maxOwnedTeams}チームです。招待で参加するサブ管理者チームはこの上限に含みません。`, 409, { limit: maxOwnedTeams });
+      }
       await auditRepository.record("account-owner", teamId, "team.self_register", "team", teamId, { userId, name }, userId);
       return { team: teamRepository.publicTeam(await teamRepository.findById(teamId)), urls: teamUrls(teamId) };
     },

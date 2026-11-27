@@ -16,10 +16,17 @@ export function createSignRepository(db, protector = null) {
       const row = await db.prepare("SELECT COALESCE(MAX(sort_order),0) AS max_order FROM signs WHERE team_id=?").bind(teamId).first();
       return Number(row?.max_order || 0) + 10;
     },
-    async create({ teamId, name, sortOrder, groupId }) {
+    async create({ teamId, name, sortOrder, groupId, maxItems = null }) {
       const protectedName = protector ? await protector.encrypt(name, "signs.name") : name;
-      const result = await db.prepare("INSERT INTO signs(team_id,name,sort_order,enabled,group_id) VALUES(?,?,?,1,?)")
-        .bind(teamId, protectedName, sortOrder, groupId).run();
+      const limit = maxItems === null || maxItems === undefined ? null : (Number.isFinite(Number(maxItems)) ? Math.max(0, Math.trunc(Number(maxItems))) : 0);
+      const result = limit === null
+        ? await db.prepare("INSERT INTO signs(team_id,name,sort_order,enabled,group_id) VALUES(?,?,?,1,?)")
+          .bind(teamId, protectedName, sortOrder, groupId).run()
+        : await db.prepare(`INSERT INTO signs(team_id,name,sort_order,enabled,group_id)
+          SELECT ?,?,?,1,?
+          WHERE (SELECT COUNT(*) FROM signs WHERE team_id=? AND deleted_at IS NULL) < ?`)
+          .bind(teamId, protectedName, sortOrder, groupId, teamId, limit).run();
+      if (limit !== null && Number(result?.meta?.changes || 0) === 0) return null;
       return Number(result.meta.last_row_id);
     },
     async hardDelete(teamId, signId) {
